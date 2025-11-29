@@ -93,7 +93,7 @@ while ($true) {
 # Organizer Dashboard
 
 A web-based dashboard for monitoring and managing the **DownloadsOrganizer** service. Built with Python and Flask, this tool provides real-time insights into system resources, service status, drive space, network activity, and more. Easily configure file routing rules, resource thresholds, and view live logs—all from a user-friendly interface.
-
+![Organizer Dashboard](Dashboard.png)
 ---
 
 ## Features
