@@ -73,6 +73,15 @@ if os.path.exists(CONFIG_FILE):
     except Exception:
         pass
 
+# If credentials are stored in the config file, prefer them (persisted change-password support)
+if isinstance(config, dict):
+    dashboard_user = config.get("dashboard_user")
+    dashboard_pass = config.get("dashboard_pass")
+    if dashboard_user:
+        ADMIN_USER = dashboard_user
+    if dashboard_pass:
+        ADMIN_PASS = dashboard_pass
+
 def update_log_paths():
     global LOGS_DIR, STDOUT_LOG, STDERR_LOG
     LOGS_DIR = config.get("logs_dir", DEFAULT_CONFIG["logs_dir"])
@@ -494,12 +503,58 @@ let __authHeader = null;
 function promptLogin() {
     const user = prompt('Username:', 'admin');
     if (!user) return;
-    const pass = prompt('Password:', 'change_this_password');
+    const pass = prompt('Password:');
     if (pass === null) return;
     __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
-    document.getElementById('login-btn').classList.add('d-none');
-    document.getElementById('logout-btn').classList.remove('d-none');
-    showNotification('Logged in (credentials stored in session)', 'success');
+    // Verify credentials by calling a lightweight protected endpoint
+    fetch('/metrics', { headers: getAuthHeaders() })
+        .then(r => {
+            if (!r.ok) throw new Error('Invalid credentials');
+            // If user logged in with the default password, prompt to change it
+            const DEFAULT_PASS = 'change_this_password';
+            if (pass === DEFAULT_PASS) {
+                // Force change
+                let np = prompt('Please choose a new dashboard password:');
+                if (!np) {
+                    showNotification('Password change required to proceed', 'warning');
+                    // Still mark logged in visually, but require change for sensitive actions
+                    document.getElementById('login-btn').classList.add('d-none');
+                    document.getElementById('logout-btn').classList.remove('d-none');
+                    return;
+                }
+                let np2 = prompt('Confirm new password:');
+                if (np !== np2) {
+                    showNotification('Passwords did not match; try logging in again', 'danger');
+                    return;
+                }
+                // Call server to update the password (requires current auth)
+                fetch('/change_password', {
+                    method: 'POST',
+                    headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
+                    body: JSON.stringify({ new_password: np })
+                }).then(r2 => {
+                    if (r2.ok) {
+                        // Update auth header with new password
+                        __authHeader = 'Basic ' + btoa(`${user}:${np}`);
+                        document.getElementById('login-btn').classList.add('d-none');
+                        document.getElementById('logout-btn').classList.remove('d-none');
+                        showNotification('Password changed and logged in', 'success');
+                    } else {
+                        showNotification('Failed to change password', 'danger');
+                    }
+                }).catch(err => {
+                    showNotification('Error changing password: ' + err.message, 'danger');
+                });
+            } else {
+                document.getElementById('login-btn').classList.add('d-none');
+                document.getElementById('logout-btn').classList.remove('d-none');
+                showNotification('Logged in (credentials stored in session)', 'success');
+            }
+        })
+        .catch(err => {
+            showNotification('Login failed: ' + err.message, 'danger');
+            __authHeader = null;
+        });
 }
 function logout() {
     __authHeader = null;
@@ -1053,6 +1108,33 @@ def clear_log(which):
         return jsonify({"status": "success", "message": f"{which} log cleared"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Failed to clear log: {e}"}), 500
+
+
+@app.route("/change_password", methods=["POST"])
+@requires_auth
+def change_password():
+    """Change the dashboard password and persist it to the config file.
+
+    Expects JSON: { "new_password": "..." }
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
+    new = data.get("new_password") if isinstance(data, dict) else None
+    if not new:
+        return jsonify({"status": "error", "message": "Missing new_password"}), 400
+    # Persist to config and update runtime ADMIN_PASS
+    try:
+        config['dashboard_user'] = ADMIN_USER
+        config['dashboard_pass'] = new
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=4)
+        global ADMIN_PASS
+        ADMIN_PASS = new
+        return jsonify({"status": "success", "message": "Password changed"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to save password: {e}"}), 500
 
 @app.route("/drives")
 def drives():
