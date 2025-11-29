@@ -40,7 +40,7 @@ A web-based dashboard for monitoring and managing the **DownloadsOrganizer** ser
    pip install -r requirements.txt
    ```
 
-3. **Run the Dashboard: **
+3. **Run the Dashboard:**
    Create a batch file to run it:
    ```bash
    @echo off
