@@ -1,47 +1,91 @@
 
+"""Organizer.py
+
+Watches a user's Downloads folder and moves files into categorized
+subfolders based on file extensions.
+
+This module aims to be readable and easy-to-run for development. It will
+attempt to load `organizer_config.json` from the current working directory
+and use the `routes` mapping there if present. Otherwise it falls back to a
+bundled `EXTENSION_MAP`.
+"""
+
+from pathlib import Path
 import os
 import shutil
 import json
 import logging
+import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime
 
-# ============================================================
-# CONFIGURATION SECTION
-# ============================================================
 
-#Set Username Variable
-uname = input("Please enter your PC username name: ")
+# -----------------------------
+# Configuration and paths
+# -----------------------------
+SCRIPT_DIR = Path(__file__).parent
+CONFIG_PATHS = [SCRIPT_DIR / "organizer_config.json", Path("C:/Scripts/organizer_config.json")]
+CONFIG = {}
+for p in CONFIG_PATHS:
+    if p.exists():
+        try:
+            with p.open("r", encoding="utf-8") as f:
+                CONFIG = json.load(f)
+            break
+        except Exception:
+            CONFIG = {}
 
+# Allow overriding the downloads path via env var for testing
+DOWNLOADS_PATH = os.environ.get("DOWNLOADS_PATH")
+if not DOWNLOADS_PATH:
+    # Try common Windows environment variables, otherwise fallback to user's Downloads
+    try:
+        username = os.environ.get("USERNAME") or os.getlogin()
+    except Exception:
+        username = None
+    if username:
+        DOWNLOADS_PATH = f"C:\\Users\\{username}\\Downloads"
+    else:
+        DOWNLOADS_PATH = str(Path.home() / "Downloads")
 
-DOWNLOADS_PATH = f"C:\\Users\\{uname}\\Downloads"
-DOWNLOADS_JSON = "C:\\Scripts\\downloads_dashboard.json"
-ORGANIZER_LOG = "organizer.log"  # exclusive log file to ignore
+DOWNLOADS_PATH = Path(DOWNLOADS_PATH)
+DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", "C:/Scripts/downloads_dashboard.json"))
+ORGANIZER_LOG = CONFIG.get("organizer_log", "organizer.log")
 
-EXTENSION_MAP = {
-    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic"],
-    "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a"],
-    "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
-    "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv"],
-    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
-    "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1"],
-    "Shortcuts": [".lnk", ".url"],
-    "Scripts": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php"],
-    "Fonts": [".ttf", ".otf", ".woff", ".woff2"],
-    "Logs": [".log"],  # dedicated folder for log files
-    "Other": []  # catch-all
-}
+# Load extension map from config if available and normalize to dot-prefixed lower-case
+if CONFIG.get("routes"):
+    EXTENSION_MAP = {}
+    for cat, exts in CONFIG["routes"].items():
+        normalized = [("." + e.lower().lstrip('.')) for e in exts]
+        EXTENSION_MAP[cat] = normalized
+else:
+    EXTENSION_MAP = {
+        "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic"],
+        "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a"],
+        "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
+        "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv"],
+        "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
+        "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1"],
+        "Shortcuts": [".lnk", ".url"],
+        "Scripts": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php"],
+        "Fonts": [".ttf", ".otf", ".woff", ".woff2"],
+        "Logs": [".log"],
+        "Other": []
+    }
+
 IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG}
 IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
 
-# ============================================================
-# LOGGING SETUP
-# ============================================================
-log_path = os.path.join(DOWNLOADS_PATH, ORGANIZER_LOG)
+
+# -----------------------------
+# Logging
+# -----------------------------
+log_path = DOWNLOADS_PATH / ORGANIZER_LOG
+log_path.parent.mkdir(parents=True, exist_ok=True)
 logger = logging.getLogger("Organizer")
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s\n %(levelname)s\n %(message)s", "%Y-%m-%d %H:%M:%S")
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", "%Y-%m-%d %H:%M:%S")
 file_handler = logging.FileHandler(log_path, encoding="utf-8")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -49,87 +93,116 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-# ============================================================
-# CORE LOGIC
-# ============================================================
-def get_unique_path(dest_dir, filename):
-    """Generate a unique file path if duplicate exists."""
-    base, ext = os.path.splitext(filename)
-    candidate = os.path.join(dest_dir, filename)
-    counter = 1
-    while os.path.exists(candidate):
-        candidate = os.path.join(dest_dir, f"{base} ({counter}){ext}")
-        counter += 1
-    return candidate
 
-def organize_file(file_path):
-    if not os.path.isfile(file_path):
+# -----------------------------
+# Core functions
+# -----------------------------
+def get_unique_path(dest_dir: Path, filename: str) -> str:
+    """Return a unique filepath in ``dest_dir`` for ``filename`` by appending
+    a numbered suffix when collisions occur.
+    """
+    base, ext = os.path.splitext(filename)
+    candidate = dest_dir / filename
+    counter = 1
+    while candidate.exists():
+        candidate = dest_dir / f"{base} ({counter}){ext}"
+        counter += 1
+    return str(candidate)
+
+
+def organize_file(file_path: str) -> None:
+    """Move a single file into the matching category folder under Downloads.
+
+    The function is careful to skip incomplete downloads and explicitly
+    ignored files.
+    """
+    p = Path(file_path)
+    if not p.is_file():
         return
-    filename = os.path.basename(file_path).lower()
-    ext = os.path.splitext(file_path)[1].lower()
-    # Only log actual changes, not searches or ignored files
+    filename = p.name
+    ext = p.suffix.lower()
+
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
         return
+
     target_dir = "Other"
     for category, extensions in EXTENSION_MAP.items():
         if ext in extensions:
             target_dir = category
             break
-    dest_dir = os.path.join(DOWNLOADS_PATH, target_dir)
-    os.makedirs(dest_dir, exist_ok=True)
-    dest_path = get_unique_path(dest_dir, os.path.basename(file_path))
+
+    dest_dir = DOWNLOADS_PATH / target_dir
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = get_unique_path(dest_dir, filename)
     try:
-        shutil.move(file_path, dest_path)
+        shutil.move(str(p), dest_path)
         logger.info(f"Moved {file_path} → {dest_path}")
     except Exception as e:
         logger.error(f"Error moving {file_path}: {e}")
 
-def update_dashboard_json(downloads_path):
-    summary = {"last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    for entry in os.scandir(downloads_path):
-        if entry.is_dir():
-            summary[entry.name] = len([f for f in os.scandir(entry.path) if f.is_file()])
-    with open(DOWNLOADS_JSON, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
-    logger.info("Dashboard JSON updated")
 
-def initial_scan(downloads_path):
-    for entry in os.scandir(downloads_path):
+def update_dashboard_json(downloads_path: Path) -> None:
+    """Write a small summary JSON used by the dashboard (if configured)."""
+    summary = {"last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    for entry in downloads_path.iterdir():
+        if entry.is_dir():
+            summary[entry.name] = len([f for f in entry.iterdir() if f.is_file()])
+    try:
+        DOWNLOADS_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with DOWNLOADS_JSON.open("w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=2)
+        logger.info("Dashboard JSON updated")
+    except Exception as e:
+        logger.error(f"Failed to update dashboard JSON: {e}")
+
+
+def initial_scan(downloads_path: Path) -> None:
+    """Process existing files in Downloads once at startup."""
+    for entry in downloads_path.iterdir():
         if entry.is_file():
-            organize_file(entry.path)
+            organize_file(str(entry))
     update_dashboard_json(downloads_path)
     logger.info("Initial scan complete")
 
+
 class DownloadsHandler(FileSystemEventHandler):
-    def __init__(self, downloads_path):
+    """Watchdog event handler for the Downloads folder."""
+
+    def __init__(self, downloads_path: Path):
         self.downloads_path = downloads_path
+
     def on_created(self, event):
         if not event.is_directory:
             organize_file(event.src_path)
             update_dashboard_json(self.downloads_path)
+
     def on_moved(self, event):
         if not event.is_directory:
             organize_file(event.dest_path)
             update_dashboard_json(self.downloads_path)
+
     def on_modified(self, event):
         if not event.is_directory:
             organize_file(event.src_path)
             update_dashboard_json(self.downloads_path)
 
-# ============================================================
-# MAIN ENTRY POINT
-# ============================================================
+
+# -----------------------------
+# Main entrypoint
+# -----------------------------
 if __name__ == "__main__":
+    DOWNLOADS_PATH.mkdir(parents=True, exist_ok=True)
     initial_scan(DOWNLOADS_PATH)
     event_handler = DownloadsHandler(DOWNLOADS_PATH)
     observer = Observer()
-    observer.schedule(event_handler, DOWNLOADS_PATH, recursive=False)
+    observer.schedule(event_handler, str(DOWNLOADS_PATH), recursive=False)
     observer.start()
     logger.info(f"Monitoring {DOWNLOADS_PATH} started")
     print(f"Monitoring {DOWNLOADS_PATH}... Press Ctrl+C to stop.")
     try:
+        # Sleep in the loop to avoid a busy-wait and reduce CPU usage
         while True:
-            pass
+            time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()

@@ -10,6 +10,13 @@ import socket
 import sys
 from functools import wraps
 
+"""OrganizerDashboard
+
+Flask-based dashboard to monitor and control the DownloadsOrganizer service.
+This module exposes JSON endpoints used by the UI (AJAX) and renders a
+single-page dashboard with controls, logs, and configuration.
+"""
+
 # --- Authentication ---
 
 import os
@@ -585,10 +592,18 @@ function showNotification(message, type) {
 
 # --- Helper Functions ---
 def service_running() -> bool:
+    # On non-Windows platforms the `sc` tool is not available. Fall back to
+    # detecting the organizer process by name so the dashboard can run in
+    # containers for preview/testing.
+    if sys.platform != "win32":
+        proc = find_organizer_proc()
+        return proc is not None
     try:
         out = subprocess.check_output(["sc", "query", SERVICE_NAME], text=True)
         return "RUNNING" in out
     except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
         return False
 
 def get_windows_version():
@@ -849,6 +864,12 @@ def dashboard():
 @app.route("/update", methods=["POST"])
 @requires_auth
 def update_config():
+    """Update configuration routes and thresholds.
+
+    Expects form-encoded data from the UI. Returns JSON with status and
+    message so the frontend can give immediate feedback without a full
+    page reload.
+    """
     new_routes = {}
     i = 1
     while True:
@@ -911,6 +932,13 @@ def metrics():
 @app.route("/restart", methods=["POST"])
 @requires_auth
 def restart_service():
+    """Restart the Windows service using `sc`.
+
+    On non-Windows platforms this returns an error JSON since `sc` is not
+    available. Returns JSON status/messages for AJAX consumption.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
@@ -921,6 +949,12 @@ def restart_service():
 @app.route("/stop", methods=["POST"])
 @requires_auth
 def stop_service():
+    """Stop the Windows service and return JSON result.
+
+    Returns an error JSON on non-Windows platforms.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
         return jsonify({"status": "success", "message": "Service stopped"}), 200
@@ -930,6 +964,12 @@ def stop_service():
 @app.route("/start", methods=["POST"])
 @requires_auth
 def start_service():
+    """Start the Windows service and return JSON result.
+
+    Returns an error JSON on non-Windows platforms.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
         return jsonify({"status": "success", "message": "Service started"}), 200
@@ -954,12 +994,17 @@ def stream(which):
 @app.route("/clear_log/<which>", methods=["POST"])
 @requires_auth
 def clear_log(which):
+    """Clear the specified log file (stdout or stderr).
+
+    Returns JSON success/error so the frontend can update the UI.
+    """
     if which not in ("stdout", "stderr"):
         return jsonify({"status": "error", "message": "Invalid log type"}), 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     try:
+        # Truncate the logfile
         with open(path, "w", encoding="utf-8"):
-            pass  # Truncate file
+            pass
         return jsonify({"status": "success", "message": f"{which} log cleared"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Failed to clear log: {e}"}), 500
