@@ -113,6 +113,10 @@ HTML = """
 <body>
 <div class="container">
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
+    <div class="text-end mb-2">
+        <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
+        <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
+    </div>
 
     <!-- System Info / Service Status / Network -->
     <div class="row">
@@ -480,14 +484,43 @@ HTML = """
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Simple client-side Basic Auth support for AJAX calls.
+// The server still enforces authentication, but fetch() won't trigger
+// the browser login dialog. We capture credentials once and attach a
+// Basic Authorization header to all protected requests.
+let __authHeader = null;
+function promptLogin() {
+    const user = prompt('Username:', 'admin');
+    if (!user) return;
+    const pass = prompt('Password:', 'change_this_password');
+    if (pass === null) return;
+    __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+    document.getElementById('login-btn').classList.add('d-none');
+    document.getElementById('logout-btn').classList.remove('d-none');
+    showNotification('Logged in (credentials stored in session)', 'success');
+}
+function logout() {
+    __authHeader = null;
+    document.getElementById('login-btn').classList.remove('d-none');
+    document.getElementById('logout-btn').classList.add('d-none');
+    showNotification('Logged out', 'info');
+}
+function getAuthHeaders() {
+    return __authHeader ? { 'Authorization': __authHeader } : {};
+}
 // Service Control Functions
 async function serviceAction(action) {
     const button = event.target;
     button.disabled = true;
     try {
+        if (!__authHeader) {
+            showNotification('Please login before performing service actions', 'warning');
+            return;
+        }
         const response = await fetch(`/${action}`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: getAuthHeaders()
         });
         if (response.ok) {
             showNotification(`Service ${action}ed successfully`, 'success');
@@ -523,10 +556,15 @@ async function saveConfiguration() {
     const formData = new FormData(form);
     
     try {
+        if (!__authHeader) {
+            showNotification('Please login before saving configuration', 'warning');
+            return;
+        }
         const response = await fetch('/update', {
             method: 'POST',
             body: formData,
-            credentials: 'include'
+            credentials: 'include',
+            headers: getAuthHeaders()
         });
         if (response.ok) {
             showNotification('Configuration saved successfully', 'success');
@@ -550,9 +588,14 @@ function deleteRow(button) {
 // Clear logs
 async function clearLog(which) {
     try {
+        if (!__authHeader) {
+            showNotification('Please login before clearing logs', 'warning');
+            return;
+        }
         const response = await fetch(`/clear_log/${which}`, {
             method: 'POST',
-            credentials: 'include'
+            credentials: 'include',
+            headers: getAuthHeaders()
         });
         if (response.ok) {
             const logElement = document.getElementById(`${which}-log`);
