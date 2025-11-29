@@ -585,6 +585,19 @@ HTML = """
     </div>
 </div>
 <script>
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if service control is supported (Windows only)
+    const isWindows = {{ 'true' if is_windows else 'false' }};
+    const serviceButtons = document.querySelectorAll('button[onclick*="serviceAction"]');
+    if (!isWindows) {
+        serviceButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.title = 'Service control is only available on Windows systems';
+        });
+    }
+});
+
 // Simple client-side Basic Auth support for AJAX calls.
 // The server still enforces authentication, but fetch() won't trigger
 // the browser login dialog. We capture credentials once and attach a
@@ -692,6 +705,7 @@ async function serviceAction(action) {
     try {
         if (!__authHeader) {
             showNotification('Please login before performing service actions', 'warning');
+            button.disabled = false;
             return;
         }
         const response = await fetch(`/${action}`, {
@@ -699,12 +713,13 @@ async function serviceAction(action) {
             credentials: 'include',
             headers: getAuthHeaders()
         });
+        const data = await response.json();
         if (response.ok) {
             showNotification(`Service ${action}ed successfully`, 'success');
             // Update service status badge
             setTimeout(updateServiceStatus, 1000);
         } else {
-            showNotification(`Failed to ${action} service`, 'danger');
+            showNotification(data.message || `Failed to ${action} service`, 'danger');
         }
     } catch (error) {
         showNotification(`Error: ${error.message}`, 'danger');
@@ -1075,6 +1090,7 @@ def dashboard():
         # Render the dashboard
         return render_template_string(
             HTML,
+            is_windows=sys.platform == "win32",
             hostname=hostname,
             os=os_version,
             cpu=cpu_name,
