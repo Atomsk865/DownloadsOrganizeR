@@ -454,6 +454,8 @@ HTML = """
         <input class="config-input form-control form-control-sm d-inline-block" type="text" name="logs_dir" value="{{ logs_dir }}">
     </div>
     <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
+    </button>
+    </form>
     </div>
 </div>
 
