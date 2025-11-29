@@ -191,56 +191,51 @@ HTML = """
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
     </div>
 
-    <!-- System Info / Service Status / Network -->
+    <!-- System Info (consolidated) -->
     <div class="row">
-        <!-- System Info -->
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">System Info</div>
+                <div class="card-header">System Information</div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li><b>Hostname:</b> {{ hostname }}</li>
-                        <li><b>OS:</b> {{ os }}</li>
-                        <li><b>CPU:</b> {{ cpu }}</li>
-                        <li><b>RAM:</b> {{ ram_gb }} GB</li>
-                        <li><b>GPU:</b> {{ gpu }}</li>
-                    </ul>
+                    <div class="row">
+                        <div class="col-6">
+                            <p><b>Hostname:</b> {{ hostname }}</p>
+                            <p><b>OS:</b> {{ os }}</p>
+                            <p><b>CPU:</b> {{ cpu }}</p>
+                        </div>
+                        <div class="col-6">
+                            <p><b>RAM:</b> {{ ram_gb }} GB</p>
+                            <p><b>GPU:</b> {{ gpu }}</p>
+                            <p><b>Private IP:</b> {{ private_ip }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Service Status -->
-        <div class="col-md-4">
+        <!-- Service Info (consolidated) -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Service Status</div>
-                <div class="card-body text-center">
-                    <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">
-                        {{ service_status }}
-                    </span>
-                    <div class="d-flex justify-content-center gap-2 mt-3">
-                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
-                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
-                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
+                <div class="card-header">Service & Network</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-12 text-center">
+                            <p><b>Service Status:</b> <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">{{ service_status }}</span></p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                                <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                                <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-3">
+                    <hr>
+                    <p><b>Public IP:</b> {{ public_ip }}</p>
+                    <p><b>Up:</b> {{ upload_rate_kb }} KB/s</p>
+                    <p><b>Down:</b> {{ download_rate_kb }} KB/s</p>
+                    <div class="d-flex gap-2">
                         <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
-                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub Repo</a>
+                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Network -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">Network</div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li><b>Private IP:</b> {{ private_ip }}</li>
-                        <li><b>Public IP:</b> {{ public_ip }}</li>
-                        <li><b>Up:</b> {{ upload_rate_kb }} KB/s ({{ upload_rate_mb }} MB/s)</li>
-                        <li><b>Down:</b> {{ download_rate_kb }} KB/s ({{ download_rate_mb }} MB/s)</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -248,31 +243,22 @@ HTML = """
 
     <!-- Resource Usage with Animated Bars -->
     <div class="row">
-        <!-- Memory Usage -->
-        <div class="col-md-4">
+        <!-- Memory & CPU Usage (consolidated) -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Memory Usage</div>
+                <div class="card-header">Resource Usage</div>
                 <div class="card-body">
-                    <p><b>Service:</b> {{ service_memory_mb }} MB</p>
-                    <p><b>System:</b> {{ total_memory_mb }} MB / {{ total_memory_gb }} GB</p>
-                    <div class="progress">
+                    <p><b>Memory:</b></p>
+                    <p style="margin-left: 20px; font-size: 0.9em;">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }} MB / {{ total_memory_gb }} GB</p>
+                    <div class="progress mb-3">
                         <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
                              role="progressbar"
                              style="width: {{ ram_percent }}%;">
                             {{ ram_percent }}%
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CPU Usage -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">CPU Usage</div>
-                <div class="card-body">
-                    <p><b>Service:</b> {{ service_cpu_percent }}%</p>
-                    <p><b>System:</b> {{ total_cpu_percent }}%</p>
+                    <p><b>CPU:</b></p>
+                    <p style="margin-left: 20px; font-size: 0.9em;">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
                     <div class="progress">
                         <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
                              role="progressbar"
@@ -284,57 +270,41 @@ HTML = """
             </div>
         </div>
 
-        <!-- RAM Usage -->
-        <div class="col-md-4">
+        <!-- Drive Space (adjusted width) -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">RAM Usage</div>
+                <div class="card-header">Drive Space</div>
                 <div class="card-body">
-                    <div class="progress">
-                        <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
-                             role="progressbar"
-                             style="width: {{ ram_percent }}%;">
-                            {{ ram_percent }}%
-                        </div>
-                    </div>
+                    <table class="table table-bordered table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>Total</th>
+                                <th>Used</th>
+                                <th>Usage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for drive in drives %}
+                            <tr>
+                                <td>{{ drive.device }}</td>
+                                <td>{{ drive.total }}</td>
+                                <td>{{ drive.used }}</td>
+                                <td>
+                                    <div class="progress" style="min-width: 50px;">
+                                        <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
+                                             role="progressbar"
+                                             style="width: {{ drive.percent }}%;">
+                                            {{ drive.percent }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Drive Space -->
-    <div class="card">
-        <div class="card-header">Drive Space</div>
-        <div class="card-body">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th>Device</th>
-                        <th>Total</th>
-                        <th>Used</th>
-                        <th>Free</th>
-                        <th>Usage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for drive in drives %}
-                    <tr>
-                        <td>{{ drive.device }}</td>
-                        <td>{{ drive.total }}</td>
-                        <td>{{ drive.used }}</td>
-                        <td>{{ drive.free }}</td>
-                        <td>
-                            <div class="progress">
-                                <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
-                                     role="progressbar"
-                                     style="width: {{ drive.percent }}%;">
-                                    {{ drive.percent }}%
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 
