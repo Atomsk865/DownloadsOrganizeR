@@ -294,7 +294,7 @@ HTML = """
                         <td>{{ proc.pid }}</td>
                         <td>{{ proc.name }}</td>
                         <td>{{ proc.user }}</td>
-                        <td>{{ proc.cpu }}</td>
+                        <td>{{ proc.cpu|round(1) }}</td>
                         <td>{{ proc.mem }}</td>
                     </tr>
                     {% endfor %}
