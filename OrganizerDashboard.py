@@ -169,18 +169,21 @@ HTML = """
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
-        body { background: #f8f9fa; }
-        .dashboard-title { margin: 30px 0; }
-        .card { margin-bottom: 20px; }
-        .table th, .table td { vertical-align: middle; }
-        .config-label { font-weight: bold; }
+        body { background: #f8f9fa; font-size: 14px; }
+        .dashboard-title { margin: 25px 0 20px 0; font-weight: 500; }
+        .card { margin-bottom: 20px; border: 1px solid #dee2e6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; padding: 0.75rem 1rem; }
+        .card-body { padding: 1rem; }
+        .card-body p { margin-bottom: 0.5rem; line-height: 1.4; }
+        .table th, .table td { vertical-align: middle; padding: 0.5rem 0.75rem; }
+        .table-sm thead th { font-weight: 600; background-color: #f8f9fa; }
+        .config-label { font-weight: 600; }
         .config-input { width: 120px; }
-        .progress { height: 20px; border-radius: 10px; }
-        .progress-bar {
-            font-size: 12px;
-            line-height: 20px;
-            transition: width 0.8s ease-in-out; /* Smooth animation */
-        }
+        .progress { height: 24px; border-radius: 4px; background-color: #e9ecef; }
+        .progress-bar { font-size: 11px; line-height: 24px; font-weight: 500; transition: width 0.8s ease-in-out; }
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        hr { margin: 1rem 0; opacity: 0.2; }
+        .text-sm { font-size: 0.85rem; color: #6c757d; }
     </style>
 </head>
 <body>
@@ -199,14 +202,14 @@ HTML = """
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6">
-                            <p><b>Hostname:</b> {{ hostname }}</p>
-                            <p><b>OS:</b> {{ os }}</p>
-                            <p><b>CPU:</b> {{ cpu }}</p>
+                            <p><small><b>Hostname:</b></small><br><small>{{ hostname }}</small></p>
+                            <p><small><b>OS:</b></small><br><small>{{ os }}</small></p>
+                            <p><small><b>CPU:</b></small><br><small>{{ cpu }}</small></p>
                         </div>
                         <div class="col-6">
-                            <p><b>RAM:</b> {{ ram_gb }} GB</p>
-                            <p><b>GPU:</b> {{ gpu }}</p>
-                            <p><b>Private IP:</b> {{ private_ip }}</p>
+                            <p><small><b>RAM:</b></small><br><small>{{ ram_gb }} GB</small></p>
+                            <p><small><b>GPU:</b></small><br><small>{{ gpu }}</small></p>
+                            <p><small><b>Private IP:</b></small><br><small>{{ private_ip }}</small></p>
                         </div>
                     </div>
                 </div>
@@ -218,38 +221,37 @@ HTML = """
             <div class="card">
                 <div class="card-header">Service & Network</div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-12 text-center">
-                            <p><b>Service Status:</b> <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">{{ service_status }}</span></p>
-                            <div class="d-flex justify-content-center gap-2">
-                                <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
-                                <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
-                                <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
-                            </div>
-                        </div>
+                    <div class="text-center mb-2">
+                        <small><b>Service Status:</b></small><br>
+                        <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} mt-1">{{ service_status }}</span>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 mb-2">
+                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
                     </div>
                     <hr>
-                    <p><b>Public IP:</b> {{ public_ip }}</p>
-                    <p><b>Up:</b> {{ upload_rate_kb }} KB/s</p>
-                    <p><b>Down:</b> {{ download_rate_kb }} KB/s</p>
-                    <div class="d-flex gap-2">
+                    <p><small><b>Public IP:</b></small><br><small>{{ public_ip }}</small></p>
+                    <p><small><b>Upload:</b></small><br><small>{{ upload_rate_kb }} KB/s</small></p>
+                    <p><small><b>Download:</b></small><br><small>{{ download_rate_kb }} KB/s</small></p>
+                    <div class="d-grid gap-2">
                         <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
-                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
+                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub Repo</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Resource Usage with Animated Bars -->
+    <!-- Resource Usage -->
     <div class="row">
         <!-- Memory & CPU Usage (consolidated) -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">Resource Usage</div>
                 <div class="card-body">
-                    <p><b>Memory:</b></p>
-                    <p style="margin-left: 20px; font-size: 0.9em;">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }} MB / {{ total_memory_gb }} GB</p>
+                    <p class="mb-2"><small><b>Memory Usage</b></small></p>
+                    <p class="text-sm mb-2">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</p>
                     <div class="progress mb-3">
                         <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
                              role="progressbar"
@@ -257,8 +259,8 @@ HTML = """
                             {{ ram_percent }}%
                         </div>
                     </div>
-                    <p><b>CPU:</b></p>
-                    <p style="margin-left: 20px; font-size: 0.9em;">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
+                    <p class="mb-2"><small><b>CPU Usage</b></small></p>
+                    <p class="text-sm mb-2">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
                     <div class="progress">
                         <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
                              role="progressbar"
@@ -270,12 +272,12 @@ HTML = """
             </div>
         </div>
 
-        <!-- Drive Space (adjusted width) -->
+        <!-- Drive Space -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">Drive Space</div>
                 <div class="card-body">
-                    <table class="table table-bordered table-sm mb-0">
+                    <table class="table table-sm mb-0">
                         <thead>
                             <tr>
                                 <th>Device</th>
@@ -288,8 +290,8 @@ HTML = """
                             {% for drive in drives %}
                             <tr>
                                 <td>{{ drive.device }}</td>
-                                <td>{{ drive.total }}</td>
-                                <td>{{ drive.used }}</td>
+                                <td><small>{{ drive.total }}</small></td>
+                                <td><small>{{ drive.used }}</small></td>
                                 <td>
                                     <div class="progress" style="min-width: 50px;">
                                         <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
@@ -338,20 +340,19 @@ HTML = """
     </div>
 
     <!-- Configuration -->
-
-<div class="card">
-    <div class="card-header">Configuration</div>
-    <div class="card-body">
-<form id="config-form">
-    <table class="table table-bordered table-sm">
-        <thead>
-            <tr>
-                <th>Folder</th>
-                <th>Extensions (comma-separated)</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="card">
+        <div class="card-header">Configuration</div>
+        <div class="card-body">
+            <form id="config-form">
+                <table class="table table-sm mb-3">
+                    <thead>
+                        <tr>
+                            <th>Folder</th>
+                            <th>Extensions (comma-separated)</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             <!-- Images -->
             <tr>
                 <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
@@ -481,45 +482,45 @@ HTML = """
                     <input class="form-control form-control-sm" type="text" name="exts_new" placeholder="Extensions">
                 </td>
                 <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="mb-2">
-        <label class="config-label">Memory Threshold (MB):</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                    </tr>
+                </tbody>
+            </table>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size: 0.9rem;">Memory Threshold (MB)</label>
+                    <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size: 0.9rem;">CPU Threshold (%)</label>
+                    <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size: 0.9rem;">Logs Directory</label>
+                    <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                </div>
+            </div>
+            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
+            </form>
+        </div>
     </div>
-    <div class="mb-2">
-        <label class="config-label">CPU Threshold (%):</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
-    </div>
-    <div class="mb-2">
-        <label class="config-label">Logs Directory:</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="text" name="logs_dir" value="{{ logs_dir }}">
-    </div>
-    <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
-    </button>
-    </form>
-    </div>
-</div>
-
 
     <!-- Logs -->
     <div class="row">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stdout (real-time)</div>
+                <div class="card-header">Stdout Log (real-time)</div>
                 <div class="card-body">
-                    <button class="btn btn-secondary btn-sm" onclick="clearLog('stdout')">Clear</button>
-                    <pre id="stdout-log">{{ stdout_log }}</pre>
+                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stdout')">Clear Log</button>
+                    <pre id="stdout-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stderr (real-time)</div>
+                <div class="card-header">Stderr Log (real-time)</div>
                 <div class="card-body">
-                    <button class="btn btn-secondary btn-sm" onclick="clearLog('stderr')">Clear</button>
-                    <pre id="stderr-log">{{ stderr_log }}</pre>
+                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stderr')">Clear Log</button>
+                    <pre id="stderr-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
                 </div>
             </div>
         </div>
