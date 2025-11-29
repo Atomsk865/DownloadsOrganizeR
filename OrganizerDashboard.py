@@ -614,7 +614,10 @@ function promptLogin() {
         }
         __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
         try {
-            const r = await fetch('/auth_check', { headers: getAuthHeaders() });
+            const headers = getAuthHeaders();
+            console.log('Attempting login with headers:', headers);
+            const r = await fetch('/auth_check', { headers: headers });
+            console.log('Auth check status:', r.status);
             if (!r.ok) throw new Error('Invalid credentials');
             // If user logged in with the default password, require change
             const DEFAULT_PASS = 'change_this_password';
