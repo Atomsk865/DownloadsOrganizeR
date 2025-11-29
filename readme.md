@@ -34,3 +34,27 @@ A web-based dashboard for monitoring and managing the **DownloadsOrganizer** ser
    git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
    cd DownloadsOrganizeR
    ```
+   
+2. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the Dashboard: **
+   Create a batch file to run it:
+   ```bash
+   @echo off
+   REM Launch OrganizerDashboard.py
+   powershell Start-Process python "C:\Path\To\OrganizerDashboard.py"
+
+   REM Give it a moment to start, then open the dashboard in your default browser
+   timeout /t 3 >nul
+   start http://localhost:5000
+
+   exit
+   ```
+   or type:
+   ```bash
+   python organizerdashboard.py
+   ```
+
