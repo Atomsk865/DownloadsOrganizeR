@@ -152,5 +152,7 @@
     },
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
-    "logs_dir": "C:\\Scripts\\service-logs"
+    "logs_dir": "C:\\Scripts\\service-logs",
+    "dashboard_user": "admin",
+    "dashboard_pass": "TestNewPass123"
 }
