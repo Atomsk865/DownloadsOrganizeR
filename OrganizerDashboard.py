@@ -192,51 +192,53 @@ HTML = """
     <div class="text-end mb-2">
         <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
+        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
     </div>
 
     <!-- System Info (consolidated) -->
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-header">System Information</div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-6">
-                            <p><small><b>Hostname:</b></small><br><small>{{ hostname }}</small></p>
-                            <p><small><b>OS:</b></small><br><small>{{ os }}</small></p>
-                            <p><small><b>CPU:</b></small><br><small>{{ cpu }}</small></p>
-                        </div>
-                        <div class="col-6">
-                            <p><small><b>RAM:</b></small><br><small>{{ ram_gb }} GB</small></p>
-                            <p><small><b>GPU:</b></small><br><small>{{ gpu }}</small></p>
-                            <p><small><b>Private IP:</b></small><br><small>{{ private_ip }}</small></p>
-                        </div>
+                    <p><small><b>Hostname:</b></small><br><small>{{ hostname }}</small></p>
+                    <p><small><b>OS:</b></small><br><small>{{ os }}</small></p>
+                    <p><small><b>CPU:</b></small><br><small>{{ cpu }}</small></p>
+                    <p><small><b>RAM:</b></small><br><small>{{ ram_gb }} GB</small></p>
+                    <p><small><b>GPU:</b></small><br><small>{{ gpu }}</small></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Info -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Service Status</div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <small><b>Status:</b></small><br>
+                        <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} mt-1">{{ service_status }}</span>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Service Info (consolidated) -->
-        <div class="col-md-6">
+        <!-- Network Info -->
+        <div class="col-md-4">
             <div class="card">
-                <div class="card-header">Service & Network</div>
+                <div class="card-header">Network</div>
                 <div class="card-body">
-                    <div class="text-center mb-2">
-                        <small><b>Service Status:</b></small><br>
-                        <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} mt-1">{{ service_status }}</span>
-                    </div>
-                    <div class="d-flex justify-content-center gap-2 mb-2">
-                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
-                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
-                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
-                    </div>
-                    <hr>
+                    <p><small><b>Private IP:</b></small><br><small>{{ private_ip }}</small></p>
                     <p><small><b>Public IP:</b></small><br><small>{{ public_ip }}</small></p>
                     <p><small><b>Upload:</b></small><br><small>{{ upload_rate_kb }} KB/s</small></p>
                     <p><small><b>Download:</b></small><br><small>{{ download_rate_kb }} KB/s</small></p>
                     <div class="d-grid gap-2">
                         <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
-                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub Repo</a>
                     </div>
                 </div>
             </div>
