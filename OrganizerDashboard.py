@@ -9,6 +9,7 @@ import subprocess
 import socket
 import sys
 from functools import wraps
+import bcrypt
 
 """OrganizerDashboard
 
@@ -22,8 +23,51 @@ single-page dashboard with controls, logs, and configuration.
 import os
 ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
 ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "change_this_password")
+
+# Runtime hashed password. This will be initialized from env/config and kept
+# up-to-date when passwords are changed.
+ADMIN_PASS_HASH = None
+
+def initialize_password_hash():
+    global ADMIN_PASS_HASH
+    # Prefer an explicit hash in the config if present
+    stored_hash = None
+    try:
+        stored_hash = config.get("dashboard_pass_hash")
+    except Exception:
+        stored_hash = None
+    if stored_hash:
+        # Stored hash is expected to be a utf-8 string from bcrypt.hashpw(...).decode()
+        ADMIN_PASS_HASH = stored_hash.encode('utf-8')
+        return
+    # If the config contains a plaintext dashboard_pass, hash and persist it
+    plain = config.get("dashboard_pass")
+    if plain:
+        ADMIN_PASS_HASH = bcrypt.hashpw(plain.encode('utf-8'), bcrypt.gensalt())
+        # Persist the hash and remove plaintext
+        try:
+            config['dashboard_pass_hash'] = ADMIN_PASS_HASH.decode('utf-8')
+            if 'dashboard_pass' in config:
+                del config['dashboard_pass']
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=4)
+        except Exception:
+            pass
+        return
+    # Fall back to ADMIN_PASS (env or default); hash it for runtime use
+    ADMIN_PASS_HASH = bcrypt.hashpw(ADMIN_PASS.encode('utf-8'), bcrypt.gensalt())
+
+
 def check_auth(username, password):
-    return username == ADMIN_USER and password == ADMIN_PASS
+    """Verify given username/password against stored admin user and hashed password."""
+    if username != ADMIN_USER:
+        return False
+    if ADMIN_PASS_HASH is None:
+        initialize_password_hash()
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), ADMIN_PASS_HASH)
+    except Exception:
+        return False
 
 
 def authenticate():
@@ -77,10 +121,19 @@ if os.path.exists(CONFIG_FILE):
 if isinstance(config, dict):
     dashboard_user = config.get("dashboard_user")
     dashboard_pass = config.get("dashboard_pass")
+    dashboard_pass_hash = config.get("dashboard_pass_hash")
     if dashboard_user:
         ADMIN_USER = dashboard_user
-    if dashboard_pass:
+    # If a hash is present prefer that, otherwise if a plaintext pass exists we'll
+    # let initialize_password_hash() migrate it to a hash on startup.
+    if dashboard_pass_hash:
+        ADMIN_PASS_HASH = dashboard_pass_hash.encode('utf-8')
+    elif dashboard_pass:
+        # leave ADMIN_PASS as-is; initialize_password_hash will hash and persist
         ADMIN_PASS = dashboard_pass
+
+# Ensure ADMIN_PASS_HASH is initialized
+initialize_password_hash()
 
 def update_log_paths():
     global LOGS_DIR, STDOUT_LOG, STDERR_LOG
@@ -494,6 +547,44 @@ HTML = """
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Login / Change-password Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Dashboard Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Username</label>
+                    <input id="login-username" class="form-control" type="text" value="admin">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Password</label>
+                    <input id="login-password" class="form-control" type="password">
+                </div>
+                <div id="change-password-section" style="display:none;">
+                    <hr>
+                    <div class="mb-2">
+                        <label class="form-label">New password</label>
+                        <input id="new-password" class="form-control" type="password">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Confirm new password</label>
+                        <input id="confirm-password" class="form-control" type="password">
+                    </div>
+                </div>
+                <div id="login-error" class="text-danger" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button id="login-submit" type="button" class="btn btn-primary">Login</button>
+                <button id="change-submit" type="button" class="btn btn-success" style="display:none;">Change Password</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 // Simple client-side Basic Auth support for AJAX calls.
 // The server still enforces authentication, but fetch() won't trigger
@@ -501,60 +592,80 @@ HTML = """
 // Basic Authorization header to all protected requests.
 let __authHeader = null;
 function promptLogin() {
-    const user = prompt('Username:', 'admin');
-    if (!user) return;
-    const pass = prompt('Password:');
-    if (pass === null) return;
-    __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
-    // Verify credentials by calling a lightweight auth endpoint
-    fetch('/auth_check', { headers: getAuthHeaders() })
-        .then(r => {
+    // Show the modal instead of prompt() dialogs
+    const lm = new bootstrap.Modal(document.getElementById('loginModal'));
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('change-password-section').style.display = 'none';
+    document.getElementById('change-submit').style.display = 'none';
+    document.getElementById('login-submit').style.display = 'inline-block';
+    document.getElementById('login-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    lm.show();
+
+    // Wire up handlers (idempotent)
+    document.getElementById('login-submit').onclick = async function () {
+        const user = document.getElementById('login-username').value.trim();
+        const pass = document.getElementById('login-password').value;
+        if (!user || !pass) {
+            document.getElementById('login-error').textContent = 'Username and password required';
+            document.getElementById('login-error').style.display = 'block';
+            return;
+        }
+        __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+        try {
+            const r = await fetch('/auth_check', { headers: getAuthHeaders() });
             if (!r.ok) throw new Error('Invalid credentials');
-            // If user logged in with the default password, prompt to change it
+            // If user logged in with the default password, require change
             const DEFAULT_PASS = 'change_this_password';
             if (pass === DEFAULT_PASS) {
-                // Force change
-                let np = prompt('Please choose a new dashboard password:');
-                if (!np) {
-                    showNotification('Password change required to proceed', 'warning');
-                    // Still mark logged in visually, but require change for sensitive actions
-                    document.getElementById('login-btn').classList.add('d-none');
-                    document.getElementById('logout-btn').classList.remove('d-none');
-                    return;
-                }
-                let np2 = prompt('Confirm new password:');
-                if (np !== np2) {
-                    showNotification('Passwords did not match; try logging in again', 'danger');
-                    return;
-                }
-                // Call server to update the password (requires current auth)
-                fetch('/change_password', {
-                    method: 'POST',
-                    headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
-                    body: JSON.stringify({ new_password: np })
-                }).then(r2 => {
-                    if (r2.ok) {
-                        // Update auth header with new password
-                        __authHeader = 'Basic ' + btoa(`${user}:${np}`);
-                        document.getElementById('login-btn').classList.add('d-none');
-                        document.getElementById('logout-btn').classList.remove('d-none');
-                        showNotification('Password changed and logged in', 'success');
-                    } else {
-                        showNotification('Failed to change password', 'danger');
-                    }
-                }).catch(err => {
-                    showNotification('Error changing password: ' + err.message, 'danger');
-                });
-            } else {
-                document.getElementById('login-btn').classList.add('d-none');
-                document.getElementById('logout-btn').classList.remove('d-none');
-                showNotification('Logged in (credentials stored in session)', 'success');
+                // reveal change-password UI
+                document.getElementById('change-password-section').style.display = 'block';
+                document.getElementById('login-submit').style.display = 'none';
+                document.getElementById('change-submit').style.display = 'inline-block';
+                return;
             }
-        })
-        .catch(err => {
-            showNotification('Login failed: ' + err.message, 'danger');
+            // success
+            document.getElementById('login-btn').classList.add('d-none');
+            document.getElementById('logout-btn').classList.remove('d-none');
+            showNotification('Logged in', 'success');
+            lm.hide();
+        } catch (err) {
+            document.getElementById('login-error').textContent = 'Login failed: ' + err.message;
+            document.getElementById('login-error').style.display = 'block';
             __authHeader = null;
-        });
+        }
+    };
+
+    document.getElementById('change-submit').onclick = async function () {
+        const user = document.getElementById('login-username').value.trim();
+        const pass = document.getElementById('login-password').value;
+        const np = document.getElementById('new-password').value;
+        const np2 = document.getElementById('confirm-password').value;
+        if (!np || np !== np2) {
+            document.getElementById('login-error').textContent = 'New passwords must match and be non-empty';
+            document.getElementById('login-error').style.display = 'block';
+            return;
+        }
+        try {
+            const r = await fetch('/change_password', {
+                method: 'POST',
+                headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
+                body: JSON.stringify({ new_password: np })
+            });
+            if (!r.ok) throw new Error('Change failed');
+            // Update local auth header to new password
+            __authHeader = 'Basic ' + btoa(`${user}:${np}`);
+            document.getElementById('login-btn').classList.add('d-none');
+            document.getElementById('logout-btn').classList.remove('d-none');
+            showNotification('Password changed and logged in', 'success');
+            const lm2 = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            lm2.hide();
+        } catch (err) {
+            document.getElementById('login-error').textContent = 'Password change failed: ' + err.message;
+            document.getElementById('login-error').style.display = 'block';
+        }
+    };
 }
 function logout() {
     __authHeader = null;
@@ -1142,12 +1253,17 @@ def change_password():
         return jsonify({"status": "error", "message": "Missing new_password"}), 400
     # Persist to config and update runtime ADMIN_PASS
     try:
+        # Hash the new password and persist only the hash
+        hashed = bcrypt.hashpw(new.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         config['dashboard_user'] = ADMIN_USER
-        config['dashboard_pass'] = new
+        config['dashboard_pass_hash'] = hashed
+        if 'dashboard_pass' in config:
+            del config['dashboard_pass']
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=4)
-        global ADMIN_PASS
-        ADMIN_PASS = new
+        # Update runtime hash
+        global ADMIN_PASS_HASH
+        ADMIN_PASS_HASH = hashed.encode('utf-8')
         return jsonify({"status": "success", "message": "Password changed"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Failed to save password: {e}"}), 500
