@@ -41,7 +41,18 @@ python OrganizerDashboard.py
 
 Then open: **http://localhost:5000**
 
-**Login:** admin / change_this_password
+**Default credentials (Dashboard)**
+
+- **Username:** `admin`
+- **Password:** `change_this_password`
+
+You can override these by setting environment variables before launching the dashboard:
+
+```bash
+export DASHBOARD_USER=myusername
+export DASHBOARD_PASS=mypassword
+python OrganizerDashboard.py
+```
 
 ### Dashboard Features
 - 🔍 Real-time service monitoring
