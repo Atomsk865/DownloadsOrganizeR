@@ -130,19 +130,13 @@ HTML = """
             <div class="card">
                 <div class="card-header">Service Status</div>
                 <div class="card-body text-center">
-                    <span class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">
+                    <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">
                         {{ service_status }}
                     </span>
                     <div class="d-flex justify-content-center gap-2 mt-3">
-                        <form method="post" action="/start">
-                            <button class="btn btn-success btn-sm" type="submit">Start</button>
-                        </form>
-                        <form method="post" action="/stop">
-                            <button class="btn btn-warning btn-sm" type="submit">Stop</button>
-                        </form>
-                        <form method="post" action="/restart">
-                            <button class="btn btn-primary btn-sm" type="submit">Restart</button>
-                        </form>
+                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
                     </div>
                     <div class="mt-3">
                         <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
@@ -294,7 +288,7 @@ HTML = """
 <div class="card">
     <div class="card-header">Configuration</div>
     <div class="card-body">
-<form action="/update" method="post">
+<form id="config-form">
     <table class="table table-bordered table-sm">
         <thead>
             <tr>
@@ -312,7 +306,7 @@ HTML = """
                         value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_1" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Music -->
@@ -323,7 +317,7 @@ HTML = """
                         value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_2" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Videos -->
@@ -334,7 +328,7 @@ HTML = """
                         value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_3" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Documents -->
@@ -345,7 +339,7 @@ HTML = """
                         value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_4" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Archives -->
@@ -356,7 +350,7 @@ HTML = """
                         value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_5" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Executables -->
@@ -367,7 +361,7 @@ HTML = """
                         value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_6" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Shortcuts -->
@@ -378,7 +372,7 @@ HTML = """
                         value="lnk, url, desktop, webloc">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_7" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Scripts -->
@@ -389,7 +383,7 @@ HTML = """
                         value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_8" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Fonts -->
@@ -400,7 +394,7 @@ HTML = """
                         value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_9" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Logs -->
@@ -411,7 +405,7 @@ HTML = """
                         value="log, out, err">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_10" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Other -->
@@ -421,7 +415,7 @@ HTML = """
                     <input class="form-control form-control-sm" type="text" name="exts_11" value="">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_11" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Add new -->
@@ -448,7 +442,7 @@ HTML = """
         <label class="config-label">Logs Directory:</label>
         <input class="config-input form-control form-control-sm d-inline-block" type="text" name="logs_dir" value="{{ logs_dir }}">
     </div>
-    <button class="btn btn-primary btn-sm" type="submit">Save Configuration</button>
+    <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
     </div>
 </div>
 
@@ -459,9 +453,7 @@ HTML = """
             <div class="card">
                 <div class="card-header">Stdout (real-time)</div>
                 <div class="card-body">
-                    <form action="/clear_log/stdout" method="post" class="d-inline">
-                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
-                    </form>
+                    <button class="btn btn-secondary btn-sm" onclick="clearLog('stdout')">Clear</button>
                     <pre id="stdout-log">{{ stdout_log }}</pre>
                 </div>
             </div>
@@ -470,9 +462,7 @@ HTML = """
             <div class="card">
                 <div class="card-header">Stderr (real-time)</div>
                 <div class="card-body">
-                    <form action="/clear_log/stderr" method="post" class="d-inline">
-                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
-                    </form>
+                    <button class="btn btn-secondary btn-sm" onclick="clearLog('stderr')">Clear</button>
                     <pre id="stderr-log">{{ stderr_log }}</pre>
                 </div>
             </div>
@@ -482,10 +472,115 @@ HTML = """
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Service Control Functions
+async function serviceAction(action) {
+    const button = event.target;
+    button.disabled = true;
+    try {
+        const response = await fetch(`/${action}`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        if (response.ok) {
+            showNotification(`Service ${action}ed successfully`, 'success');
+            // Update service status badge
+            setTimeout(updateServiceStatus, 1000);
+        } else {
+            showNotification(`Failed to ${action} service`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// Update service status
+async function updateServiceStatus() {
+    try {
+        const response = await fetch('/metrics');
+        const data = await response.json();
+        const badge = document.getElementById('service-badge');
+        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
+        badge.textContent = data.service_status;
+        badge.className = `badge ${statusClass}`;
+    } catch (error) {
+        console.error('Error updating service status:', error);
+    }
+}
+
+// Configuration Save
+async function saveConfiguration() {
+    const form = document.getElementById('config-form');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        if (response.ok) {
+            showNotification('Configuration saved successfully', 'success');
+        } else {
+            showNotification('Failed to save configuration', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Delete row
+function deleteRow(button) {
+    const row = button.closest('tr');
+    const folder = row.querySelector('input[name^="folder_"]');
+    if (folder && folder.value) {
+        row.remove();
+    }
+}
+
+// Clear logs
+async function clearLog(which) {
+    try {
+        const response = await fetch(`/clear_log/${which}`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const logElement = document.getElementById(`${which}-log`);
+            logElement.textContent = '';
+            showNotification(`${which.toUpperCase()} log cleared`, 'success');
+        } else {
+            showNotification(`Failed to clear ${which} log`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Show notification
+function showNotification(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of container
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
 </body>
 </html>
 """
-
 
 
 # --- Helper Functions ---
@@ -759,11 +854,10 @@ def update_config():
     while True:
         folder_key = f"folder_{i}"
         exts_key = f"exts_{i}"
-        delete_key = f"delete_{i}"
         if folder_key in request.form and exts_key in request.form:
             folder = request.form[folder_key].strip()
             exts = [e.strip() for e in request.form[exts_key].split(",") if e.strip()]
-            if folder and delete_key not in request.form:
+            if folder:
                 new_routes[folder] = exts
             i += 1
         else:
@@ -778,18 +872,18 @@ def update_config():
     try:
         config['memory_threshold_mb'] = int(mem)
     except ValueError:
-        return "Invalid memory threshold value", 400
+        return jsonify({"status": "error", "message": "Invalid memory threshold value"}), 400
     try:
         config['cpu_threshold_percent'] = int(cpu)
     except ValueError:
-        return "Invalid CPU threshold value", 400
+        return jsonify({"status": "error", "message": "Invalid CPU threshold value"}), 400
     if logs:
         config['logs_dir'] = logs
     config['routes'] = new_routes
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
     update_log_paths()
-    return redirect("/")
+    return jsonify({"status": "success", "message": "Configuration saved"}), 200
 
 @app.route("/metrics")
 def metrics():
@@ -820,27 +914,27 @@ def restart_service():
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service restarted"}), 200
     except Exception as e:
-        return f"Restart failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Restart failed: {e}"}), 500
 
 @app.route("/stop", methods=["POST"])
 @requires_auth
 def stop_service():
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service stopped"}), 200
     except Exception as e:
-        return f"Stop failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Stop failed: {e}"}), 500
 
 @app.route("/start", methods=["POST"])
 @requires_auth
 def start_service():
     try:
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service started"}), 200
     except Exception as e:
-        return f"Start failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Start failed: {e}"}), 500
 
 @app.route("/tail/<which>")
 def tail(which):
@@ -861,14 +955,14 @@ def stream(which):
 @requires_auth
 def clear_log(which):
     if which not in ("stdout", "stderr"):
-        return "Invalid log type", 400
+        return jsonify({"status": "error", "message": "Invalid log type"}), 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     try:
         with open(path, "w", encoding="utf-8"):
             pass  # Truncate file
-        return "OK", 200
+        return jsonify({"status": "success", "message": f"{which} log cleared"}), 200
     except Exception as e:
-        return f"Failed to clear log: {e}", 500
+        return jsonify({"status": "error", "message": f"Failed to clear log: {e}"}), 500
 
 @app.route("/drives")
 def drives():
