@@ -506,8 +506,8 @@ function promptLogin() {
     const pass = prompt('Password:');
     if (pass === null) return;
     __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
-    // Verify credentials by calling a lightweight protected endpoint
-    fetch('/metrics', { headers: getAuthHeaders() })
+    // Verify credentials by calling a lightweight auth endpoint
+    fetch('/auth_check', { headers: getAuthHeaders() })
         .then(r => {
             if (!r.ok) throw new Error('Invalid credentials');
             // If user logged in with the default password, prompt to change it
@@ -1028,6 +1028,22 @@ def metrics():
         "total_cpu_percent": psutil.cpu_percent(interval=0.2),
         "ram_percent": ram_pct
     })
+
+
+@app.route('/auth_check')
+def auth_check():
+    """Lightweight endpoint to validate Basic credentials sent in the Authorization header.
+
+    Returns 200 + {valid: true} when credentials match, otherwise 401 + {valid: false}.
+    This is intended for client-side login checks (AJAX) without requiring a full protected
+    endpoint to be touched.
+    """
+    auth = request.authorization
+    if not auth:
+        return jsonify({"valid": False, "message": "No credentials provided"}), 401
+    if check_auth(auth.username, auth.password):
+        return jsonify({"valid": True}), 200
+    return jsonify({"valid": False, "message": "Invalid credentials"}), 401
 
 @app.route("/restart", methods=["POST"])
 @requires_auth
