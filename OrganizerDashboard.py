@@ -312,38 +312,67 @@ HTML = """
         </div>
     </div>
 
-    <!-- Task Manager -->
-    <div class="card">
-        <div class="card-header">Task Manager (Top 5 by CPU)</div>
-        <div class="card-body">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th>PID</th>
-                        <th>Name</th>
-                        <th>User</th>
-                        <th>CPU (%)</th>
-                        <th>Memory (MB)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for proc in tasks %}
-                    <tr>
-                        <td>{{ proc.pid }}</td>
-                        <td>{{ proc.name }}</td>
-                        <td>{{ proc.user }}</td>
-                        <td>{{ proc.cpu|round(1) }}</td>
-                        <td>{{ proc.mem }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Task Manager & Configuration -->
+    <div class="row">
+        <!-- Task Manager -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Task Manager (Top 5 by CPU)</div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th>CPU (%)</th>
+                                <th>Memory (MB)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proc in tasks %}
+                            <tr>
+                                <td><small>{{ proc.pid }}</small></td>
+                                <td><small>{{ proc.name }}</small></td>
+                                <td><small>{{ proc.cpu|round(1) }}</small></td>
+                                <td><small>{{ proc.mem }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Settings -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Settings</div>
+                <div class="card-body">
+                    <form id="config-form-settings">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
+                                <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
+                                <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                            <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Configuration -->
+    <!-- File Categories Configuration -->
     <div class="card">
-        <div class="card-header">Configuration</div>
+        <div class="card-header">File Categories</div>
         <div class="card-body">
             <form id="config-form">
                 <table class="table table-sm mb-3">
@@ -487,20 +516,6 @@ HTML = """
                     </tr>
                 </tbody>
             </table>
-            <div class="row mt-3">
-                <div class="col-md-4">
-                    <label class="form-label" style="font-size: 0.9rem;">Memory Threshold (MB)</label>
-                    <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" style="font-size: 0.9rem;">CPU Threshold (%)</label>
-                    <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" style="font-size: 0.9rem;">Logs Directory</label>
-                    <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
-                </div>
-            </div>
             <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
             </form>
         </div>
@@ -732,6 +747,32 @@ async function saveConfiguration() {
             showNotification('Configuration saved successfully', 'success');
         } else {
             showNotification('Failed to save configuration', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Settings Save (threshold & logs directory)
+async function saveSettings() {
+    const form = document.getElementById('config-form-settings');
+    const formData = new FormData(form);
+    
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before saving settings', 'warning');
+            return;
+        }
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            showNotification('Settings saved successfully', 'success');
+        } else {
+            showNotification('Failed to save settings', 'danger');
         }
     } catch (error) {
         showNotification(`Error: ${error.message}`, 'danger');
