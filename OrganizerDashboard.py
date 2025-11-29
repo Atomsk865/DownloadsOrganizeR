@@ -603,72 +603,79 @@ function promptLogin() {
     document.getElementById('confirm-password').value = '';
     lm.show();
 
-    // Wire up handlers (idempotent)
-    document.getElementById('login-submit').onclick = async function () {
-        const user = document.getElementById('login-username').value.trim();
-        const pass = document.getElementById('login-password').value;
-        if (!user || !pass) {
-            document.getElementById('login-error').textContent = 'Username and password required';
-            document.getElementById('login-error').style.display = 'block';
-            return;
-        }
-        __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
-        try {
-            const headers = getAuthHeaders();
-            console.log('Attempting login with headers:', headers);
-            const r = await fetch('/auth_check', { headers: headers });
-            console.log('Auth check status:', r.status);
-            if (!r.ok) throw new Error('Invalid credentials');
-            // If user logged in with the default password, require change
-            const DEFAULT_PASS = 'change_this_password';
-            if (pass === DEFAULT_PASS) {
-                // reveal change-password UI
-                document.getElementById('change-password-section').style.display = 'block';
-                document.getElementById('login-submit').style.display = 'none';
-                document.getElementById('change-submit').style.display = 'inline-block';
-                return;
-            }
-            // success
-            document.getElementById('login-btn').classList.add('d-none');
-            document.getElementById('logout-btn').classList.remove('d-none');
-            showNotification('Logged in', 'success');
-            lm.hide();
-        } catch (err) {
-            document.getElementById('login-error').textContent = 'Login failed: ' + err.message;
-            document.getElementById('login-error').style.display = 'block';
-            __authHeader = null;
-        }
-    };
+    // Wire up login button handler
+    document.getElementById('login-submit').onclick = handleLogin;
+    document.getElementById('change-submit').onclick = handleChangePassword;
+}
 
-    document.getElementById('change-submit').onclick = async function () {
-        const user = document.getElementById('login-username').value.trim();
-        const pass = document.getElementById('login-password').value;
-        const np = document.getElementById('new-password').value;
-        const np2 = document.getElementById('confirm-password').value;
-        if (!np || np !== np2) {
-            document.getElementById('login-error').textContent = 'New passwords must match and be non-empty';
-            document.getElementById('login-error').style.display = 'block';
+async function handleLogin() {
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value;
+    if (!user || !pass) {
+        document.getElementById('login-error').textContent = 'Username and password required';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+    __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+    console.log('Set __authHeader to:', __authHeader);
+    try {
+        const headers = getAuthHeaders();
+        console.log('Sending headers:', headers);
+        const r = await fetch('/auth_check', { headers: headers });
+        console.log('Auth check response:', r.status);
+        if (!r.ok) throw new Error('Invalid credentials');
+        // If user logged in with the default password, require change
+        const DEFAULT_PASS = 'change_this_password';
+        if (pass === DEFAULT_PASS) {
+            // reveal change-password UI
+            document.getElementById('change-password-section').style.display = 'block';
+            document.getElementById('login-submit').style.display = 'none';
+            document.getElementById('change-submit').style.display = 'inline-block';
             return;
         }
-        try {
-            const r = await fetch('/change_password', {
-                method: 'POST',
-                headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
-                body: JSON.stringify({ new_password: np })
-            });
-            if (!r.ok) throw new Error('Change failed');
-            // Update local auth header to new password
-            __authHeader = 'Basic ' + btoa(`${user}:${np}`);
-            document.getElementById('login-btn').classList.add('d-none');
-            document.getElementById('logout-btn').classList.remove('d-none');
-            showNotification('Password changed and logged in', 'success');
-            const lm2 = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-            lm2.hide();
-        } catch (err) {
-            document.getElementById('login-error').textContent = 'Password change failed: ' + err.message;
-            document.getElementById('login-error').style.display = 'block';
-        }
-    };
+        // success
+        document.getElementById('login-btn').classList.add('d-none');
+        document.getElementById('logout-btn').classList.remove('d-none');
+        showNotification('Logged in', 'success');
+        const lm = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        lm.hide();
+    } catch (err) {
+        console.error('Login error:', err);
+        document.getElementById('login-error').textContent = 'Login failed: ' + err.message;
+        document.getElementById('login-error').style.display = 'block';
+        __authHeader = null;
+    }
+}
+
+async function handleChangePassword() {
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value;
+    const np = document.getElementById('new-password').value;
+    const np2 = document.getElementById('confirm-password').value;
+    if (!np || np !== np2) {
+        document.getElementById('login-error').textContent = 'New passwords must match and be non-empty';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+    try {
+        const r = await fetch('/change_password', {
+            method: 'POST',
+            headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
+            body: JSON.stringify({ new_password: np })
+        });
+        if (!r.ok) throw new Error('Change failed');
+        // Update local auth header to new password
+        __authHeader = 'Basic ' + btoa(`${user}:${np}`);
+        document.getElementById('login-btn').classList.add('d-none');
+        document.getElementById('logout-btn').classList.remove('d-none');
+        showNotification('Password changed and logged in', 'success');
+        const lm = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        lm.hide();
+    } catch (err) {
+        console.error('Password change error:', err);
+        document.getElementById('login-error').textContent = 'Password change failed: ' + err.message;
+        document.getElementById('login-error').style.display = 'block';
+    }
 }
 function logout() {
     __authHeader = null;
