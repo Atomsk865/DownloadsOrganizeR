@@ -9,12 +9,7 @@
             "tiff",
             "svg",
             "webp",
-            "heic",
-            "ico",
-            "raw",
-            "psd",
-            "ai",
-            "eps"
+            "heic"
         ],
         "Music": [
             "mp3",
@@ -23,13 +18,7 @@
             "aac",
             "ogg",
             "wma",
-            "m4a",
-            "alac",
-            "aiff",
-            "opus",
-            "amr",
-            "mid",
-            "midi"
+            "m4a"
         ],
         "Videos": [
             "mp4",
@@ -38,16 +27,7 @@
             "mov",
             "wmv",
             "flv",
-            "webm",
-            "mpeg",
-            "mpg",
-            "m4v",
-            "3gp",
-            "vob",
-            "ogv",
-            "ts",
-            "mts",
-            "m2ts"
+            "webm"
         ],
         "Documents": [
             "pdf",
@@ -60,14 +40,7 @@
             "xlsx",
             "ppt",
             "pptx",
-            "csv",
-            "md",
-            "tex",
-            "epub",
-            "mobi",
-            "pages",
-            "numbers",
-            "key"
+            "csv"
         ],
         "Archives": [
             "zip",
@@ -75,38 +48,18 @@
             "7z",
             "tar",
             "gz",
-            "bz2",
-            "xz",
-            "iso",
-            "cab",
-            "arj",
-            "lzh",
-            "ace",
-            "uue",
-            "jar",
-            "tar.gz",
-            "tar.bz2"
+            "bz2"
         ],
         "Executables": [
             "exe",
             "msi",
             "bat",
             "cmd",
-            "ps1",
-            "sh",
-            "app",
-            "deb",
-            "rpm",
-            "apk",
-            "com",
-            "bin",
-            "run"
+            "ps1"
         ],
         "Shortcuts": [
             "lnk",
-            "url",
-            "desktop",
-            "webloc"
+            "url"
         ],
         "Scripts": [
             "py",
@@ -117,40 +70,22 @@
             "xml",
             "sh",
             "ts",
-            "php",
-            "rb",
-            "pl",
-            "swift",
-            "go",
-            "c",
-            "cpp",
-            "cs",
-            "java",
-            "scala",
-            "lua",
-            "r",
-            "ipynb",
-            "jsx",
-            "tsx"
+            "php"
         ],
         "Fonts": [
             "ttf",
             "otf",
             "woff",
-            "woff2",
-            "fon",
-            "fnt",
-            "eot",
-            "svg"
+            "woff2"
         ],
         "Logs": [
-            "log",
-            "out",
-            "err"
+            "log"
         ],
         "Other": []
     },
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
-    "logs_dir": "C:\\Scripts\\service-logs"
+    "logs_dir": "C:\\Scripts\\service-logs",
+    "dashboard_user": "admin",
+    "dashboard_pass_hash": "$2b$12$3/lsEL55WAKUFs27i5neKuGZAXYLWC9WVfwu8WokdzGFEZ5UGVID6"
 }
