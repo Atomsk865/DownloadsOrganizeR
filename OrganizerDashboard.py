@@ -193,6 +193,7 @@ HTML = """
         <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
         <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
+        <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
     </div>
 
     <!-- System Info (consolidated) -->
@@ -596,6 +597,8 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.title = 'Service control is only available on Windows systems';
         });
     }
+    // Fetch and display the configured service name (if available)
+    try { fetchServiceName(); } catch (e) { /* ignore */ }
 });
 
 // Simple client-side Basic Auth support for AJAX calls.
@@ -740,6 +743,34 @@ async function updateServiceStatus() {
     } catch (error) {
         console.error('Error updating service status:', error);
     }
+}
+
+// Fetch configured service name from server and display in header
+async function fetchServiceName() {
+    try {
+        const resp = await fetch('/service_name');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const name = data.service_name || '';
+        const el = document.getElementById('service-name');
+        const btn = document.getElementById('service-name-btn');
+        if (el) el.textContent = name;
+        if (btn) btn.style.display = name ? 'inline-block' : 'none';
+    } catch (err) {
+        console.error('Failed to fetch service name:', err);
+    }
+}
+
+function copyServiceName() {
+    const el = document.getElementById('service-name');
+    if (!el) return;
+    const name = el.textContent || '';
+    if (!name) return;
+    navigator.clipboard?.writeText(name).then(() => {
+        showNotification('Service name copied to clipboard', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy service name', 'warning');
+    });
 }
 
 // Configuration Save
@@ -1190,6 +1221,12 @@ def metrics():
         "total_cpu_percent": psutil.cpu_percent(interval=0.2),
         "ram_percent": ram_pct
     })
+
+
+@app.route('/service_name')
+def service_name():
+    """Return the configured Windows service name used by the dashboard/installer."""
+    return jsonify({"service_name": SERVICE_NAME})
 
 
 @app.route('/auth_check')
