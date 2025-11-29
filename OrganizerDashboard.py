@@ -1,4 +1,5 @@
 
+from flask import Flask, render_template_string, request, redirect, Response, jsonify
 import os
 import json
 import time
@@ -6,14 +7,37 @@ import psutil
 import platform
 import subprocess
 import socket
-from flask import Flask, render_template_string, request, redirect, Response, jsonify
+import sys
+from functools import wraps
 
+# --- Authentication ---
+
+import os
+ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
+ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "change_this_password")
+def check_auth(username, password):
+    return username == ADMIN_USER and password == ADMIN_PASS
+
+
+def authenticate():
+    return Response(
+        'Authentication required', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+# --- Service and Config ---
 SERVICE_NAME = "DownloadsOrganizer"
 CONFIG_FILE = "organizer_config.json"
-proc_cpu_cache = {}
 
-
-# ---------- Load config or defaults ----------
 DEFAULT_CONFIG = {
     "routes": {
         "Images": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "heic"],
@@ -32,6 +56,7 @@ DEFAULT_CONFIG = {
     "cpu_threshold_percent": 60,
     "logs_dir": r"C:\Scripts\service-logs"
 }
+
 config = DEFAULT_CONFIG.copy()
 if os.path.exists(CONFIG_FILE):
     try:
@@ -41,415 +66,502 @@ if os.path.exists(CONFIG_FILE):
     except Exception:
         pass
 
-LOGS_DIR = config.get("logs_dir", DEFAULT_CONFIG["logs_dir"])
-STDOUT_LOG = os.path.join(LOGS_DIR, "organizer_stdout.log")
-STDERR_LOG = os.path.join(LOGS_DIR, "organizer_stderr.log")
+def update_log_paths():
+    global LOGS_DIR, STDOUT_LOG, STDERR_LOG
+    LOGS_DIR = config.get("logs_dir", DEFAULT_CONFIG["logs_dir"])
+    STDOUT_LOG = os.path.join(LOGS_DIR, "organizer_stdout.log")
+    STDERR_LOG = os.path.join(LOGS_DIR, "organizer_stderr.log")
+
+update_log_paths()
 
 app = Flask(__name__)
 
-# ---------- HTML ----------
+
+# --- HTML Template ---
 
 HTML = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Organizer Dashboard</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizer Service Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f7f9fa;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 1800px;
-            margin: 24px auto;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px #0001;
-            padding: 24px 18px 18px 18px;
-        }
-        h2, h4 { margin-top: 0; }
-        .section { margin-bottom: 24px; }
-        .card-row {
-            display: flex;
-            gap: 18px;
-            margin-bottom: 12px;
-        }
-        .card {
-            background: #f0f4f8;
-            border-radius: 8px;
-            padding: 14px 18px;
-            flex: 1;
-            min-width: 120px;
-            text-align: center;
-            box-shadow: 0 1px 4px #0001;
-            position: relative;
-        }
-        .card b { font-size: 1.15em; }
-        .usage-green { color: #1db954; font-weight: bold; }
-        .usage-yellow { color: #ffb300; font-weight: bold; }
-        .usage-orange { color: #ff7043; font-weight: bold; }
-        .usage-red { color: #e53935; font-weight: bold; }
-        .bg-green { background: #eafbe7 !important; }
-        .bg-yellow { background: #fffbe6 !important; }
-        .bg-orange { background: #fff3e0 !important; }
-        .bg-red { background: #ffebee !important; }
-        .config-table, .drives-table, .tasks-table, .hardware-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
-        .config-table th, .config-table td,
-        .drives-table th, .drives-table td,
-        .tasks-table th, .tasks-table td,
-        .hardware-table th, .hardware-table td {
-            border: 1px solid #e0e6ed;
-            padding: 6px 10px;
-            text-align: left;
-        }
-        .config-table th, .drives-table th, .tasks-table th, .hardware-table th {
-            background: #f7f9fa;
-        }
-        .config-table input {
-            width: 95%;
-            padding: 2px 4px;
-            border: 1px solid #d0d7de;
-            border-radius: 3px;
-        }
-        .log-controls {
-            margin-bottom: 6px;
-        }
-        .log-controls button {
-            margin-right: 8px;
-            padding: 4px 10px;
-            border: none;
-            border-radius: 4px;
-            background: #e0e6ed;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .log-controls button:hover {
-            background: #c9d6e3;
-        }
-        .logs-row {
-            display: flex;
-            gap: 24px;
-        }
-        .log-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        pre {
-            background: #23272e;
-            color: #e6e6e6;
-            border-radius: 6px;
-            padding: 14px;
-            max-height: 420px;
-            min-height: 200px;
-            overflow-y: auto;
-            font-size: 1.08em;
-            line-height: 1.5;
-        }
-        .save-btn, .restart-btn {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            padding: 7px 18px;
-            font-size: 1em;
-            cursor: pointer;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            transition: background 0.2s;
-        }
-        .save-btn:hover, .restart-btn:hover {
-            background: #125ea7;
-        }
-        .row-flex {
-            display: flex;
-            gap: 24px;
-        }
-        .half {
-            flex: 1;
-            min-width: 0;
-        }
-        @media (max-width: 1200px) {
-            .container { padding: 8px 1vw; }
-            .card-row, .row-flex, .logs-row { flex-direction: column; gap: 10px; }
-        }
-        .top-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 8px;
+        body { background: #f8f9fa; }
+        .dashboard-title { margin: 30px 0; }
+        .card { margin-bottom: 20px; }
+        .table th, .table td { vertical-align: middle; }
+        .config-label { font-weight: bold; }
+        .config-input { width: 120px; }
+        .progress { height: 20px; border-radius: 10px; }
+        .progress-bar {
+            font-size: 12px;
+            line-height: 20px;
+            transition: width 0.8s ease-in-out; /* Smooth animation */
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>Organizer Service Dashboard</h2>
-    <!-- Hardware Info Row -->
-    <div class="section">
-        <div class="card-row" id="hardware_cards">
-            <div class="card" title="This PC's hostname.">
-                Hostname<br><b id="hw_hostname">—</b>
+    <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
+
+    <!-- System Info / Service Status / Network -->
+    <div class="row">
+        <!-- System Info -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">System Info</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><b>Hostname:</b> {{ hostname }}</li>
+                        <li><b>OS:</b> {{ os }}</li>
+                        <li><b>CPU:</b> {{ cpu }}</li>
+                        <li><b>RAM:</b> {{ ram_gb }} GB</li>
+                        <li><b>GPU:</b> {{ gpu }}</li>
+                    </ul>
+                </div>
             </div>
-            <div class="card" title="Operating system and version.">
-                OS<br><b id="hw_os">—</b>
+        </div>
+
+        <!-- Service Status -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Service Status</div>
+                <div class="card-body text-center">
+                    <span class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">
+                        {{ service_status }}
+                    </span>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <form method="post" action="/start">
+                            <button class="btn btn-success btn-sm" type="submit">Start</button>
+                        </form>
+                        <form method="post" action="/stop">
+                            <button class="btn btn-warning btn-sm" type="submit">Stop</button>
+                        </form>
+                        <form method="post" action="/restart">
+                            <button class="btn btn-primary btn-sm" type="submit">Restart</button>
+                        </form>
+                    </div>
+                    <div class="mt-3">
+                        <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
+                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub Repo</a>
+                    </div>
+                </div>
             </div>
-            <div class="card" title="Processor model and core count.">
-                CPU<br><b id="hw_cpu">—</b>
-            </div>
-            <div class="card" title="Total installed RAM.">
-                RAM<br><b id="hw_ram">—</b>
-            </div>
-            <div class="card" title="Graphics card(s) detected.">
-                GPU<br><b id="hw_gpu">—</b>
+        </div>
+
+        <!-- Network -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Network</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><b>Private IP:</b> {{ private_ip }}</li>
+                        <li><b>Public IP:</b> {{ public_ip }}</li>
+                        <li><b>Up:</b> {{ upload_rate_kb }} KB/s ({{ upload_rate_mb }} MB/s)</li>
+                        <li><b>Down:</b> {{ download_rate_kb }} KB/s ({{ download_rate_mb }} MB/s)</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Status Cards -->
-    <div class="section">
-        <div class="card-row">
-            <div class="card" title="Shows if the Organizer service is running.">
-                Service<br><b id="service_status">—</b>
-            </div>
-            <div class="card" title="Current memory used by the Organizer process.">
-                Memory Usage<br><b id="memory_usage" class="usage-green">—</b>
-            </div>
-            <div class="card" title="Current CPU usage by the Organizer process.">
-                CPU Usage<br><b id="cpu_usage" class="usage-green">—</b>
-            </div>
-            <div class="card" title="Overall system RAM usage.">
-                RAM Usage<br><b id="ram_usage" class="usage-green">—</b>
-            </div>
-            <div class="card" title="Current upload and download speeds.">
-                Network<br>
-                <span style="font-size:0.95em;">
-                    Up: <b id="network_up" class="usage-green">—</b><br>
-                    Down: <b id="network_down" class="usage-green">—</b>
-                </span>
+
+    <!-- Resource Usage with Animated Bars -->
+    <div class="row">
+        <!-- Memory Usage -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Memory Usage</div>
+                <div class="card-body">
+                    <p><b>Service:</b> {{ service_memory_mb }} MB</p>
+                    <p><b>System:</b> {{ total_memory_mb }} MB / {{ total_memory_gb }} GB</p>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
+                             role="progressbar"
+                             style="width: {{ ram_percent }}%;">
+                            {{ ram_percent }}%
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="top-actions">
-            <button class="restart-btn" type="button" onclick="restartService()">Restart Service</button>
+
+        <!-- CPU Usage -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">CPU Usage</div>
+                <div class="card-body">
+                    <p><b>Service:</b> {{ service_cpu_percent }}%</p>
+                    <p><b>System:</b> {{ total_cpu_percent }}%</p>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
+                             role="progressbar"
+                             style="width: {{ total_cpu_percent }}%;">
+                            {{ total_cpu_percent }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RAM Usage -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">RAM Usage</div>
+                <div class="card-body">
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
+                             role="progressbar"
+                             style="width: {{ ram_percent }}%;">
+                            {{ ram_percent }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="section row-flex">
-        <div class="half">
-            <h4>Drive Space</h4>
-            <table id="drives_table" class="drives-table"></table>
-        </div>
-        <div class="half">
-            <h4>Task Manager</h4>
-            <table id="tasks_table" class="tasks-table"></table>
-        </div>
-    </div>
-    <div class="section">
-        <h4>Configuration</h4>
-        <form method="POST" action="/update">
-            <table class="config-table">
-                <tr>
-                    <th>Folder</th>
-                    <th>Extensions (comma-separated)</th>
-                    <th>Action</th>
-                </tr>
-                {% for folder, exts in routes.items() %}
-                <tr>
-                    <td><input name="folder_{{loop.index}}" value="{{folder}}" /></td>
-                    <td><input name="exts_{{loop.index}}" value="{{ ','.join(exts) }}" /></td>
-                    <td><button name="delete_{{loop.index}}" value="1">Delete</button></td>
-                </tr>
-                {% endfor %}
-                <tr>
-                    <td><input name="folder_new" placeholder="New folder" /></td>
-                    <td><input name="exts_new" placeholder="ext1,ext2" /></td>
-                    <td></td>
-                </tr>
+
+    <!-- Drive Space -->
+    <div class="card">
+        <div class="card-header">Drive Space</div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Total</th>
+                        <th>Used</th>
+                        <th>Free</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in drives %}
+                    <tr>
+                        <td>{{ drive.device }}</td>
+                        <td>{{ drive.total }}</td>
+                        <td>{{ drive.used }}</td>
+                        <td>{{ drive.free }}</td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
+                                     role="progressbar"
+                                     style="width: {{ drive.percent }}%;">
+                                    {{ drive.percent }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
-            <div style="margin-bottom:8px;">
-                Memory Threshold (MB): <input name="memory_threshold" value="{{ memory_threshold }}" size="4" />
-                &nbsp; CPU Threshold (%): <input name="cpu_threshold" value="{{ cpu_threshold }}" size="3" />
-                &nbsp; Logs Directory: <input name="logs_dir" value="{{ logs_dir }}" size="30" />
-            </div>
-            <button class="save-btn" type="submit">Save Configuration</button>
-        </form>
-    </div>
-    <div class="section logs-row">
-        <div class="log-box">
-            <h4>Stdout (real-time)</h4>
-            <div class="log-controls">
-                <button onclick="clearLog('stdout')" type="button">Clear</button>
-                <button onclick="pauseScroll('stdout')" type="button">Pause Auto-Scroll</button>
-            </div>
-            <pre id="stdout_log"></pre>
         </div>
-        <div class="log-box">
-            <h4>Stderr (real-time)</h4>
-            <div class="log-controls">
-                <button onclick="clearLog('stderr')" type="button">Clear</button>
-                <button onclick="pauseScroll('stderr')" type="button">Pause Auto-Scroll</button>
+    </div>
+
+    <!-- Task Manager -->
+    <div class="card">
+        <div class="card-header">Task Manager (Top 5 by CPU)</div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>PID</th>
+                        <th>Name</th>
+                        <th>User</th>
+                        <th>CPU (%)</th>
+                        <th>Memory (MB)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc in tasks %}
+                    <tr>
+                        <td>{{ proc.pid }}</td>
+                        <td>{{ proc.name }}</td>
+                        <td>{{ proc.user }}</td>
+                        <td>{{ proc.cpu }}</td>
+                        <td>{{ proc.mem }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Configuration -->
+
+<div class="card">
+    <div class="card-header">Configuration</div>
+    <div class="card-body">
+<form action="/update" method="post">
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Folder</th>
+                <th>Extensions (comma-separated)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Images -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_1"
+                        value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_1" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Music -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_2" value="Music"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_2"
+                        value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_2" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Videos -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_3" value="Videos"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_3"
+                        value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_3" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Documents -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_4" value="Documents"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_4"
+                        value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_4" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Archives -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_5" value="Archives"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_5"
+                        value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_5" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Executables -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_6" value="Executables"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_6"
+                        value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_6" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Shortcuts -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_7" value="Shortcuts"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_7"
+                        value="lnk, url, desktop, webloc">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_7" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Scripts -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_8" value="Scripts"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_8"
+                        value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_8" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Fonts -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_9" value="Fonts"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_9"
+                        value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_9" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Logs -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_10" value="Logs"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_10"
+                        value="log, out, err">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_10" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Other -->
+            <tr>
+                <td><input class="form-control form-control-sm" type="text" name="folder_11" value="Other"></td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_11" value="">
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm" name="delete_11" value="1">Delete</button>
+                </td>
+            </tr>
+            <!-- Add new -->
+            <tr>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="folder_new" placeholder="New folder">
+                </td>
+                <td>
+                    <input class="form-control form-control-sm" type="text" name="exts_new" placeholder="Extensions">
+                </td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="mb-2">
+        <label class="config-label">Memory Threshold (MB):</label>
+        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+    </div>
+    <div class="mb-2">
+        <label class="config-label">CPU Threshold (%):</label>
+        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+    </div>
+    <div class="mb-2">
+        <label class="config-label">Logs Directory:</label>
+        <input class="config-input form-control form-control-sm d-inline-block" type="text" name="logs_dir" value="{{ logs_dir }}">
+    </div>
+    <button class="btn btn-primary btn-sm" type="submit">Save Configuration</button>
+    </div>
+</div>
+
+
+    <!-- Logs -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Stdout (real-time)</div>
+                <div class="card-body">
+                    <form action="/clear_log/stdout" method="post" class="d-inline">
+                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
+                    </form>
+                    <pre id="stdout-log">{{ stdout_log }}</pre>
+                </div>
             </div>
-            <pre id="stderr_log"></pre>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Stderr (real-time)</div>
+                <div class="card-body">
+                    <form action="/clear_log/stderr" method="post" class="d-inline">
+                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
+                    </form>
+                    <pre id="stderr-log">{{ stderr_log }}</pre>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<script>
-function usageClass(percent) {
-    if (percent < 60) return "usage-green";
-    if (percent < 80) return "usage-yellow";
-    if (percent < 90) return "usage-orange";
-    return "usage-red";
-}
-function bgClass(percent) {
-    if (percent < 60) return "bg-green";
-    if (percent < 80) return "bg-yellow";
-    if (percent < 90) return "bg-orange";
-    return "bg-red";
-}
 
-let scrollPaused = {stdout: false, stderr: false};
-
-function pauseScroll(which) {
-    scrollPaused[which] = !scrollPaused[which];
-    alert((scrollPaused[which] ? "Paused" : "Resumed") + " auto-scroll for " + which);
-}
-
-function clearLog(which) {
-    fetch(`/clear_log/${which}`, {method: "POST"})
-        .then(resp => {
-            if (resp.ok) {
-                document.getElementById(which + "_log").textContent = "";
-            } else {
-                alert("Failed to clear log file.");
-            }
-        });
-}
-
-function restartService() {
-    fetch("/restart", {method: "POST"})
-        .then(resp => {
-            if (resp.ok) {
-                alert("Service restart requested.");
-            } else {
-                alert("Failed to restart service.");
-            }
-        });
-}
-
-// Hardware info
-function updateHardware() {
-    fetch("/hardware").then(r => r.json()).then(data => {
-        document.getElementById("hw_hostname").textContent = data.hostname || "—";
-        document.getElementById("hw_os").textContent = data.os || "—";
-        document.getElementById("hw_cpu").textContent = (data.cpu || "—") + (data.cpu_count ? ` (${data.cpu_count} cores)` : "");
-        document.getElementById("hw_ram").textContent = data.ram_gb ? (data.ram_gb + " GB") : "—";
-        document.getElementById("hw_gpu").textContent = (data.gpus && data.gpus.length) ? data.gpus.join(", ") : "—";
-    });
-}
-updateHardware();
-
-function updateStatus() {
-    fetch("/metrics").then(r => r.json()).then(data => {
-        document.getElementById("service_status").textContent = data.service_status;
-        document.getElementById("memory_usage").textContent = data.memory_usage_mb.toFixed(1) + " MB";
-        document.getElementById("cpu_usage").textContent = data.cpu_percent.toFixed(1) + " %";
-        document.getElementById("ram_usage").textContent = data.ram_percent.toFixed(1) + " %";
-        document.getElementById("cpu_usage").className = usageClass(data.cpu_percent);
-        document.getElementById("ram_usage").className = usageClass(data.ram_percent);
-        document.getElementById("memory_usage").className = usageClass((data.memory_usage_mb / 8192) * 100); // Example: scale to 8GB
-    });
-    fetch("/network").then(r => r.json()).then(data => {
-        document.getElementById("network_up").textContent = (data.upload_rate/1024).toFixed(1) + " KB/s";
-        document.getElementById("network_down").textContent = (data.download_rate/1024).toFixed(1) + " KB/s";
-    });
-}
-setInterval(updateStatus, 2000);
-updateStatus();
-
-
-function updateDrives() {
-    fetch("/drives").then(r => r.json()).then(data => {
-        let html = "<tr><th>Device</th><th>Mount</th><th>Total</th><th>Used</th><th>Free</th><th>Usage</th></tr>";
-        for (const d of data) {
-            let usageClassName = usageClass(d.percent);
-            let rowBg = bgClass(d.percent);
-            let mountLink = d.mountpoint.replace(/\\\\/g, "/");
-            if (!mountLink.endsWith("/")) mountLink += "/";
-		html += `<tr class="${rowBg}">
-    		<td>${d.device}</td>
-    	<td>
-        	<button onclick="copyMount('${d.mountpoint.replace(/\\\\/g, "/")}')">Copy Path</button>
-        	<span style="margin-left:8px;">${d.mountpoint}</span>
-    	</td>
-    <td>${(d.total/1e9).toFixed(1)} GB</td>
-    <td>${(d.used/1e9).toFixed(1)} GB</td>
-    <td>${(d.free/1e9).toFixed(1)} GB</td>
-    <td><span class="${usageClassName}">${d.percent}%</span></td>
-</tr>`;
-
-        }
-        document.getElementById("drives_table").innerHTML = html;
-    });
-}
-setInterval(updateDrives, 5000);
-updateDrives();
-
-function copyMount(mountPath) {
-    navigator.clipboard.writeText(mountPath);
-    alert("Mount path copied to clipboard!");
-}
-
-function updateTasks() {
-    fetch("/tasks").then(r => r.json()).then(data => {
-        let html = "<tr><th>PID</th><th>Name</th><th>User</th><th>CPU %</th><th>Memory (MB)</th></tr>";
-        for (const p of data) {
-            let cpuClass = usageClass(p.cpu);
-            let memClass = usageClass(p.mem); // Optionally scale memory usage
-            html += `<tr>
-                <td>${p.pid}</td>
-                <td>${p.name}</td>
-                <td>${p.user || ""}</td>
-                <td><span class="${cpuClass}">${p.cpu.toFixed(1)}</span></td>
-                <td><span class="${memClass}">${p.mem.toFixed(1)}</span></td>
-            </tr>`;
-        }
-        document.getElementById("tasks_table").innerHTML = html;
-    });
-}
-setInterval(updateTasks, 3000);
-updateTasks();
-
-function startLogStream(which) {
-    let logElem = document.getElementById(which + "_log");
-    let es = new EventSource(`/stream/${which}`);
-    es.onmessage = function(event) {
-        logElem.textContent += event.data + "\\n";
-        if (!scrollPaused[which]) {
-            logElem.scrollTop = logElem.scrollHeight;
-        }
-    };
-    es.onerror = function() {
-        es.close();
-        setTimeout(() => startLogStream(which), 2000);
-    };
-}
-startLogStream('stdout');
-startLogStream('stderr');
-</script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 """
 
-# ---------- Helpers ----------
+
+
+# --- Helper Functions ---
 def service_running() -> bool:
     try:
         out = subprocess.check_output(["sc", "query", SERVICE_NAME], text=True)
         return "RUNNING" in out
     except subprocess.CalledProcessError:
         return False
+
+def get_windows_version():
+    if sys.platform == "win32":
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion")
+            product_name, _ = winreg.QueryValueEx(key, "ProductName")
+            display_version, _ = winreg.QueryValueEx(key, "DisplayVersion")
+            build_number, _ = winreg.QueryValueEx(key, "CurrentBuildNumber")
+            if int(build_number) >= 22000:
+                product_name = product_name.replace("Windows 10", "Windows 11")
+            return f"{product_name} {display_version}"
+        except Exception:
+            return platform.platform()
+    else:
+        return platform.platform()
+
+def get_cpu_name():
+    if sys.platform == "win32":
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0")
+            cpu_name, _ = winreg.QueryValueEx(key, "ProcessorNameString")
+            return cpu_name.strip()
+        except Exception:
+            return platform.processor() or platform.machine()
+    else:
+        # For Linux/macOS, try /proc/cpuinfo or fallback
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "model name" in line:
+                        return line.split(":", 1)[1].strip()
+        except Exception as e:
+            print(f"Exception: {e}")
+        return platform.processor() or platform.machine()
+        
+
+import subprocess
+
+def get_gpus():
+    try:
+        output = subprocess.check_output(
+            ['wmic', 'path', 'win32_VideoController', 'get', 'name'],
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
+        # Skip the header and empty lines
+        gpus = [line.strip() for line in output.split('\n') if line.strip() and 'Name' not in line]
+        return gpus
+    except Exception:
+        return []
+
+
+def get_private_ip():
+    try:
+        hostname = socket.gethostname()
+        return socket.gethostbyname(hostname)
+    except Exception:
+        return "Unavailable"
+
+def get_public_ip():
+    try:
+        import requests
+        return requests.get("https://api.ipify.org").text
+    except Exception:
+        return "Unavailable"
 
 def find_organizer_proc():
     for proc in psutil.process_iter(['name', 'cmdline']):
@@ -462,21 +574,14 @@ def find_organizer_proc():
             continue
     return None
 
-def last_n_lines(path, n=200):
+def last_n_lines_normalized(path, n=200):
     if not os.path.exists(path):
         return "(log file not found)"
-    with open(path, 'rb') as f:
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        block = 1024
-        data = b''
-        pos = size
-        while pos > 0 and len(data.splitlines()) <= n:
-            pos = max(0, pos - block)
-            f.seek(pos)
-            data = f.read(size - pos) + data
-        lines = data.splitlines()[-n:]
-        return b'\n'.join(lines).decode('utf-8', errors='replace')
+    with open(path, 'r', encoding='utf-8', errors='replace') as f:
+        lines = f.readlines()[-n:]
+    # Normalize: strip whitespace, replace any internal newlines in each line
+    normalized = [line.replace('\n', ' ').replace('\r', '').strip() for line in lines]
+    return '\n'.join(normalized)
 
 def sse_stream(path):
     if not os.path.exists(path):
@@ -502,20 +607,152 @@ def sse_stream(path):
                 continue
             yield f"data: {line.rstrip()}\n\n"
 
-# ---------- Routes ----------
+def format_bytes(num):
+    """Convert bytes to GB or TB as a string with 2 decimals."""
+    num = float(num)
+    gb = num / (1024 ** 3)
+    if gb < 1024:
+        return f"{gb:.2f} GB"
+    tb = gb / 1024
+    return f"{tb:.2f} TB"
+    
+    
+import json
+
+DASHBOARD_JSON = "C:\\Scripts\\downloads_dashboard.json"
+
+def load_dashboard_json():
+    try:
+        with open(DASHBOARD_JSON, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception:
+        return {}
+
+
+
+# --- Flask Routes ---
 
 @app.route("/")
 def dashboard():
-    return render_template_string(
-        HTML,
-        routes=config['routes'],
-        memory_threshold=config['memory_threshold_mb'],
-        cpu_threshold=config['cpu_threshold_percent'],
-        logs_dir=config['logs_dir']
-    )
+    dashboard_data = load_dashboard_json()
+    try:
+        # System Info
+        hostname = socket.gethostname()
+        os_version = get_windows_version()
+        cpu_name = get_cpu_name()
+        ram_gb = round(psutil.virtual_memory().total / (1024**3), 2)
+        
+        try:
+            gpu_list = get_gpus()
+            gpu = " / ".join(gpu_list) if gpu_list else "N/A"
+        except Exception:
+            gpu = "N/A"
+
+        # Service Status
+        service_status = "Running" if service_running() else "Stopped"
+
+        # Service process info
+        service_memory_mb = 0
+        service_cpu_percent = 0
+        proc = find_organizer_proc()
+        if proc:
+            try:
+                service_cpu_percent = proc.cpu_percent(interval=0.2)
+                service_memory_mb = round(proc.memory_info().rss / (1024 * 1024), 2)
+            except Exception:
+                pass
+
+        # System memory/cpu
+        total_memory_mb = round(psutil.virtual_memory().used / (1024 * 1024), 2)
+        total_memory_gb = round(psutil.virtual_memory().total / (1024 * 1024 * 1024), 2)
+        total_cpu_percent = psutil.cpu_percent(interval=0.2)
+        ram_percent = psutil.virtual_memory().percent
+
+        # Network info (dummy values, replace with real if you track deltas)
+        upload_rate_kb = 0
+        upload_rate_mb = 0
+        download_rate_kb = 0
+        download_rate_mb = 0
+
+        private_ip = get_private_ip()
+        public_ip = get_public_ip()
+
+        # Drives info (now formatted in GB/TB)
+        drives = []
+        for part in psutil.disk_partitions():
+            try:
+                usage = psutil.disk_usage(part.mountpoint)
+                drives.append({
+                    "device": part.device,
+                #    "mountpoint": part.mountpoint,
+                    "total": format_bytes(usage.total),
+                    "used": format_bytes(usage.used),
+                    "free": format_bytes(usage.free),
+                    "percent": usage.percent
+                })
+            except Exception:
+                continue
+
+        # Tasks info (top 5 by CPU)
+        num_cpus = psutil.cpu_count(logical=True)
+        procs = []
+        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info']):
+            try:
+                cpu = proc.info['cpu_percent'] / num_cpus
+                procs.append({
+                    "pid": proc.info['pid'],
+                    "name": proc.info['name'],
+                    "user": proc.info['username'],
+                    "cpu": cpu,
+                    "mem": round(proc.info['memory_info'].rss / (1024*1024), 2)
+                })
+            except Exception:
+                continue
+        procs.sort(key=lambda x: x['cpu'], reverse=True)
+        tasks = procs[:5]
+
+        # Logs (last 50 lines)
+        stdout_log = last_n_lines_normalized(STDOUT_LOG, 50)
+        stderr_log = last_n_lines_normalized(STDERR_LOG, 50)
+
+        # Render the dashboard
+        return render_template_string(
+            HTML,
+            hostname=hostname,
+            os=os_version,
+            cpu=cpu_name,
+            ram_gb=ram_gb,
+            gpu=gpu,
+            service_status=service_status,
+            service_memory_mb=service_memory_mb,
+            total_memory_mb=total_memory_mb,
+            total_memory_gb=total_memory_gb,
+            service_cpu_percent=service_cpu_percent,
+            total_cpu_percent=total_cpu_percent,
+            ram_percent=ram_percent,
+            private_ip=private_ip,
+            public_ip=public_ip,
+            upload_rate_kb=upload_rate_kb,
+            upload_rate_mb=upload_rate_mb,
+            download_rate_kb=download_rate_kb,
+            download_rate_mb=download_rate_mb,
+            drives=drives,
+            tasks=tasks,
+            routes=config['routes'],
+            memory_threshold=config['memory_threshold_mb'],
+            cpu_threshold=config['cpu_threshold_percent'],
+            logs_dir=config['logs_dir'],
+            stdout_log=stdout_log,
+            stderr_log=stderr_log
+        )
+    except Exception as e:
+        # Show error in browser for debugging
+        return f"<pre>Dashboard error: {e}</pre>", 500
 
 
 @app.route("/update", methods=["POST"])
+@requires_auth
 def update_config():
     new_routes = {}
     i = 1
@@ -541,20 +778,17 @@ def update_config():
     try:
         config['memory_threshold_mb'] = int(mem)
     except ValueError:
-        pass
+        return "Invalid memory threshold value", 400
     try:
         config['cpu_threshold_percent'] = int(cpu)
     except ValueError:
-        pass
+        return "Invalid CPU threshold value", 400
     if logs:
         config['logs_dir'] = logs
     config['routes'] = new_routes
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
-    global LOGS_DIR, STDOUT_LOG, STDERR_LOG
-    LOGS_DIR = config['logs_dir']
-    STDOUT_LOG = os.path.join(LOGS_DIR, "organizer_stdout.log")
-    STDERR_LOG = os.path.join(LOGS_DIR, "organizer_stderr.log")
+    update_log_paths()
     return redirect("/")
 
 @app.route("/metrics")
@@ -564,30 +798,24 @@ def metrics():
     cpu_pct = 0.0
     ram_pct = psutil.virtual_memory().percent
     proc = find_organizer_proc()
-    global proc_cpu_cache
     if proc:
         try:
-            # Use PID as key to cache last cpu_percent call
-            pid = proc.pid
-            if pid not in proc_cpu_cache:
-                proc.cpu_percent(interval=None)  # Prime the measurement
-                proc_cpu_cache[pid] = time.time()
-                cpu_pct = 0.0
-            else:
-                cpu_pct = proc.cpu_percent(interval=0.2)
-                proc_cpu_cache[pid] = time.time()
+            cpu_pct = proc.cpu_percent(interval=0.2)
             mem_mb = proc.memory_info().rss / (1024 * 1024)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
     return jsonify({
         "service_status": "Running" if running else "Stopped",
-        "memory_usage_mb": mem_mb,
-        "cpu_percent": cpu_pct,
+        "service_memory_mb": mem_mb,
+        "total_memory_mb": psutil.virtual_memory().used / (1024 * 1024),
+        "total_memory_gb": psutil.virtual_memory().total / (1024 * 1024 * 1024),
+        "service_cpu_percent": cpu_pct,
+        "total_cpu_percent": psutil.cpu_percent(interval=0.2),
         "ram_percent": ram_pct
     })
 
-
 @app.route("/restart", methods=["POST"])
+@requires_auth
 def restart_service():
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
@@ -596,19 +824,44 @@ def restart_service():
     except Exception as e:
         return f"Restart failed: {e}", 500
 
+@app.route("/stop", methods=["POST"])
+@requires_auth
+def stop_service():
+    try:
+        subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
+        return redirect("/")
+    except Exception as e:
+        return f"Stop failed: {e}", 500
+
+@app.route("/start", methods=["POST"])
+@requires_auth
+def start_service():
+    try:
+        subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
+        return redirect("/")
+    except Exception as e:
+        return f"Start failed: {e}", 500
+
 @app.route("/tail/<which>")
 def tail(which):
+    if which not in ("stdout", "stderr"):
+        return "Invalid log type", 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     lines = int(request.args.get("lines", "200"))
-    return last_n_lines(path, lines)
+    return last_n_lines_normalized(path, lines)
 
 @app.route("/stream/<which>")
 def stream(which):
+    if which not in ("stdout", "stderr"):
+        return "Invalid log type", 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     return Response(sse_stream(path), mimetype="text/event-stream")
 
 @app.route("/clear_log/<which>", methods=["POST"])
+@requires_auth
 def clear_log(which):
+    if which not in ("stdout", "stderr"):
+        return "Invalid log type", 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     try:
         with open(path, "w", encoding="utf-8"):
@@ -617,7 +870,6 @@ def clear_log(which):
     except Exception as e:
         return f"Failed to clear log: {e}", 500
 
-# --- Drive Space ---
 @app.route("/drives")
 def drives():
     drives_info = []
@@ -637,7 +889,6 @@ def drives():
     return jsonify(drives_info)
 
 # --- Network Usage ---
-
 last_net = psutil.net_io_counters()
 last_time = time.time()
 
@@ -647,19 +898,25 @@ def network():
     now_net = psutil.net_io_counters()
     now_time = time.time()
     interval = now_time - last_time
-    upload_rate = (now_net.bytes_sent - last_net.bytes_sent) / interval if interval > 0 else 0
-    download_rate = (now_net.bytes_recv - last_net.bytes_recv) / interval if interval > 0 else 0
+    upload_rate_b = (now_net.bytes_sent - last_net.bytes_sent) / interval if interval > 0 else 0
+    download_rate_b = (now_net.bytes_recv - last_net.bytes_recv) / interval if interval > 0 else 0
     last_net = now_net
     last_time = now_time
+    # Convert to KB/s and MB/s
+    upload_rate_kb = upload_rate_b / 1024
+    download_rate_kb = download_rate_b / 1024
+    upload_rate_mb = upload_rate_b / (1024 * 1024)
+    download_rate_mb = download_rate_b / (1024 * 1024)
     return jsonify({
-        "upload_rate": upload_rate,
-        "download_rate": download_rate,
+        "upload_rate_b": upload_rate_b,
+        "download_rate_b": download_rate_b,
+        "upload_rate_kb": upload_rate_kb,
+        "download_rate_kb": download_rate_kb,
+        "upload_rate_mb": upload_rate_mb,
+        "download_rate_mb": download_rate_mb,
         "total_sent": now_net.bytes_sent,
         "total_recv": now_net.bytes_recv
     })
-
-
-# --- Task Manager ---
 
 @app.route("/tasks")
 def tasks():
@@ -680,98 +937,19 @@ def tasks():
     procs.sort(key=lambda x: x['cpu'], reverse=True)
     return jsonify(procs[:5])  # Only top 5 by CPU usage
 
-# --- OS ---
-
-def get_windows_version():
-    if sys.platform == "win32":
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
-            product_name, _ = winreg.QueryValueEx(key, "ProductName")
-            display_version, _ = winreg.QueryValueEx(key, "DisplayVersion")
-            return f"{product_name} {display_version}"
-        except Exception:
-            return platform.platform()
-    else:
-        return platform.platform()
-
-
-# --- Hardware ---
-
-import sys
-import platform
-import socket
-import psutil
-
-if sys.platform == "win32":
-    import winreg
-
-def get_cpu_name():
-    if sys.platform == "win32":
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
-            cpu_name, _ = winreg.QueryValueEx(key, "ProcessorNameString")
-            return cpu_name.strip()
-        except Exception:
-            return platform.processor() or platform.machine()
-    else:
-        # For Linux/macOS, try /proc/cpuinfo or fallback
-        try:
-            with open("/proc/cpuinfo") as f:
-                for line in f:
-                    if "model name" in line:
-                        return line.split(":", 1)[1].strip()
-        except Exception:
-            pass
-        return platform.processor() or platform.machine()
-
-def get_windows_version():
-    if sys.platform == "win32":
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
-            product_name, _ = winreg.QueryValueEx(key, "ProductName")
-            display_version, _ = winreg.QueryValueEx(key, "DisplayVersion")
-            return f"{product_name} {display_version}"
-        except Exception:
-            return platform.platform()
-    else:
-        return platform.platform()
-
-def get_gpus():
-    try:
-        import GPUtil
-        gpus = GPUtil.getGPUs()
-        if not gpus:
-            return ["No GPU detected"]
-        return [f"{gpu.name} ({gpu.memoryTotal}MB)" for gpu in gpus]
-    except Exception as e:
-        return [f"GPUtil error: {e}"]
-
-def get_ipv4():
-    try:
-        hostname = socket.gethostname()
-        return socket.gethostbyname(hostname)
-    except Exception:
-        return "Unavailable"
-
 @app.route("/hardware")
 def hardware():
     info = {
         "hostname": socket.gethostname(),
         "os": get_windows_version(),
         "cpu": get_cpu_name(),
-        "cpu_count": psutil.cpu_count(logical=True),
         "ram_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-        "ipv4": get_ipv4(),
-        "gpus": get_gpus()
+        "private_ip": get_private_ip(),
+        "public_ip": get_public_ip()
     }
     return jsonify(info)
 
-# ---------- Main ----------
-
+# --- Main Entry Point ---
 if __name__ == "__main__":
     print("✅ Dashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000)
-
