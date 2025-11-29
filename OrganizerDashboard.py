@@ -30,6 +30,9 @@ ADMIN_PASS_HASH = None
 
 def initialize_password_hash():
     global ADMIN_PASS_HASH
+    if ADMIN_PASS_HASH is not None:
+        # Already initialized
+        return
     # Prefer an explicit hash in the config if present
     stored_hash = None
     try:
@@ -54,8 +57,16 @@ def initialize_password_hash():
         except Exception:
             pass
         return
-    # Fall back to ADMIN_PASS (env or default); hash it for runtime use
+    # Fall back to ADMIN_PASS (env or default); hash it for runtime use and persist it
     ADMIN_PASS_HASH = bcrypt.hashpw(ADMIN_PASS.encode('utf-8'), bcrypt.gensalt())
+    # Persist the hash so future runs use the same hash
+    try:
+        config['dashboard_user'] = ADMIN_USER
+        config['dashboard_pass_hash'] = ADMIN_PASS_HASH.decode('utf-8')
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=4)
+    except Exception:
+        pass
 
 
 def check_auth(username, password):
