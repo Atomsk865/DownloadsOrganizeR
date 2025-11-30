@@ -1,151 +1,175 @@
+# DownloadsOrganizeR 📦
 
-# 📦 Organizer Service Installer
-
-## Overview
-`Install-And-Monitor-OrganizerService.ps1` automates the setup of a Windows service that runs `Organizer.py` to organize your Downloads folder in real time. It installs **NSSM**, configures the service, and creates a health monitoring script.
+Automatically organize your Downloads folder by file type. DownloadsOrganizeR monitors your Downloads folder in real-time and sorts files into categories (Images, Videos, Documents, etc.) — no manual work required.
 
 ---
 
-## Features
-- ✅ Auto-elevates to Administrator if not already.
-- ✅ Installs **NSSM** and configures `DownloadsOrganizer` service.
-- ✅ Copies `Organizer.py` to `C:\Scripts`.
-- ✅ Creates health monitoring script for CPU and memory usage.
-- ✅ Logs all actions to:
-  ```
-  C:\Scripts\Installer-Transcript.log
-  ```
+## Quick Start (5 minutes)
 
----
+### Option 1: Automated Service Installation (Recommended)
 
-## Requirements
-- Windows PowerShell (Run as Administrator)
-- Python installed and available in PATH
-- Internet access (to download NSSM)
-- `Organizer.py` in the same folder as this installer script
-
----
-
-## Parameters
-| Parameter              | Description                                      |
-|------------------------|--------------------------------------------------|
-| `ServiceName`          | Name of the Windows service (default: DownloadsOrganizer) |
-| `ScriptsRoot`          | Root folder for scripts (default: C:\Scripts)   |
-| `MemoryThresholdMB`    | Memory threshold for health monitor             |
-| `CpuThresholdPercent`  | CPU threshold for health monitor                |
-| `CheckIntervalSec`     | Interval for health checks                      |
-| `DryRun`               | Switch for dry-run mode                         |
-| `ServiceUser`          | Service account user                            |
-| `ServicePassword`      | Service account password (secure string)        |
-
----
-
-## Usage
-Run PowerShell as Administrator:
-```powershell
-.\Install-And-Monitor-OrganizerService.ps1
-```
-
-Follow prompts to confirm `Organizer.py` location.
-
----
-
-## Service Details
-- Service Name: `DownloadsOrganizer`
-- Logs:
-  ```
-  C:\Scripts\service-logs\organizer_stdout.log
-  C:\Scripts\service-logs\organizer_stderr.log
-  ```
-
----
-
-## Health Monitoring
-A script `Monitor-OrganizerService.ps1` is generated in `C:\Scripts` to monitor CPU and memory usage.
-
----
-
-## Uninstall
-To remove the service:
-```powershell
-nssm remove DownloadsOrganizer confirm
-```
----
-
-## ▶️ Manual Run (Without NSSM)
-If you prefer not to install the service, you can run `Organizer.py` manually:
-
-```powershell
-cd C:\Scripts
-python Organizer.py
-```
-
-For continuous monitoring, you can use:
-```powershell
-while ($true) {
-    python Organizer.py
-    Start-Sleep -Seconds 30
-}
-```
-
----
-
-# Organizer Dashboard
-
-A web-based dashboard for monitoring and managing the **DownloadsOrganizer** service. Built with Python and Flask, this tool provides real-time insights into system resources, service status, drive space, network activity, and more. Easily configure file routing rules, resource thresholds, and view live logs—all from a user-friendly interface.
-![Organizer Dashboard](Dashboard.png)
----
-
-## Features
-
-- **Service status monitoring and control**
-- **Real-time CPU, RAM, and network usage**
-- **Customizable file organization rules by extension**
-- **Live stdout/stderr log streaming and management**
-- **Drive space and hardware info display**
-- **Task manager for top processes**
-- **Easy configuration via web UI**
-
----
-
-## Requirements
-
-- Python 3.7+
-- Flask
-- psutil
-- setuptools
-- *(Optional)* GPUtil for GPU info
-
----
-
-## Quick Start
-
-1. **Clone the repository:**
+1. **Install Python** if you haven't already ([python.org](https://www.python.org/downloads/))
+2. **Download this repository** or clone it:
    ```bash
    git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
    cd DownloadsOrganizeR
    ```
-   
-2. **Install Dependencies:**
-   ```bash
-   pip install -r requirements.txt
+3. **Run the installer** (Right-click PowerShell → Run as Administrator):
+   ```powershell
+   .\Install-And-Monitor-OrganizerService.ps1
    ```
+4. **Done!** The service will start automatically on boot and organize your Downloads in real-time.
 
-3. **Run the Dashboard:**
-   Create a batch file to run it:
-   ```bash
-   @echo off
-   REM Launch OrganizerDashboard.py
-   powershell Start-Process python "C:\Path\To\OrganizerDashboard.py"
+### Option 2: Manual Run (No Service)
 
-   REM Give it a moment to start, then open the dashboard in your default browser
-   timeout /t 3 >nul
-   start http://localhost:5000
+```powershell
+cd DownloadsOrganizeR
+pip install -r requirements.txt
+python Organizer.py
+```
 
-   exit
-   ```
-   or type:
-   ```bash
-   python organizerdashboard.py
-   ```
+---
 
+## Dashboard 📊
+
+Monitor and configure the organizer from a web dashboard:
+
+```bash
+pip install -r requirements.txt
+python OrganizerDashboard.py
+```
+
+Then open: **http://localhost:5000**
+
+**Default credentials (Dashboard)**
+
+- **Username:** `admin`
+- **Password:** `change_this_password`
+
+You can override these by setting environment variables before launching the dashboard:
+
+```bash
+export DASHBOARD_USER=myusername
+export DASHBOARD_PASS=mypassword
+python OrganizerDashboard.py
+```
+
+### Dashboard Features
+- 🔍 Real-time service monitoring
+- 📈 CPU, RAM, and network usage
+- ⚙️ Customize file organization rules
+- 📋 Live log viewer
+- 💾 Drive space overview
+- 📱 Responsive web UI
+
+---
+
+## What Gets Organized?
+
+Files are automatically sorted into folders by type:
+
+| Category | File Types |
+|----------|-----------|
+| **Images** | jpg, png, gif, svg, webp, heic, psd, ai, ... |
+| **Videos** | mp4, mkv, avi, mov, wmv, webm, flv, ... |
+| **Music** | mp3, wav, flac, aac, ogg, wma, m4a, ... |
+| **Documents** | pdf, doc, docx, txt, excel, ppt, csv, ... |
+| **Archives** | zip, rar, 7z, tar, gz, iso, ... |
+| **Executables** | exe, msi, bat, cmd, ps1, app, ... |
+| **Scripts** | py, js, html, css, json, xml, ts, php, ... |
+| **Fonts** | ttf, otf, woff, eot, ... |
+| **Shortcuts** | lnk, url, webloc, ... |
+| **Logs** | log, out, err |
+| **Other** | Everything else |
+
+---
+
+## Configuration
+
+### Editing Organization Rules
+
+1. Open the Dashboard: http://localhost:5000
+2. Go to "Configuration" section
+3. Add/remove file extensions for each category
+4. Changes apply immediately
+
+### Environment Variables (Dashboard Security)
+
+Set custom login credentials:
+
+```bash
+set DASHBOARD_USER=myusername
+set DASHBOARD_PASS=mypassword
+python OrganizerDashboard.py
+```
+
+---
+
+## Troubleshooting
+
+### Service won't start?
+- Check logs: `C:\Scripts\service-logs\organizer_stdout.log`
+- Ensure Python is in PATH: `python --version`
+- Try running manually: `cd C:\Scripts && python Organizer.py`
+
+### Dashboard won't connect?
+- Verify service is running: Check Windows Services
+- Ensure port 5000 is available: `netstat -ano | findstr :5000`
+- Check firewall settings
+
+### Files not organizing?
+- Check the organizer log: `C:\Users\{username}\Downloads\organizer.log`
+- Verify file extensions are in the config
+- Ensure destination folders are writable
+
+---
+
+## Uninstall
+
+Remove the Windows service:
+
+```powershell
+nssm remove DownloadsOrganizer confirm
+```
+
+Then delete the `C:\Scripts\Organizer.py` file if desired.
+
+---
+
+## Requirements
+
+- **Windows** (Service installation only)
+- **Python 3.7+**
+- **Dependencies:**
+  ```
+  watchdog==6.0.0     # File monitoring
+  Flask==3.1.2        # Dashboard web framework
+  psutil==7.1.3       # System metrics
+  gputil==1.4.0       # GPU info (optional)
+  ```
+
+---
+
+## File Structure
+
+```
+DownloadsOrganizeR/
+├── Organizer.py                          # Core file organizer
+├── OrganizerDashboard.py                 # Web dashboard
+├── Install-And-Monitor-OrganizerService.ps1  # Service installer
+├── organizer_config.json                 # Configuration file
+├── requirements.txt                      # Python dependencies
+└── README.md                             # This file
+```
+
+---
+
+## License
+
+[LICENSE](LICENSE)
+
+---
+
+## Support
+
+Found a bug? Have a feature request? Open an issue on [GitHub](https://github.com/Atomsk865/DownloadsOrganizeR/issues).

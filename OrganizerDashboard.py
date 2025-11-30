@@ -9,14 +9,76 @@ import subprocess
 import socket
 import sys
 from functools import wraps
+import bcrypt
+
+"""OrganizerDashboard
+
+Flask-based dashboard to monitor and control the DownloadsOrganizer service.
+This module exposes JSON endpoints used by the UI (AJAX) and renders a
+single-page dashboard with controls, logs, and configuration.
+"""
 
 # --- Authentication ---
 
 import os
 ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
 ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "change_this_password")
+
+# Runtime hashed password. This will be initialized from env/config and kept
+# up-to-date when passwords are changed.
+ADMIN_PASS_HASH = None
+
+def initialize_password_hash():
+    global ADMIN_PASS_HASH
+    if ADMIN_PASS_HASH is not None:
+        # Already initialized
+        return
+    # Prefer an explicit hash in the config if present
+    stored_hash = None
+    try:
+        stored_hash = config.get("dashboard_pass_hash")
+    except Exception:
+        stored_hash = None
+    if stored_hash:
+        # Stored hash is expected to be a utf-8 string from bcrypt.hashpw(...).decode()
+        ADMIN_PASS_HASH = stored_hash.encode('utf-8')
+        return
+    # If the config contains a plaintext dashboard_pass, hash and persist it
+    plain = config.get("dashboard_pass")
+    if plain:
+        ADMIN_PASS_HASH = bcrypt.hashpw(plain.encode('utf-8'), bcrypt.gensalt())
+        # Persist the hash and remove plaintext
+        try:
+            config['dashboard_pass_hash'] = ADMIN_PASS_HASH.decode('utf-8')
+            if 'dashboard_pass' in config:
+                del config['dashboard_pass']
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=4)
+        except Exception:
+            pass
+        return
+    # Fall back to ADMIN_PASS (env or default); hash it for runtime use and persist it
+    ADMIN_PASS_HASH = bcrypt.hashpw(ADMIN_PASS.encode('utf-8'), bcrypt.gensalt())
+    # Persist the hash so future runs use the same hash
+    try:
+        config['dashboard_user'] = ADMIN_USER
+        config['dashboard_pass_hash'] = ADMIN_PASS_HASH.decode('utf-8')
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=4)
+    except Exception:
+        pass
+
+
 def check_auth(username, password):
-    return username == ADMIN_USER and password == ADMIN_PASS
+    """Verify given username/password against stored admin user and hashed password."""
+    if username != ADMIN_USER:
+        return False
+    if ADMIN_PASS_HASH is None:
+        initialize_password_hash()
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), ADMIN_PASS_HASH)
+    except Exception:
+        return False
 
 
 def authenticate():
@@ -66,6 +128,24 @@ if os.path.exists(CONFIG_FILE):
     except Exception:
         pass
 
+# If credentials are stored in the config file, prefer them (persisted change-password support)
+if isinstance(config, dict):
+    dashboard_user = config.get("dashboard_user")
+    dashboard_pass = config.get("dashboard_pass")
+    dashboard_pass_hash = config.get("dashboard_pass_hash")
+    if dashboard_user:
+        ADMIN_USER = dashboard_user
+    # If a hash is present prefer that, otherwise if a plaintext pass exists we'll
+    # let initialize_password_hash() migrate it to a hash on startup.
+    if dashboard_pass_hash:
+        ADMIN_PASS_HASH = dashboard_pass_hash.encode('utf-8')
+    elif dashboard_pass:
+        # leave ADMIN_PASS as-is; initialize_password_hash will hash and persist
+        ADMIN_PASS = dashboard_pass
+
+# Ensure ADMIN_PASS_HASH is initialized
+initialize_password_hash()
+
 def update_log_paths():
     global LOGS_DIR, STDOUT_LOG, STDERR_LOG
     LOGS_DIR = config.get("logs_dir", DEFAULT_CONFIG["logs_dir"])
@@ -89,112 +169,101 @@ HTML = """
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
-        body { background: #f8f9fa; }
-        .dashboard-title { margin: 30px 0; }
-        .card { margin-bottom: 20px; }
-        .table th, .table td { vertical-align: middle; }
-        .config-label { font-weight: bold; }
+        body { background: #f8f9fa; font-size: 14px; }
+        .dashboard-title { margin: 25px 0 20px 0; font-weight: 500; }
+        .card { margin-bottom: 20px; border: 1px solid #dee2e6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; padding: 0.75rem 1rem; }
+        .card-body { padding: 1rem; }
+        .card-body p { margin-bottom: 0.5rem; line-height: 1.4; }
+        .table th, .table td { vertical-align: middle; padding: 0.5rem 0.75rem; }
+        .table-sm thead th { font-weight: 600; background-color: #f8f9fa; }
+        .config-label { font-weight: 600; }
         .config-input { width: 120px; }
-        .progress { height: 20px; border-radius: 10px; }
-        .progress-bar {
-            font-size: 12px;
-            line-height: 20px;
-            transition: width 0.8s ease-in-out; /* Smooth animation */
-        }
+        .progress { height: 24px; border-radius: 4px; background-color: #e9ecef; }
+        .progress-bar { font-size: 11px; line-height: 24px; font-weight: 500; transition: width 0.8s ease-in-out; }
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        hr { margin: 1rem 0; opacity: 0.2; }
+        .text-sm { font-size: 0.85rem; color: #6c757d; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
+    <div class="text-end mb-2">
+        <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
+        <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
+        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
+        <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
+    </div>
 
-    <!-- System Info / Service Status / Network -->
+    <!-- System Info (consolidated) -->
     <div class="row">
-        <!-- System Info -->
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header">System Info</div>
+                <div class="card-header">System Information</div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li><b>Hostname:</b> {{ hostname }}</li>
-                        <li><b>OS:</b> {{ os }}</li>
-                        <li><b>CPU:</b> {{ cpu }}</li>
-                        <li><b>RAM:</b> {{ ram_gb }} GB</li>
-                        <li><b>GPU:</b> {{ gpu }}</li>
-                    </ul>
+                    <p><small><b>Hostname:</b></small><br><small>{{ hostname }}</small></p>
+                    <p><small><b>OS:</b></small><br><small>{{ os }}</small></p>
+                    <p><small><b>CPU:</b></small><br><small>{{ cpu }}</small></p>
+                    <p><small><b>RAM:</b></small><br><small>{{ ram_gb }} GB</small></p>
+                    <p><small><b>GPU:</b></small><br><small>{{ gpu }}</small></p>
                 </div>
             </div>
         </div>
 
-        <!-- Service Status -->
+        <!-- Service Info -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">Service Status</div>
-                <div class="card-body text-center">
-                    <span class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}">
-                        {{ service_status }}
-                    </span>
-                    <div class="d-flex justify-content-center gap-2 mt-3">
-                        <form method="post" action="/start">
-                            <button class="btn btn-success btn-sm" type="submit">Start</button>
-                        </form>
-                        <form method="post" action="/stop">
-                            <button class="btn btn-warning btn-sm" type="submit">Stop</button>
-                        </form>
-                        <form method="post" action="/restart">
-                            <button class="btn btn-primary btn-sm" type="submit">Restart</button>
-                        </form>
+                <div class="card-body">
+                    <div class="text-center">
+                        <small><b>Status:</b></small><br>
+                        <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} mt-1">{{ service_status }}</span>
                     </div>
-                    <div class="mt-3">
-                        <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
-                        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub Repo</a>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                        <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                        <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Network -->
+        <!-- Network Info -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">Network</div>
                 <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li><b>Private IP:</b> {{ private_ip }}</li>
-                        <li><b>Public IP:</b> {{ public_ip }}</li>
-                        <li><b>Up:</b> {{ upload_rate_kb }} KB/s ({{ upload_rate_mb }} MB/s)</li>
-                        <li><b>Down:</b> {{ download_rate_kb }} KB/s ({{ download_rate_mb }} MB/s)</li>
-                    </ul>
+                    <p><small><b>Private IP:</b></small><br><small>{{ private_ip }}</small></p>
+                    <p><small><b>Public IP:</b></small><br><small>{{ public_ip }}</small></p>
+                    <p><small><b>Upload:</b></small><br><small>{{ upload_rate_kb }} KB/s</small></p>
+                    <p><small><b>Download:</b></small><br><small>{{ download_rate_kb }} KB/s</small></p>
+                    <div class="d-grid gap-2">
+                        <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Resource Usage with Animated Bars -->
+    <!-- Resource Usage -->
     <div class="row">
-        <!-- Memory Usage -->
-        <div class="col-md-4">
+        <!-- Memory & CPU Usage (consolidated) -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Memory Usage</div>
+                <div class="card-header">Resource Usage</div>
                 <div class="card-body">
-                    <p><b>Service:</b> {{ service_memory_mb }} MB</p>
-                    <p><b>System:</b> {{ total_memory_mb }} MB / {{ total_memory_gb }} GB</p>
-                    <div class="progress">
+                    <p class="mb-2"><small><b>Memory Usage</b></small></p>
+                    <p class="text-sm mb-2">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</p>
+                    <div class="progress mb-3">
                         <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
                              role="progressbar"
                              style="width: {{ ram_percent }}%;">
                             {{ ram_percent }}%
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CPU Usage -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">CPU Usage</div>
-                <div class="card-body">
-                    <p><b>Service:</b> {{ service_cpu_percent }}%</p>
-                    <p><b>System:</b> {{ total_cpu_percent }}%</p>
+                    <p class="mb-2"><small><b>CPU Usage</b></small></p>
+                    <p class="text-sm mb-2">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
                     <div class="progress">
                         <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
                              role="progressbar"
@@ -206,104 +275,116 @@ HTML = """
             </div>
         </div>
 
-        <!-- RAM Usage -->
-        <div class="col-md-4">
+        <!-- Drive Space -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header">RAM Usage</div>
+                <div class="card-header">Drive Space</div>
                 <div class="card-body">
-                    <div class="progress">
-                        <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
-                             role="progressbar"
-                             style="width: {{ ram_percent }}%;">
-                            {{ ram_percent }}%
-                        </div>
-                    </div>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>Total</th>
+                                <th>Used</th>
+                                <th>Usage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for drive in drives %}
+                            <tr>
+                                <td>{{ drive.device }}</td>
+                                <td><small>{{ drive.total }}</small></td>
+                                <td><small>{{ drive.used }}</small></td>
+                                <td>
+                                    <div class="progress" style="min-width: 50px;">
+                                        <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
+                                             role="progressbar"
+                                             style="width: {{ drive.percent }}%;">
+                                            {{ drive.percent }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Drive Space -->
-    <div class="card">
-        <div class="card-header">Drive Space</div>
-        <div class="card-body">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th>Device</th>
-                        <th>Total</th>
-                        <th>Used</th>
-                        <th>Free</th>
-                        <th>Usage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for drive in drives %}
-                    <tr>
-                        <td>{{ drive.device }}</td>
-                        <td>{{ drive.total }}</td>
-                        <td>{{ drive.used }}</td>
-                        <td>{{ drive.free }}</td>
-                        <td>
-                            <div class="progress">
-                                <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
-                                     role="progressbar"
-                                     style="width: {{ drive.percent }}%;">
-                                    {{ drive.percent }}%
-                                </div>
+    <!-- Task Manager & Configuration -->
+    <div class="row">
+        <!-- Task Manager -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Task Manager (Top 5 by CPU)</div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th>CPU (%)</th>
+                                <th>Memory (MB)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proc in tasks %}
+                            <tr>
+                                <td><small>{{ proc.pid }}</small></td>
+                                <td><small>{{ proc.name }}</small></td>
+                                <td><small>{{ proc.cpu|round(1) }}</small></td>
+                                <td><small>{{ proc.mem }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Settings -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Settings</div>
+                <div class="card-body">
+                    <form id="config-form-settings">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
+                                <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
+                                <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                            <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                        </div>
+                        <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Task Manager -->
+    <!-- File Categories Configuration -->
     <div class="card">
-        <div class="card-header">Task Manager (Top 5 by CPU)</div>
+        <div class="card-header">File Categories</div>
         <div class="card-body">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th>PID</th>
-                        <th>Name</th>
-                        <th>User</th>
-                        <th>CPU (%)</th>
-                        <th>Memory (MB)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for proc in tasks %}
-                    <tr>
-                        <td>{{ proc.pid }}</td>
-                        <td>{{ proc.name }}</td>
-                        <td>{{ proc.user }}</td>
-                        <td>{{ proc.cpu }}</td>
-                        <td>{{ proc.mem }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Configuration -->
-
-<div class="card">
-    <div class="card-header">Configuration</div>
-    <div class="card-body">
-<form action="/update" method="post">
-    <table class="table table-bordered table-sm">
-        <thead>
-            <tr>
-                <th>Folder</th>
-                <th>Extensions (comma-separated)</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
+            <form id="config-form">
+                <table class="table table-sm mb-3">
+                    <thead>
+                        <tr>
+                            <th>Folder</th>
+                            <th>Extensions (comma-separated)</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             <!-- Images -->
             <tr>
                 <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
@@ -312,7 +393,7 @@ HTML = """
                         value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_1" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Music -->
@@ -323,7 +404,7 @@ HTML = """
                         value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_2" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Videos -->
@@ -334,7 +415,7 @@ HTML = """
                         value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_3" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Documents -->
@@ -345,7 +426,7 @@ HTML = """
                         value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_4" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Archives -->
@@ -356,7 +437,7 @@ HTML = """
                         value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_5" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Executables -->
@@ -367,7 +448,7 @@ HTML = """
                         value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_6" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Shortcuts -->
@@ -378,7 +459,7 @@ HTML = """
                         value="lnk, url, desktop, webloc">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_7" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Scripts -->
@@ -389,7 +470,7 @@ HTML = """
                         value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_8" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Fonts -->
@@ -400,7 +481,7 @@ HTML = """
                         value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_9" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Logs -->
@@ -411,7 +492,7 @@ HTML = """
                         value="log, out, err">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_10" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Other -->
@@ -421,7 +502,7 @@ HTML = """
                     <input class="form-control form-control-sm" type="text" name="exts_11" value="">
                 </td>
                 <td>
-                    <button class="btn btn-danger btn-sm" name="delete_11" value="1">Delete</button>
+                    <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                 </td>
             </tr>
             <!-- Add new -->
@@ -433,47 +514,31 @@ HTML = """
                     <input class="form-control form-control-sm" type="text" name="exts_new" placeholder="Extensions">
                 </td>
                 <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="mb-2">
-        <label class="config-label">Memory Threshold (MB):</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
+            </form>
+        </div>
     </div>
-    <div class="mb-2">
-        <label class="config-label">CPU Threshold (%):</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
-    </div>
-    <div class="mb-2">
-        <label class="config-label">Logs Directory:</label>
-        <input class="config-input form-control form-control-sm d-inline-block" type="text" name="logs_dir" value="{{ logs_dir }}">
-    </div>
-    <button class="btn btn-primary btn-sm" type="submit">Save Configuration</button>
-    </div>
-</div>
-
 
     <!-- Logs -->
     <div class="row">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stdout (real-time)</div>
+                <div class="card-header">Stdout Log (real-time)</div>
                 <div class="card-body">
-                    <form action="/clear_log/stdout" method="post" class="d-inline">
-                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
-                    </form>
-                    <pre id="stdout-log">{{ stdout_log }}</pre>
+                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stdout')">Clear Log</button>
+                    <pre id="stdout-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stderr (real-time)</div>
+                <div class="card-header">Stderr Log (real-time)</div>
                 <div class="card-body">
-                    <form action="/clear_log/stderr" method="post" class="d-inline">
-                        <button class="btn btn-secondary btn-sm" type="submit">Clear</button>
-                    </form>
-                    <pre id="stderr-log">{{ stderr_log }}</pre>
+                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stderr')">Clear Log</button>
+                    <pre id="stderr-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
                 </div>
             </div>
         </div>
@@ -482,18 +547,355 @@ HTML = """
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Login / Change-password Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Dashboard Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Username</label>
+                    <input id="login-username" class="form-control" type="text" value="admin">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Password</label>
+                    <input id="login-password" class="form-control" type="password">
+                </div>
+                <div id="change-password-section" style="display:none;">
+                    <hr>
+                    <div class="mb-2">
+                        <label class="form-label">New password</label>
+                        <input id="new-password" class="form-control" type="password">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Confirm new password</label>
+                        <input id="confirm-password" class="form-control" type="password">
+                    </div>
+                </div>
+                <div id="login-error" class="text-danger" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button id="login-submit" type="button" class="btn btn-primary">Login</button>
+                <button id="change-submit" type="button" class="btn btn-success" style="display:none;">Change Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if service control is supported (Windows only)
+    const isWindows = {{ 'true' if is_windows else 'false' }};
+    const serviceButtons = document.querySelectorAll('button[onclick*="serviceAction"]');
+    if (!isWindows) {
+        serviceButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.title = 'Service control is only available on Windows systems';
+        });
+    }
+    // Fetch and display the configured service name (if available)
+    try { fetchServiceName(); } catch (e) { /* ignore */ }
+});
+
+// Simple client-side Basic Auth support for AJAX calls.
+// The server still enforces authentication, but fetch() won't trigger
+// the browser login dialog. We capture credentials once and attach a
+// Basic Authorization header to all protected requests.
+let __authHeader = null;
+function promptLogin() {
+    // Show the modal instead of prompt() dialogs
+    const lm = new bootstrap.Modal(document.getElementById('loginModal'));
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('change-password-section').style.display = 'none';
+    document.getElementById('change-submit').style.display = 'none';
+    document.getElementById('login-submit').style.display = 'inline-block';
+    document.getElementById('login-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    lm.show();
+
+    // Wire up login button handler
+    document.getElementById('login-submit').onclick = handleLogin;
+    document.getElementById('change-submit').onclick = handleChangePassword;
+}
+
+async function handleLogin() {
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value;
+    if (!user || !pass) {
+        document.getElementById('login-error').textContent = 'Username and password required';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+    __authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+    console.log('Set __authHeader to:', __authHeader);
+    try {
+        const headers = getAuthHeaders();
+        console.log('Sending headers:', headers);
+        const r = await fetch('/auth_check', { headers: headers });
+        console.log('Auth check response:', r.status);
+        if (!r.ok) throw new Error('Invalid credentials');
+        // If user logged in with the default password, require change
+        const DEFAULT_PASS = 'change_this_password';
+        if (pass === DEFAULT_PASS) {
+            // reveal change-password UI
+            document.getElementById('change-password-section').style.display = 'block';
+            document.getElementById('login-submit').style.display = 'none';
+            document.getElementById('change-submit').style.display = 'inline-block';
+            return;
+        }
+        // success
+        document.getElementById('login-btn').classList.add('d-none');
+        document.getElementById('logout-btn').classList.remove('d-none');
+        showNotification('Logged in', 'success');
+        const lm = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        lm.hide();
+    } catch (err) {
+        console.error('Login error:', err);
+        document.getElementById('login-error').textContent = 'Login failed: ' + err.message;
+        document.getElementById('login-error').style.display = 'block';
+        __authHeader = null;
+    }
+}
+
+async function handleChangePassword() {
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value;
+    const np = document.getElementById('new-password').value;
+    const np2 = document.getElementById('confirm-password').value;
+    if (!np || np !== np2) {
+        document.getElementById('login-error').textContent = 'New passwords must match and be non-empty';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+    try {
+        const r = await fetch('/change_password', {
+            method: 'POST',
+            headers: Object.assign({'Content-Type': 'application/json'}, getAuthHeaders()),
+            body: JSON.stringify({ new_password: np })
+        });
+        if (!r.ok) throw new Error('Change failed');
+        // Update local auth header to new password
+        __authHeader = 'Basic ' + btoa(`${user}:${np}`);
+        document.getElementById('login-btn').classList.add('d-none');
+        document.getElementById('logout-btn').classList.remove('d-none');
+        showNotification('Password changed and logged in', 'success');
+        const lm = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        lm.hide();
+    } catch (err) {
+        console.error('Password change error:', err);
+        document.getElementById('login-error').textContent = 'Password change failed: ' + err.message;
+        document.getElementById('login-error').style.display = 'block';
+    }
+}
+function logout() {
+    __authHeader = null;
+    document.getElementById('login-btn').classList.remove('d-none');
+    document.getElementById('logout-btn').classList.add('d-none');
+    showNotification('Logged out', 'info');
+}
+function getAuthHeaders() {
+    return __authHeader ? { 'Authorization': __authHeader } : {};
+}
+// Service Control Functions
+async function serviceAction(action) {
+    const button = event.target;
+    button.disabled = true;
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before performing service actions', 'warning');
+            button.disabled = false;
+            return;
+        }
+        const response = await fetch(`/${action}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(`Service ${action}ed successfully`, 'success');
+            // Update service status badge
+            setTimeout(updateServiceStatus, 1000);
+        } else {
+            showNotification(data.message || `Failed to ${action} service`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// Update service status
+async function updateServiceStatus() {
+    try {
+        const response = await fetch('/metrics');
+        const data = await response.json();
+        const badge = document.getElementById('service-badge');
+        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
+        badge.textContent = data.service_status;
+        badge.className = `badge ${statusClass}`;
+    } catch (error) {
+        console.error('Error updating service status:', error);
+    }
+}
+
+// Fetch configured service name from server and display in header
+async function fetchServiceName() {
+    try {
+        const resp = await fetch('/service_name');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const name = data.service_name || '';
+        const el = document.getElementById('service-name');
+        const btn = document.getElementById('service-name-btn');
+        if (el) el.textContent = name;
+        if (btn) btn.style.display = name ? 'inline-block' : 'none';
+    } catch (err) {
+        console.error('Failed to fetch service name:', err);
+    }
+}
+
+function copyServiceName() {
+    const el = document.getElementById('service-name');
+    if (!el) return;
+    const name = el.textContent || '';
+    if (!name) return;
+    navigator.clipboard?.writeText(name).then(() => {
+        showNotification('Service name copied to clipboard', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy service name', 'warning');
+    });
+}
+
+// Configuration Save
+async function saveConfiguration() {
+    const form = document.getElementById('config-form');
+    const formData = new FormData(form);
+    
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before saving configuration', 'warning');
+            return;
+        }
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            showNotification('Configuration saved successfully', 'success');
+        } else {
+            showNotification('Failed to save configuration', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Settings Save (threshold & logs directory)
+async function saveSettings() {
+    const form = document.getElementById('config-form-settings');
+    const formData = new FormData(form);
+    
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before saving settings', 'warning');
+            return;
+        }
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            showNotification('Settings saved successfully', 'success');
+        } else {
+            showNotification('Failed to save settings', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Delete row
+function deleteRow(button) {
+    const row = button.closest('tr');
+    const folder = row.querySelector('input[name^="folder_"]');
+    if (folder && folder.value) {
+        row.remove();
+    }
+}
+
+// Clear logs
+async function clearLog(which) {
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before clearing logs', 'warning');
+            return;
+        }
+        const response = await fetch(`/clear_log/${which}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            const logElement = document.getElementById(`${which}-log`);
+            logElement.textContent = '';
+            showNotification(`${which.toUpperCase()} log cleared`, 'success');
+        } else {
+            showNotification(`Failed to clear ${which} log`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Show notification
+function showNotification(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of container
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
 </body>
 </html>
 """
 
 
-
 # --- Helper Functions ---
 def service_running() -> bool:
+    # On non-Windows platforms the `sc` tool is not available. Fall back to
+    # detecting the organizer process by name so the dashboard can run in
+    # containers for preview/testing.
+    if sys.platform != "win32":
+        proc = find_organizer_proc()
+        return proc is not None
     try:
         out = subprocess.check_output(["sc", "query", SERVICE_NAME], text=True)
         return "RUNNING" in out
     except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
         return False
 
 def get_windows_version():
@@ -719,6 +1121,7 @@ def dashboard():
         # Render the dashboard
         return render_template_string(
             HTML,
+            is_windows=sys.platform == "win32",
             hostname=hostname,
             os=os_version,
             cpu=cpu_name,
@@ -754,16 +1157,21 @@ def dashboard():
 @app.route("/update", methods=["POST"])
 @requires_auth
 def update_config():
+    """Update configuration routes and thresholds.
+
+    Expects form-encoded data from the UI. Returns JSON with status and
+    message so the frontend can give immediate feedback without a full
+    page reload.
+    """
     new_routes = {}
     i = 1
     while True:
         folder_key = f"folder_{i}"
         exts_key = f"exts_{i}"
-        delete_key = f"delete_{i}"
         if folder_key in request.form and exts_key in request.form:
             folder = request.form[folder_key].strip()
             exts = [e.strip() for e in request.form[exts_key].split(",") if e.strip()]
-            if folder and delete_key not in request.form:
+            if folder:
                 new_routes[folder] = exts
             i += 1
         else:
@@ -778,18 +1186,18 @@ def update_config():
     try:
         config['memory_threshold_mb'] = int(mem)
     except ValueError:
-        return "Invalid memory threshold value", 400
+        return jsonify({"status": "error", "message": "Invalid memory threshold value"}), 400
     try:
         config['cpu_threshold_percent'] = int(cpu)
     except ValueError:
-        return "Invalid CPU threshold value", 400
+        return jsonify({"status": "error", "message": "Invalid CPU threshold value"}), 400
     if logs:
         config['logs_dir'] = logs
     config['routes'] = new_routes
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4)
     update_log_paths()
-    return redirect("/")
+    return jsonify({"status": "success", "message": "Configuration saved"}), 200
 
 @app.route("/metrics")
 def metrics():
@@ -814,33 +1222,74 @@ def metrics():
         "ram_percent": ram_pct
     })
 
+
+@app.route('/service_name')
+def service_name():
+    """Return the configured Windows service name used by the dashboard/installer."""
+    return jsonify({"service_name": SERVICE_NAME})
+
+
+@app.route('/auth_check')
+def auth_check():
+    """Lightweight endpoint to validate Basic credentials sent in the Authorization header.
+
+    Returns 200 + {valid: true} when credentials match, otherwise 401 + {valid: false}.
+    This is intended for client-side login checks (AJAX) without requiring a full protected
+    endpoint to be touched.
+    """
+    auth = request.authorization
+    if not auth:
+        return jsonify({"valid": False, "message": "No credentials provided"}), 401
+    if check_auth(auth.username, auth.password):
+        return jsonify({"valid": True}), 200
+    return jsonify({"valid": False, "message": "Invalid credentials"}), 401
+
 @app.route("/restart", methods=["POST"])
 @requires_auth
 def restart_service():
+    """Restart the Windows service using `sc`.
+
+    On non-Windows platforms this returns an error JSON since `sc` is not
+    available. Returns JSON status/messages for AJAX consumption.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service restarted"}), 200
     except Exception as e:
-        return f"Restart failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Restart failed: {e}"}), 500
 
 @app.route("/stop", methods=["POST"])
 @requires_auth
 def stop_service():
+    """Stop the Windows service and return JSON result.
+
+    Returns an error JSON on non-Windows platforms.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "stop", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service stopped"}), 200
     except Exception as e:
-        return f"Stop failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Stop failed: {e}"}), 500
 
 @app.route("/start", methods=["POST"])
 @requires_auth
 def start_service():
+    """Start the Windows service and return JSON result.
+
+    Returns an error JSON on non-Windows platforms.
+    """
+    if sys.platform != "win32":
+        return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
     try:
         subprocess.run(["sc", "start", SERVICE_NAME], capture_output=True, text=True)
-        return redirect("/")
+        return jsonify({"status": "success", "message": "Service started"}), 200
     except Exception as e:
-        return f"Start failed: {e}", 500
+        return jsonify({"status": "error", "message": f"Start failed: {e}"}), 500
 
 @app.route("/tail/<which>")
 def tail(which):
@@ -860,15 +1309,52 @@ def stream(which):
 @app.route("/clear_log/<which>", methods=["POST"])
 @requires_auth
 def clear_log(which):
+    """Clear the specified log file (stdout or stderr).
+
+    Returns JSON success/error so the frontend can update the UI.
+    """
     if which not in ("stdout", "stderr"):
-        return "Invalid log type", 400
+        return jsonify({"status": "error", "message": "Invalid log type"}), 400
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     try:
+        # Truncate the logfile
         with open(path, "w", encoding="utf-8"):
-            pass  # Truncate file
-        return "OK", 200
+            pass
+        return jsonify({"status": "success", "message": f"{which} log cleared"}), 200
     except Exception as e:
-        return f"Failed to clear log: {e}", 500
+        return jsonify({"status": "error", "message": f"Failed to clear log: {e}"}), 500
+
+
+@app.route("/change_password", methods=["POST"])
+@requires_auth
+def change_password():
+    """Change the dashboard password and persist it to the config file.
+
+    Expects JSON: { "new_password": "..." }
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
+    new = data.get("new_password") if isinstance(data, dict) else None
+    if not new:
+        return jsonify({"status": "error", "message": "Missing new_password"}), 400
+    # Persist to config and update runtime ADMIN_PASS
+    try:
+        # Hash the new password and persist only the hash
+        hashed = bcrypt.hashpw(new.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        config['dashboard_user'] = ADMIN_USER
+        config['dashboard_pass_hash'] = hashed
+        if 'dashboard_pass' in config:
+            del config['dashboard_pass']
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=4)
+        # Update runtime hash
+        global ADMIN_PASS_HASH
+        ADMIN_PASS_HASH = hashed.encode('utf-8')
+        return jsonify({"status": "success", "message": "Password changed"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to save password: {e}"}), 500
 
 @app.route("/drives")
 def drives():
