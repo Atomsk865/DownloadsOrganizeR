@@ -11,9 +11,9 @@ def update_log_paths():
     """Update global log paths based on config."""
     import sys
     main = sys.modules['__main__']
-    main.LOGS_DIR = main.config.get("logs_dir", main.DEFAULT_CONFIG["logs_dir"])
-    main.STDOUT_LOG = os.path.join(main.LOGS_DIR, "organizer_stdout.log")
-    main.STDERR_LOG = os.path.join(main.LOGS_DIR, "organizer_stderr.log")
+    main.LOGS_DIR = main.config.get("logs_dir", main.DEFAULT_CONFIG["logs_dir"])  # type: ignore
+    main.STDOUT_LOG = os.path.join(main.LOGS_DIR, "organizer_stdout.log")  # type: ignore
+    main.STDERR_LOG = os.path.join(main.LOGS_DIR, "organizer_stderr.log")  # type: ignore
 
 def service_running() -> bool:
     """Check if the DownloadsOrganizer service is running."""
@@ -86,7 +86,7 @@ def get_private_ip():
 
 def get_public_ip():
     try:
-        import requests
+        import requests  # type: ignore
         return requests.get("https://api.ipify.org").text
     except Exception:
         return "Unavailable"
