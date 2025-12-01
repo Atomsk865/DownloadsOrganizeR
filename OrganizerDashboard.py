@@ -250,30 +250,73 @@ HTML = """
         </div>
     </div>
 
-    <!-- Resource Usage -->
+    <!-- Resource Usage (moved under Service Status) -->
     <div class="row">
-        <!-- Memory & CPU Usage (consolidated) -->
-        <div class="col-md-6">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">Resource Usage</div>
                 <div class="card-body">
-                    <p class="mb-2"><small><b>Memory Usage</b></small></p>
-                    <p class="text-sm mb-2">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</p>
-                    <div class="progress mb-3">
-                        <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
-                             role="progressbar"
-                             style="width: {{ ram_percent }}%;">
-                            {{ ram_percent }}%
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><small><b>Memory Usage</b></small></p>
+                            <p class="text-sm mb-2">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</p>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}"
+                                     role="progressbar"
+                                     style="width: {{ ram_percent }}%;">
+                                    {{ ram_percent }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><small><b>CPU Usage</b></small></p>
+                            <p class="text-sm mb-2">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
+                                     role="progressbar"
+                                     style="width: {{ total_cpu_percent }}%;">
+                                    {{ total_cpu_percent }}%
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p class="mb-2"><small><b>CPU Usage</b></small></p>
-                    <p class="text-sm mb-2">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</p>
-                    <div class="progress">
-                        <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}"
-                             role="progressbar"
-                             style="width: {{ total_cpu_percent }}%;">
-                            {{ total_cpu_percent }}%
-                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Manager & Drive Space (collapsible, side by side) -->
+    <div class="row">
+        <!-- Task Manager -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#taskManagerCollapse" aria-expanded="false" aria-controls="taskManagerCollapse">
+                        Task Manager (Top 5 by CPU)
+                    </button>
+                </div>
+                <div class="collapse" id="taskManagerCollapse">
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Name</th>
+                                    <th>CPU (%)</th>
+                                    <th>Memory (MB)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proc in tasks %}
+                                <tr>
+                                    <td><small>{{ proc.pid }}</small></td>
+                                    <td><small>{{ proc.name }}</small></td>
+                                    <td><small>{{ proc.cpu|round(1) }}</small></td>
+                                    <td><small>{{ proc.mem }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -282,91 +325,68 @@ HTML = """
         <!-- Drive Space -->
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Drive Space</div>
-                <div class="card-body">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Device</th>
-                                <th>Total</th>
-                                <th>Used</th>
-                                <th>Usage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for drive in drives %}
-                            <tr>
-                                <td>{{ drive.device }}</td>
-                                <td><small>{{ drive.total }}</small></td>
-                                <td><small>{{ drive.used }}</small></td>
-                                <td>
-                                    <div class="progress" style="min-width: 50px;">
-                                        <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
-                                             role="progressbar"
-                                             style="width: {{ drive.percent }}%;">
-                                            {{ drive.percent }}%
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#driveSpaceCollapse" aria-expanded="false" aria-controls="driveSpaceCollapse">
+                        Drive Space
+                    </button>
+                </div>
+                <div class="collapse" id="driveSpaceCollapse">
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Total</th>
+                                    <th>Used</th>
+                                    <th>Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drive in drives %}
+                                <tr>
+                                    <td>{{ drive.device }}</td>
+                                    <td><small>{{ drive.total }}</small></td>
+                                    <td><small>{{ drive.used }}</small></td>
+                                    <td>
+                                        <div class="progress" style="min-width: 50px;">
+                                            <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}"
+                                                 role="progressbar"
+                                                 style="width: {{ drive.percent }}%;">
+                                                {{ drive.percent }}%
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Task Manager & Configuration -->
+    <!-- Configuration Settings -->
     <div class="row">
-        <!-- Task Manager -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">Task Manager (Top 5 by CPU)</div>
-                <div class="card-body">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>PID</th>
-                                <th>Name</th>
-                                <th>CPU (%)</th>
-                                <th>Memory (MB)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for proc in tasks %}
-                            <tr>
-                                <td><small>{{ proc.pid }}</small></td>
-                                <td><small>{{ proc.name }}</small></td>
-                                <td><small>{{ proc.cpu|round(1) }}</small></td>
-                                <td><small>{{ proc.mem }}</small></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- Configuration Settings -->
-        <div class="col-md-6">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">Settings</div>
                 <div class="card-body">
                     <form id="config-form-settings">
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-md-4">
                                 <label class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
                                 <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
                             </div>
-                            <div class="col-6">
+                            <div class="col-md-4">
                                 <label class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
                                 <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
                             </div>
-                        </div>
-                        <div class="mt-2">
-                            <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
-                            <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                            <div class="col-md-4">
+                                <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                                <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                            </div>
                         </div>
                         <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
                     </form>
@@ -375,9 +395,9 @@ HTML = """
         </div>
     </div>
 
-    <!-- Recent Files -->
+    <!-- Recent Files & File Categories (side by side) -->
     <div class="row">
-        <div class="col-12">
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Recent File Movements</span>
@@ -406,22 +426,22 @@ HTML = """
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- File Categories Configuration -->
-    <div class="card">
-        <div class="card-header">File Categories</div>
-        <div class="card-body">
-            <form id="config-form">
-                <table class="table table-sm mb-3">
-                    <thead>
-                        <tr>
-                            <th>Folder</th>
-                            <th>Extensions (comma-separated)</th>
-                            <th style="width: 80px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <!-- File Categories Configuration -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">File Categories</div>
+                <div class="card-body">
+                    <form id="config-form">
+                        <table class="table table-sm mb-3">
+                            <thead>
+                                <tr>
+                                    <th>Folder</th>
+                                    <th>Extensions (comma-separated)</th>
+                                    <th style="width: 80px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
             <!-- Images -->
             <tr>
                 <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
@@ -557,25 +577,39 @@ HTML = """
             <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
             </form>
         </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Logs -->
+    <!-- Logs (collapsible) -->
     <div class="row">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stdout Log (real-time)</div>
-                <div class="card-body">
-                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stdout')">Clear Log</button>
-                    <pre id="stdout-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#stdoutLogCollapse" aria-expanded="false" aria-controls="stdoutLogCollapse">
+                        Stdout Log (real-time)
+                    </button>
+                </div>
+                <div class="collapse" id="stdoutLogCollapse">
+                    <div class="card-body">
+                        <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stdout')">Clear Log</button>
+                        <pre id="stdout-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Stderr Log (real-time)</div>
-                <div class="card-body">
-                    <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stderr')">Clear Log</button>
-                    <pre id="stderr-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#stderrLogCollapse" aria-expanded="false" aria-controls="stderrLogCollapse">
+                        Stderr Log (real-time)
+                    </button>
+                </div>
+                <div class="collapse" id="stderrLogCollapse">
+                    <div class="card-body">
+                        <button class="btn btn-secondary btn-sm mb-2" onclick="clearLog('stderr')">Clear Log</button>
+                        <pre id="stderr-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
+                    </div>
                 </div>
             </div>
         </div>
