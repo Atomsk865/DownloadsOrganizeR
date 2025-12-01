@@ -72,14 +72,14 @@ This option runs the organizer in the background for the current user. It does n
 
 4. To stop: find the process and terminate it (Task Manager or):
    ```powershell
-   Get-Process -Name python | Where-Object { $_.Path -like "*Organizer.py*" } | Stop-Process
+   Get-Process -Name python, pythonw -ErrorAction SilentlyContinue | Stop-Process -Force
    ```
 
 Notes:
 - This approach runs as the current user. It will not automatically start after reboot unless you add a Scheduled Task or put a shortcut in Startup.
-- To auto-start on login via CLI, create a Scheduled Task:
+- To auto-start on login via CLI, create a Scheduled Task (adjust paths if you copied files elsewhere):
   ```powershell
-  schtasks /Create /TN "DownloadsOrganizeR" /TR "C:\Scripts\.venv\Scripts\pythonw.exe C:\Scripts\Organizer.py" /SC ONLOGON /RL HIGHEST
+  schtasks /Create /TN "DownloadsOrganizeR" /TR "`"$PWD\.venv\Scripts\pythonw.exe`" `"C:\Scripts\Organizer.py`"" /SC ONLOGON /RL HIGHEST
   ```
 
 ### B — Windows service (CLI-only, Administrator required) using NSSM

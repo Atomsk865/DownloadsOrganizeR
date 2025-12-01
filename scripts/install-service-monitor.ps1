@@ -232,8 +232,8 @@ if ($CreateScheduledTask) {
         # For service mode: create a task that checks and restarts the service
         $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -Command `"if ((Get-Service -Name '$ServiceName' -ErrorAction SilentlyContinue).Status -ne 'Running') { Start-Service -Name '$ServiceName' }`""
     } else {
-        # For user mode: create a task that starts the organizer if not running
-        $Action = New-ScheduledTaskAction -Execute $VenvPythonW -Argument "`"$OrganizerScript`""
+        # For user mode: create a task that checks if process is running before starting
+        $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -Command `"if (-not (Get-Process -Name pythonw -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*Organizer.py*' })) { Start-Process -FilePath '$VenvPythonW' -ArgumentList '`"$OrganizerScript`"' -WindowStyle Hidden }`""
     }
 
     $Trigger = New-ScheduledTaskTrigger -AtLogon
