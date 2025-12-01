@@ -42,6 +42,8 @@
 // Global auth header storage
 let __authHeader = null;
 let __rights = {};
+let __configVersion = 0;
+let __rightsPollIntervalMs = 60000; // 60s polling
 
 // Login functionality
 function promptLogin() {
@@ -76,6 +78,7 @@ document.getElementById('login-submit').addEventListener('click', async function
         if (response.ok) {
             const data = await response.json();
             __rights = data.rights || {};
+            __configVersion = data.config_version || 0;
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
             document.getElementById('login-btn').classList.add('d-none');
             document.getElementById('logout-btn').classList.remove('d-none');
@@ -107,7 +110,11 @@ function applyRights() {
     document.querySelectorAll('[data-right]').forEach(el => {
         const need = el.getAttribute('data-right');
         if (!__rights[need]) {
-            el.style.display = 'none';
+            // Graceful message instead of hiding
+            const collapses = el.querySelectorAll('.collapse');
+            collapses.forEach(c => {
+                c.innerHTML = `<div class="ps-2 pe-2 pt-2 pb-1"><small class="text-muted">You lack rights (<code>${need}</code>) to view this section.</small></div>`;
+            });
         }
     });
     // Service buttons gating
@@ -116,6 +123,24 @@ function applyRights() {
             b.disabled = true;
             b.title = 'Insufficient rights (manage_service)';
         });
+    }
+    async function pollRights() {
+        if (!__authHeader) return; // only when logged in
+        try {
+            const resp = await fetch('/auth/session', { headers: getAuthHeaders(), credentials: 'include' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const newVersion = data.config_version || 0;
+            if (newVersion !== __configVersion) {
+                __configVersion = newVersion;
+                __rights = data.rights || {};
+                applyRights();
+                if (__rights.view_metrics) updateServiceStatus();
+                if (__rights.view_recent_files) refreshRecentFiles();
+            }
+        } catch (e) {
+            // Silent failures acceptable
+        }
     }
     // Config save gating
     if (!__rights.manage_config) {
@@ -420,6 +445,7 @@ function escapeHtml(text) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     fetchServiceName();
-    // Metrics and logs will start after login & rights validation
+    // Start polling rights periodically
+    setInterval(pollRights, __rightsPollIntervalMs);
 });
 </script>
