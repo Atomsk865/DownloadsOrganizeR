@@ -192,7 +192,6 @@ def update_dashboard_json(downloads_path: Path) -> None:
         DOWNLOADS_JSON.parent.mkdir(parents=True, exist_ok=True)
         with DOWNLOADS_JSON.open("w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
-        logger.info("Dashboard JSON updated")
     except Exception as e:
         logger.error(f"Failed to update dashboard JSON: {e}")
 
