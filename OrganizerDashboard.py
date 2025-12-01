@@ -75,6 +75,8 @@ def check_auth(username, password):
         return False
     if ADMIN_PASS_HASH is None:
         initialize_password_hash()
+    if ADMIN_PASS_HASH is None:
+        return False
     try:
         return bcrypt.checkpw(password.encode('utf-8'), ADMIN_PASS_HASH)
     except Exception:
@@ -1619,7 +1621,7 @@ def open_file():
                 subprocess.run(["explorer", "/select,", file_path], check=False)
             else:
                 # Open file with default application
-                os.startfile(file_path)
+                subprocess.run(["cmd", "/c", "start", "", file_path], check=False, shell=True)
         elif platform.system() == "Darwin":  # macOS
             if action == "reveal":
                 subprocess.run(["open", "-R", file_path], check=False)
