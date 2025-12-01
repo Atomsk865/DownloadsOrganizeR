@@ -41,6 +41,7 @@
 <script>
 // Global auth header storage
 let __authHeader = null;
+let __rights = {};
 
 // Login functionality
 function promptLogin() {
@@ -73,12 +74,19 @@ document.getElementById('login-submit').addEventListener('click', async function
         });
         
         if (response.ok) {
+            const data = await response.json();
+            __rights = data.rights || {};
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
             document.getElementById('login-btn').classList.add('d-none');
             document.getElementById('logout-btn').classList.remove('d-none');
             showNotification('Login successful', 'success');
-            // Refresh data after login
-            refreshRecentFiles();
+            applyRights();
+            if (__rights.view_recent_files) refreshRecentFiles();
+            if (__rights.view_metrics) {
+                updateServiceStatus();
+                streamLog('stdout');
+                streamLog('stderr');
+            }
         } else {
             document.getElementById('login-error').textContent = 'Invalid credentials';
             document.getElementById('login-error').style.display = 'block';
@@ -93,6 +101,35 @@ document.getElementById('login-submit').addEventListener('click', async function
 
 function getAuthHeaders() {
     return __authHeader ? { 'Authorization': __authHeader } : {};
+}
+
+function applyRights() {
+    document.querySelectorAll('[data-right]').forEach(el => {
+        const need = el.getAttribute('data-right');
+        if (!__rights[need]) {
+            el.style.display = 'none';
+        }
+    });
+    // Service buttons gating
+    if (!__rights.manage_service) {
+        document.querySelectorAll('#collapseServiceStatus button').forEach(b => {
+            b.disabled = true;
+            b.title = 'Insufficient rights (manage_service)';
+        });
+    }
+    // Config save gating
+    if (!__rights.manage_config) {
+        const cfgBtn = document.querySelector('#config-form button.btn-primary');
+        if (cfgBtn) {
+            cfgBtn.disabled = true;
+            cfgBtn.title = 'Insufficient rights (manage_config)';
+        }
+        const setBtn = document.querySelector('#config-form-settings button.btn-primary');
+        if (setBtn) {
+            setBtn.disabled = true;
+            setBtn.title = 'Insufficient rights (manage_config)';
+        }
+    }
 }
 
 // Service Control Functions
@@ -383,15 +420,6 @@ function escapeHtml(text) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     fetchServiceName();
-    updateServiceStatus();
-    streamLog('stdout');
-    streamLog('stderr');
-    refreshRecentFiles();
-    
-    // Auto-refresh recent files every 30 seconds
-    setInterval(refreshRecentFiles, 30000);
-    
-    // Auto-refresh service status every 5 seconds
-    setInterval(updateServiceStatus, 5000);
+    // Metrics and logs will start after login & rights validation
 });
 </script>
