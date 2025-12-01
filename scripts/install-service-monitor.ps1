@@ -178,8 +178,8 @@ if ($InstallService) {
     $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if ($existingService) {
         Write-Host "  Service '$ServiceName' already exists. Stopping and removing..." -ForegroundColor Yellow
-        & $NssmPath stop $ServiceName 2>$null
-        & $NssmPath remove $ServiceName confirm 2>$null
+        & $NssmPath stop $ServiceName 2>&1 | Out-Null
+        & $NssmPath remove $ServiceName confirm 2>&1 | Out-Null
     }
 
     # Install service
@@ -232,8 +232,8 @@ if ($CreateScheduledTask) {
         # For service mode: create a task that checks and restarts the service
         $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -Command `"if ((Get-Service -Name '$ServiceName' -ErrorAction SilentlyContinue).Status -ne 'Running') { Start-Service -Name '$ServiceName' }`""
     } else {
-        # For user mode: create a task that checks if process is running before starting
-        $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -Command `"if (-not (Get-Process -Name pythonw -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*Organizer.py*' })) { Start-Process -FilePath '$VenvPythonW' -ArgumentList '`"$OrganizerScript`"' -WindowStyle Hidden }`""
+        # For user mode: create a task that checks if process is running before starting (using Get-CimInstance for CommandLine access)
+        $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -Command `"if (-not (Get-CimInstance Win32_Process -Filter `"Name='pythonw.exe'`" -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*Organizer.py*' })) { Start-Process -FilePath '$VenvPythonW' -ArgumentList '`"$OrganizerScript`"' -WindowStyle Hidden }`""
     }
 
     $Trigger = New-ScheduledTaskTrigger -AtLogon
@@ -241,7 +241,8 @@ if ($CreateScheduledTask) {
     $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
     # Add repetition for monitoring (every 5 minutes)
-    $Trigger.Repetition = (New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5)).Repetition
+    $RepetitionTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5)
+    $Trigger.Repetition = $RepetitionTrigger.Repetition
 
     Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Principal $Principal -Settings $Settings -Description "Monitors and restarts DownloadsOrganizeR if not running" | Out-Null
     
