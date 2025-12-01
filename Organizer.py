@@ -37,21 +37,22 @@ for p in CONFIG_PATHS:
             CONFIG = {}
 
 # Allow overriding the downloads path via env var for testing
-DOWNLOADS_PATH = os.environ.get("DOWNLOADS_PATH")
-if not DOWNLOADS_PATH:
+downloads_path_str = os.environ.get("DOWNLOADS_PATH")
+if not downloads_path_str:
     # Try common Windows environment variables, otherwise fallback to user's Downloads
     try:
         username = os.environ.get("USERNAME") or os.getlogin()
     except Exception:
-        username = None
+        username = ""
     if username:
-        DOWNLOADS_PATH = f"C:\\Users\\{username}\\Downloads"
+        downloads_path_str = f"C:\\Users\\{username}\\Downloads"
     else:
-        DOWNLOADS_PATH = str(Path.home() / "Downloads")
+        downloads_path_str = str(Path.home() / "Downloads")
 
-DOWNLOADS_PATH = Path(DOWNLOADS_PATH)
+DOWNLOADS_PATH = Path(downloads_path_str)
 DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", "C:/Scripts/downloads_dashboard.json"))
 ORGANIZER_LOG = CONFIG.get("organizer_log", "organizer.log")
+FILE_MOVES_JSON = Path(CONFIG.get("file_moves_json", "C:/Scripts/file_moves.json"))
 
 # Load extension map from config if available and normalize to dot-prefixed lower-case
 if CONFIG.get("routes"):
@@ -110,6 +111,44 @@ def get_unique_path(dest_dir: Path, filename: str) -> str:
     return str(candidate)
 
 
+def log_file_move(original_path: str, destination_path: str, category: str) -> None:
+    """Log a file move to the file moves JSON for dashboard reference.
+    
+    Maintains a list of recent file moves with metadata including timestamp,
+    original path, destination path, category, and filename. Limits to most
+    recent 100 entries to prevent unbounded growth.
+    """
+    try:
+        # Load existing moves
+        moves = []
+        if FILE_MOVES_JSON.exists():
+            try:
+                with FILE_MOVES_JSON.open("r", encoding="utf-8") as f:
+                    moves = json.load(f)
+            except Exception:
+                moves = []
+        
+        # Add new move entry
+        move_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "original_path": original_path,
+            "destination_path": destination_path,
+            "category": category,
+            "filename": Path(destination_path).name
+        }
+        moves.insert(0, move_entry)  # Add to beginning (most recent first)
+        
+        # Keep only the 100 most recent moves
+        moves = moves[:100]
+        
+        # Save back to file
+        FILE_MOVES_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with FILE_MOVES_JSON.open("w", encoding="utf-8") as f:
+            json.dump(moves, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Failed to log file move: {e}")
+
+
 def organize_file(file_path: str) -> None:
     """Move a single file into the matching category folder under Downloads.
 
@@ -137,6 +176,8 @@ def organize_file(file_path: str) -> None:
     try:
         shutil.move(str(p), dest_path)
         logger.info(f"Moved {file_path} → {dest_path}")
+        # Log the file move for dashboard reference
+        log_file_move(file_path, dest_path, target_dir)
     except Exception as e:
         logger.error(f"Error moving {file_path}: {e}")
 
@@ -146,7 +187,7 @@ def update_dashboard_json(downloads_path: Path) -> None:
     summary = {"last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     for entry in downloads_path.iterdir():
         if entry.is_dir():
-            summary[entry.name] = len([f for f in entry.iterdir() if f.is_file()])
+            summary[entry.name] = str(len([f for f in entry.iterdir() if f.is_file()]))
     try:
         DOWNLOADS_JSON.parent.mkdir(parents=True, exist_ok=True)
         with DOWNLOADS_JSON.open("w", encoding="utf-8") as f:
@@ -173,17 +214,15 @@ class DownloadsHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         if not event.is_directory:
-            organize_file(event.src_path)
+            organize_file(str(event.src_path))
             update_dashboard_json(self.downloads_path)
-
     def on_moved(self, event):
         if not event.is_directory:
-            organize_file(event.dest_path)
+            organize_file(str(event.dest_path))
             update_dashboard_json(self.downloads_path)
-
     def on_modified(self, event):
         if not event.is_directory:
-            organize_file(event.src_path)
+            organize_file(str(event.src_path))
             update_dashboard_json(self.downloads_path)
 
 

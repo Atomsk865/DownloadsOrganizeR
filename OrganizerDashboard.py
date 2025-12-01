@@ -168,6 +168,8 @@ HTML = """
     <title>Organizer Service Dashboard</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
         body { background: #f8f9fa; font-size: 14px; }
         .dashboard-title { margin: 25px 0 20px 0; font-weight: 500; }
@@ -366,6 +368,39 @@ HTML = """
                         </div>
                         <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Files -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Recent File Movements</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="recent-files-list" class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Filename</th>
+                                    <th>Category</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-files-tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Loading recent files...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -876,6 +911,119 @@ function showNotification(message, type) {
         alertDiv.remove();
     }, 3000);
 }
+
+// Recent Files Functions
+async function refreshRecentFiles() {
+    try {
+        const response = await fetch('/api/recent_files', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch recent files');
+        }
+        
+        const files = await response.json();
+        displayRecentFiles(files);
+    } catch (error) {
+        console.error('Error fetching recent files:', error);
+        const tbody = document.getElementById('recent-files-tbody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading recent files</td></tr>';
+    }
+}
+
+function displayRecentFiles(files) {
+    const tbody = document.getElementById('recent-files-tbody');
+    
+    if (!files || files.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No recent file movements</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = files.map(file => {
+        const timestamp = new Date(file.timestamp);
+        const timeStr = timestamp.toLocaleString();
+        const categoryBadge = getCategoryBadge(file.category);
+        
+        return `
+            <tr>
+                <td><small>${timeStr}</small></td>
+                <td>
+                    <small><strong>${escapeHtml(file.filename)}</strong></small>
+                    <br><small class="text-muted">${escapeHtml(file.destination_path)}</small>
+                </td>
+                <td>${categoryBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
+                        <i class="bi bi-folder2-open"></i> Open
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
+                        <i class="bi bi-folder"></i> Show
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getCategoryBadge(category) {
+    const badges = {
+        'Images': 'bg-success',
+        'Videos': 'bg-primary',
+        'Music': 'bg-info',
+        'Documents': 'bg-warning',
+        'Archives': 'bg-secondary',
+        'Executables': 'bg-danger',
+        'Scripts': 'bg-dark',
+        'Fonts': 'bg-light text-dark',
+        'Shortcuts': 'bg-info',
+        'Logs': 'bg-secondary',
+        'Other': 'bg-secondary'
+    };
+    const badgeClass = badges[category] || 'bg-secondary';
+    return `<span class="badge ${badgeClass}">${escapeHtml(category)}</span>`;
+}
+
+async function openFile(filePath, action = 'open') {
+    try {
+        const response = await fetch('/api/open_file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                file_path: filePath,
+                action: action
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification(data.message || `File ${action === 'reveal' ? 'revealed' : 'opened'}`, 'success');
+        } else {
+            showNotification(data.error || 'Failed to open file', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load recent files on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshRecentFiles();
+    // Refresh recent files every 30 seconds
+    setInterval(refreshRecentFiles, 30000);
+});
 </script>
 </body>
 </html>
@@ -1434,6 +1582,60 @@ def hardware():
         "public_ip": get_public_ip()
     }
     return jsonify(info)
+
+@app.route("/api/recent_files")
+@requires_auth
+def recent_files():
+    """Return list of recently moved files from the file moves JSON."""
+    file_moves_path = config.get("file_moves_json", "C:/Scripts/file_moves.json")
+    try:
+        if not os.path.exists(file_moves_path):
+            return jsonify([])
+        with open(file_moves_path, 'r', encoding='utf-8') as f:
+            moves = json.load(f)
+        # Return most recent 20 files
+        return jsonify(moves[:20])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/open_file", methods=["POST"])
+@requires_auth
+def open_file():
+    """Open a file in the default application or reveal it in Explorer."""
+    data = request.get_json()
+    file_path = data.get("file_path")
+    action = data.get("action", "open")  # "open" or "reveal"
+    
+    if not file_path:
+        return jsonify({"error": "No file path provided"}), 400
+    
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
+    
+    try:
+        if platform.system() == "Windows":
+            if action == "reveal":
+                # Open Explorer and select the file
+                subprocess.run(["explorer", "/select,", file_path], check=False)
+            else:
+                # Open file with default application
+                os.startfile(file_path)
+        elif platform.system() == "Darwin":  # macOS
+            if action == "reveal":
+                subprocess.run(["open", "-R", file_path], check=False)
+            else:
+                subprocess.run(["open", file_path], check=False)
+        else:  # Linux
+            if action == "reveal":
+                # Try to open file manager to parent directory
+                parent_dir = os.path.dirname(file_path)
+                subprocess.run(["xdg-open", parent_dir], check=False)
+            else:
+                subprocess.run(["xdg-open", file_path], check=False)
+        
+        return jsonify({"success": True, "message": f"File {'revealed' if action == 'reveal' else 'opened'}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # --- Main Entry Point ---
 if __name__ == "__main__":
