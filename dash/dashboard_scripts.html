@@ -1,5 +1,3 @@
-<!-- Login / Change-password Modal and all dashboard JS scripts go here. Paste the script and modal HTML from the original file. -->
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Login / Change-password Modal -->
@@ -41,6 +39,359 @@
     </div>
 </div>
 <script>
-// ... All dashboard JS from the original HTML ...
-// (Paste the entire <script>...</script> block here from the original file)
+// Global auth header storage
+let __authHeader = null;
+
+// Login functionality
+function promptLogin() {
+    document.getElementById('change-password-section').style.display = 'none';
+    document.getElementById('login-submit').style.display = 'inline-block';
+    document.getElementById('change-submit').style.display = 'none';
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-password').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+    modal.show();
+}
+
+function logout() {
+    __authHeader = null;
+    document.getElementById('login-btn').classList.remove('d-none');
+    document.getElementById('logout-btn').classList.add('d-none');
+    showNotification('Logged out successfully', 'info');
+}
+
+document.getElementById('login-submit').addEventListener('click', async function() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const credentials = btoa(username + ':' + password);
+    __authHeader = 'Basic ' + credentials;
+    
+    try {
+        const response = await fetch('/auth_check', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            document.getElementById('login-btn').classList.add('d-none');
+            document.getElementById('logout-btn').classList.remove('d-none');
+            showNotification('Login successful', 'success');
+            // Refresh data after login
+            refreshRecentFiles();
+        } else {
+            document.getElementById('login-error').textContent = 'Invalid credentials';
+            document.getElementById('login-error').style.display = 'block';
+            __authHeader = null;
+        }
+    } catch (error) {
+        document.getElementById('login-error').textContent = 'Login failed: ' + error.message;
+        document.getElementById('login-error').style.display = 'block';
+        __authHeader = null;
+    }
+});
+
+function getAuthHeaders() {
+    return __authHeader ? { 'Authorization': __authHeader } : {};
+}
+
+// Service Control Functions
+async function serviceAction(action) {
+    const button = event.target;
+    button.disabled = true;
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before performing service actions', 'warning');
+            button.disabled = false;
+            return;
+        }
+        const response = await fetch(`/${action}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(`Service ${action}ed successfully`, 'success');
+            setTimeout(updateServiceStatus, 1000);
+        } else {
+            showNotification(data.message || `Failed to ${action} service`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// Update service status
+async function updateServiceStatus() {
+    try {
+        const response = await fetch('/metrics');
+        const data = await response.json();
+        const badge = document.getElementById('service-badge');
+        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
+        badge.textContent = data.service_status;
+        badge.className = `badge ${statusClass} ms-1`;
+    } catch (error) {
+        console.error('Error updating service status:', error);
+    }
+}
+
+// Fetch configured service name from server and display in header
+async function fetchServiceName() {
+    try {
+        const resp = await fetch('/service_name');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const name = data.service_name || '';
+        const el = document.getElementById('service-name');
+        const btn = document.getElementById('service-name-btn');
+        if (el) el.textContent = name;
+        if (btn) btn.style.display = name ? 'inline-block' : 'none';
+    } catch (err) {
+        console.error('Failed to fetch service name:', err);
+    }
+}
+
+function copyServiceName() {
+    const el = document.getElementById('service-name');
+    if (!el) return;
+    const name = el.textContent || '';
+    if (!name) return;
+    navigator.clipboard?.writeText(name).then(() => {
+        showNotification('Service name copied to clipboard', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy service name', 'warning');
+    });
+}
+
+// Configuration Save
+async function saveConfiguration() {
+    const form = document.getElementById('config-form');
+    const formData = new FormData(form);
+    
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before saving configuration', 'warning');
+            return;
+        }
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            showNotification('Configuration saved successfully', 'success');
+        } else {
+            showNotification('Failed to save configuration', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+async function saveSettings() {
+    const form = document.getElementById('config-form-settings');
+    const formData = new FormData(form);
+    
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before saving settings', 'warning');
+            return;
+        }
+        const response = await fetch('/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            showNotification('Settings saved successfully', 'success');
+        } else {
+            showNotification('Failed to save settings', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+function deleteRow(btn) {
+    btn.closest('tr').remove();
+}
+
+// Log streaming
+function streamLog(which) {
+    const logElement = document.getElementById(`${which}-log`);
+    const eventSource = new EventSource(`/stream/${which}`);
+    eventSource.onmessage = function(event) {
+        if (event.data) {
+            logElement.textContent += event.data + '\n';
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+    };
+    eventSource.onerror = function() {
+        eventSource.close();
+        setTimeout(() => streamLog(which), 5000);
+    };
+}
+
+// Clear log
+async function clearLog(which) {
+    try {
+        const response = await fetch(`/clear_log/${which}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            const logElement = document.getElementById(`${which}-log`);
+            logElement.textContent = '';
+            showNotification(`${which.toUpperCase()} log cleared`, 'success');
+        } else {
+            showNotification(`Failed to clear ${which} log`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// Show notification
+function showNotification(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+// Recent Files Functions
+async function refreshRecentFiles() {
+    try {
+        const response = await fetch('/api/recent_files', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch recent files');
+        }
+        
+        const files = await response.json();
+        displayRecentFiles(files);
+    } catch (error) {
+        console.error('Error fetching recent files:', error);
+        const tbody = document.getElementById('recent-files-tbody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading recent files</td></tr>';
+    }
+}
+
+function displayRecentFiles(files) {
+    const tbody = document.getElementById('recent-files-tbody');
+    
+    if (!files || files.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No recent file movements</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = files.map(file => {
+        const timestamp = new Date(file.timestamp);
+        const timeStr = timestamp.toLocaleString();
+        const categoryBadge = getCategoryBadge(file.category);
+        
+        return `
+            <tr>
+                <td><small>${timeStr}</small></td>
+                <td>
+                    <small><strong>${escapeHtml(file.filename)}</strong></small>
+                    <br><small class="text-muted">${escapeHtml(file.destination_path)}</small>
+                </td>
+                <td>${categoryBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
+                        <i class="bi bi-folder2-open"></i> Open
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
+                        <i class="bi bi-folder"></i> Show
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getCategoryBadge(category) {
+    const badges = {
+        'Images': 'bg-success',
+        'Videos': 'bg-primary',
+        'Music': 'bg-info',
+        'Documents': 'bg-warning',
+        'Archives': 'bg-secondary',
+        'Executables': 'bg-danger',
+        'Scripts': 'bg-dark',
+        'Fonts': 'bg-light text-dark',
+        'Shortcuts': 'bg-info',
+        'Logs': 'bg-secondary',
+        'Other': 'bg-secondary'
+    };
+    const badgeClass = badges[category] || 'bg-secondary';
+    return `<span class="badge ${badgeClass}">${escapeHtml(category)}</span>`;
+}
+
+async function openFile(filePath, action = 'open') {
+    try {
+        const response = await fetch('/api/open_file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                file_path: filePath,
+                action: action
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification(data.message || `File ${action === 'reveal' ? 'revealed' : 'opened'}`, 'success');
+        } else {
+            showNotification(data.error || 'Failed to open file', 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    fetchServiceName();
+    updateServiceStatus();
+    streamLog('stdout');
+    streamLog('stderr');
+    refreshRecentFiles();
+    
+    // Auto-refresh recent files every 30 seconds
+    setInterval(refreshRecentFiles, 30000);
+    
+    // Auto-refresh service status every 5 seconds
+    setInterval(updateServiceStatus, 5000);
+});
 </script>
