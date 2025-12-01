@@ -1,6 +1,6 @@
 # DownloadsOrganizeR 📦
 
-Automatically organize your Downloads folder by file type. DownloadsOrganizeR monitors your Downloads folder in real-time and sorts files into categories (Images, Videos, Documents, etc.) — no manual work required.
+Automated, real-time organization of your Downloads folder plus a role-aware web dashboard for monitoring, configuration, and service control.
 
 ---
 
@@ -32,7 +32,7 @@ python Organizer.py
 
 ## Dashboard 📊
 
-Monitor and configure the organizer from a web dashboard:
+Monitor, configure, and customize layout & access control from the web dashboard:
 
 ```bash
 pip install -r requirements.txt
@@ -55,12 +55,38 @@ python OrganizerDashboard.py
 ```
 
 ### Dashboard Features
-- 🔍 Real-time service monitoring
-- 📈 CPU, RAM, and network usage
-- ⚙️ Customize file organization rules
-- 📋 Live log viewer
-- 💾 Drive space overview
-- 📱 Responsive web UI
+
+- 🔍 Real-time service monitoring & control (rights gated)
+- 📈 CPU, RAM, network usage & top processes
+- 🧩 Drag-and-drop dashboard layout editor (`/config`)
+- 👥 User & role management (admin/operator/viewer)
+- ⚙️ File organization rule editor
+- 📋 Live stdout/stderr log streaming & clearing
+- 💾 Drive space overview & hardware info
+- 🪪 Multiple authentication methods (Basic, LDAP, Windows) with fallback
+- 🛡️ Rights-based route protection (`manage_service`, `manage_config`, `modify_layout`, `view_metrics`, `view_recent_files`)
+
+### Authentication & Authorization Options
+
+Supported auth methods:
+
+1. **Basic** (Default) – Bcrypt hashed password (admin + additional configured users)
+2. **LDAP/Active Directory** – Bind + optional group filtering
+3. **Windows Local/Domain** – Native logon (Windows only)
+
+If the primary method fails and fallback is enabled, Basic authentication is attempted.
+
+Configure via `organizer_config.json` or `/api/auth/settings`:
+
+```json
+{
+  "auth_method": "basic",  // or "ldap" or "windows"
+  "auth_fallback_enabled": true
+}
+```
+
+📖 **See [AUTHENTICATION.md](AUTHENTICATION.md) for complete setup guide**  
+⚡ **See [AUTH_QUICK_REFERENCE.md](AUTH_QUICK_REFERENCE.md) for quick commands**
 
 ---
 
@@ -86,16 +112,21 @@ Files are automatically sorted into folders by type:
 
 ## Configuration
 
-### Editing Organization Rules
+### File Organization Rules
 
-1. Open the Dashboard: http://localhost:5000
-2. Go to "Configuration" section
-3. Add/remove file extensions for each category
-4. Changes apply immediately
+Dashboard main page: modify categories in the "File Categories" section and click Save. Persisted to `organizer_config.json`.
 
-### Environment Variables (Dashboard Security)
+### Dashboard User / Role / Layout Configuration
 
-Set custom login credentials:
+Navigate to `/config` after login:
+- Add/update/delete non-primary users (bcrypt-hashed passwords)
+- Assign roles (admin/operator/viewer) with predefined rights
+- Drag to reorder sections; hide with checkboxes; save persists to `dashboard_config.json`
+
+
+### Environment Variables (Primary Admin Credentials)
+
+Set before starting `OrganizerDashboard.py` to override defaults:
 
 ```bash
 set DASHBOARD_USER=myusername
@@ -108,16 +139,19 @@ python OrganizerDashboard.py
 ## Troubleshooting
 
 ### Service won't start?
+
 - Check logs: `C:\Scripts\service-logs\organizer_stdout.log`
 - Ensure Python is in PATH: `python --version`
 - Try running manually: `cd C:\Scripts && python Organizer.py`
 
 ### Dashboard won't connect?
+
 - Verify service is running: Check Windows Services
 - Ensure port 5000 is available: `netstat -ano | findstr :5000`
 - Check firewall settings
 
 ### Files not organizing?
+
 - Check the organizer log: `C:\Users\{username}\Downloads\organizer.log`
 - Verify file extensions are in the config
 - Ensure destination folders are writable
@@ -138,29 +172,42 @@ Then delete the `C:\Scripts\Organizer.py` file if desired.
 
 ## Requirements
 
-- **Windows** (Service installation only)
+- **Windows** (Service installation only, dashboard works cross-platform)
 - **Python 3.7+**
 - **Dependencies:**
-  ```
-  watchdog==6.0.0     # File monitoring
-  Flask==3.1.2        # Dashboard web framework
-  psutil==7.1.3       # System metrics
-  gputil==1.4.0       # GPU info (optional)
-  ```
+
+```text
+watchdog==6.0.0     # File monitoring
+Flask==3.1.2        # Dashboard web framework
+psutil==7.1.3       # System metrics
+bcrypt==4.0.1       # Password hashing
+gputil==1.4.0       # GPU info (optional)
+ldap3==2.9.1        # LDAP authentication (optional)
+pywin32==306        # Windows authentication (Windows only, optional)
+flask-login==0.6.3  # Session management
+```
 
 ---
 
 ## File Structure
 
-```
+```text
 DownloadsOrganizeR/
-├── Organizer.py                          # Core file organizer
-├── OrganizerDashboard.py                 # Web dashboard
-├── Install-And-Monitor-OrganizerService.ps1  # Service installer
-├── organizer_config.json                 # Configuration file
+├── Organizer.py                          # Core file system watcher & mover
+├── OrganizerDashboard.py                 # Flask dashboard entry point
+├── dashboard_config.json                 # Dashboard users/roles/layout (generated)
+├── organizer_config.json                 # Organizer routing & thresholds
+├── Install-And-Monitor-OrganizerService.ps1  # Windows service installer
+├── Monitor-OrganizerService.ps1          # Generated health monitor script
+├── OrganizerDashboard/                   # Dashboard blueprints & auth helpers
+├── dash/                                 # Jinja2 templates (dashboard & config)
 ├── requirements.txt                      # Python dependencies
-└── README.md                             # This file
+└── readme.md                             # Project overview (this file)
 ```
+
+## New in Dev Branch
+
+See `CHANGELOG_DEV_vs_MAIN.md` for differences from `main` (roles, layout editor, rights enforcement, multi-user support).
 
 ---
 

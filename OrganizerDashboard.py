@@ -13,6 +13,7 @@ single-page dashboard with controls, logs, and configuration.
 # --- Service and Config ---
 SERVICE_NAME = "DownloadsOrganizer"
 CONFIG_FILE = "organizer_config.json"
+DASHBOARD_CONFIG_FILE = "dashboard_config.json"
 
 DEFAULT_CONFIG = {
     "routes": {
@@ -30,7 +31,23 @@ DEFAULT_CONFIG = {
     },
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
-    "logs_dir": r"C:\Scripts\service-logs"
+    "logs_dir": r"C:\Scripts\service-logs",
+    "auth_method": "basic",
+    "auth_fallback_enabled": True,
+    "ldap_config": {
+        "server": "",
+        "base_dn": "",
+        "user_dn_template": "uid={username},{base_dn}",
+        "use_ssl": True,
+        "bind_dn": "",
+        "bind_password": "",
+        "search_filter": "(uid={username})",
+        "allowed_groups": []
+    },
+    "windows_auth_config": {
+        "domain": "",
+        "allowed_groups": []
+    }
 }
 
 config = DEFAULT_CONFIG.copy()
@@ -38,7 +55,8 @@ if os.path.exists(CONFIG_FILE):
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             loaded = json.load(f)
-        config.update(loaded)
+        if isinstance(loaded, dict):
+            config.update(loaded)
     except Exception:
         pass
 
@@ -68,6 +86,70 @@ def update_log_paths():
 
 update_log_paths()
 
+# --- Dashboard (Users/Roles/Layout) Config ---
+DASHBOARD_CONFIG_DEFAULT = {
+    "users": [
+        {"username": ADMIN_USER, "role": "admin"}
+    ],
+    "roles": {
+        "admin": {
+            "manage_service": True,
+            "manage_config": True,
+            "view_metrics": True,
+            "view_recent_files": True,
+            "modify_layout": True
+        },
+        "operator": {
+            "manage_service": True,
+            "manage_config": False,
+            "view_metrics": True,
+            "view_recent_files": True,
+            "modify_layout": False
+        },
+        "viewer": {
+            "manage_service": False,
+            "manage_config": False,
+            "view_metrics": True,
+            "view_recent_files": True,
+            "modify_layout": False
+        }
+    },
+    "layout": {
+        "sections_order": [
+            "System Information",
+            "Service Status & Resource Usage",
+            "Task Manager (Top 5 by CPU)",
+            "Drive Space",
+            "Settings",
+            "Recent File Movements",
+            "File Categories",
+            "Logs (real-time)"
+        ],
+        "hidden_sections": []
+    }
+}
+
+dashboard_config = DASHBOARD_CONFIG_DEFAULT.copy()
+if os.path.exists(DASHBOARD_CONFIG_FILE):
+    try:
+        with open(DASHBOARD_CONFIG_FILE, "r", encoding="utf-8") as f:
+            loaded_dash = json.load(f)
+        if isinstance(loaded_dash, dict):
+            # Merge with defaults (shallow merge; roles preserved)
+            for k, v in DASHBOARD_CONFIG_DEFAULT.items():
+                if k not in loaded_dash:
+                    loaded_dash[k] = v
+            dashboard_config = loaded_dash
+    except Exception:
+        pass
+else:
+    # Persist initial default
+    try:
+        with open(DASHBOARD_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(dashboard_config, f, indent=4)
+    except Exception:
+        pass
+
 # --- Flask App and Blueprint Registration ---
 app = Flask(__name__, template_folder='dash')
 
@@ -90,6 +172,8 @@ from OrganizerDashboard.routes.tasks import routes_tasks
 from OrganizerDashboard.routes.hardware import routes_hardware
 from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
 from OrganizerDashboard.routes.api_open_file import routes_api_open_file
+from OrganizerDashboard.routes.auth_settings import routes_auth_settings
+from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
 
 app.register_blueprint(routes_dashboard)
 app.register_blueprint(routes_update_config)
@@ -109,10 +193,12 @@ app.register_blueprint(routes_tasks)
 app.register_blueprint(routes_hardware)
 app.register_blueprint(routes_api_recent_files)
 app.register_blueprint(routes_api_open_file)
+app.register_blueprint(routes_auth_settings)
+app.register_blueprint(routes_dashboard_config)
 
-# Initialize password hash after all globals are set
-from OrganizerDashboard.auth.auth import initialize_password_hash
-initialize_password_hash()
+# Initialize authentication manager after all globals are set
+from OrganizerDashboard.auth.auth import initialize_auth_manager
+initialize_auth_manager()
 
 # --- Main Entry Point ---
 if __name__ == "__main__":

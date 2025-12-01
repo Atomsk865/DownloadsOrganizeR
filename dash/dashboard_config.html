@@ -1,0 +1,141 @@
+{% extends "dashboard_base.html" %}
+{% block dashboard_content %}
+<div class="mb-3 d-flex justify-content-between align-items-center">
+  <h5 class="mb-0">Dashboard Configuration</h5>
+  <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+</div>
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header"><b>Users & Roles</b></div>
+      <div class="card-body p-2">
+        <table class="table table-sm" id="users-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th style="width:80px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+        <hr class="mt-2 mb-2"/>
+        <div class="mb-2"><b>Add / Update User</b></div>
+        <div class="mb-2">
+          <input id="new-username" class="form-control form-control-sm" placeholder="Username">
+        </div>
+        <div class="mb-2">
+          <select id="new-role" class="form-select form-select-sm"></select>
+        </div>
+        <div class="mb-2">
+          <input id="new-password" class="form-control form-control-sm" type="password" placeholder="Password (leave blank to keep)">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveUser()">Save User</button>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><b>Role Rights</b></div>
+      <div class="card-body p-2">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Rights</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for role, rights in roles.items() %}
+            <tr>
+              <td><small>{{ role }}</small></td>
+              <td>
+                {% for r, allowed in rights.items() %}
+                  <span class="badge bg-{{ 'success' if allowed else 'secondary' }} mb-1">{{ r }}</span>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><b>Layout (Drag to Reorder)</b></div>
+      <div class="card-body p-2">
+        <ul id="sections-list" class="list-group mb-2"></ul>
+        <div class="mb-2">
+          <small class="text-muted">Check to hide a section. Drag handles on left to reorder.</small>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="saveLayout()">Save Layout</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let dashboardConfig = null;
+function fetchConfig() {
+  fetch('/api/dashboard/config', {headers: getAuthHeaders()})
+    .then(r => { if(!r.ok) throw new Error('Failed'); return r.json(); })
+    .then(data => {
+      dashboardConfig = data;
+      renderUsers(data.users);
+      renderRoles(Object.keys(data.roles));
+      renderLayout(data.layout);
+    })
+    .catch(err => showNotification('Load failed: ' + err.message, 'danger'));
+}
+function renderUsers(users){
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = users.map(u => {
+    return `<tr><td><small>${u.username}</small></td><td><small>${u.role}</small></td><td><button class='btn btn-sm btn-danger' onclick="deleteUser('${u.username}')">Del</button></td></tr>`;
+  }).join('');
+}
+function renderRoles(roleNames){
+  const sel = document.getElementById('new-role');
+  sel.innerHTML = roleNames.map(r => `<option value='${r}'>${r}</option>`).join('');
+}
+function saveUser(){
+  const username = document.getElementById('new-username').value.trim();
+  const role = document.getElementById('new-role').value.trim();
+  const password = document.getElementById('new-password').value;
+  if(!username || !role){ showNotification('Username and role required', 'warning'); return; }
+  fetch('/api/dashboard/users', {method:'POST', headers: {'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify({username, role, password: password || undefined})})
+    .then(r=>r.json().then(j=>({ok:r.ok, j})))
+    .then(({ok,j})=>{ if(ok){ showNotification('User saved', 'success'); document.getElementById('new-password').value=''; fetchConfig(); } else { showNotification(j.error||'Save failed','danger'); } });
+}
+function deleteUser(username){
+  if(!confirm('Delete user ' + username + '?')) return;
+  fetch('/api/dashboard/users/' + encodeURIComponent(username), {method:'DELETE', headers: getAuthHeaders()})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification('User deleted', 'success'); fetchConfig(); } else { showNotification(j.error||'Delete failed','danger'); } });
+}
+function renderLayout(layout){
+  const list = document.getElementById('sections-list');
+  const order = layout.sections_order || [];
+  const hidden = new Set(layout.hidden_sections || []);
+  list.innerHTML = order.map(sec => {
+    const checked = hidden.has(sec) ? 'checked' : '';
+    return `<li class='list-group-item d-flex align-items-center' draggable='true' ondragstart='dragStart(event)' ondragover='dragOver(event)' ondrop='dropItem(event)'>
+      <span class='me-2 text-muted' style='cursor:grab'>&#9776;</span>
+      <input type='checkbox' class='form-check-input me-2' data-section='${sec}' ${checked} />
+      <span>${sec}</span>
+    </li>`;
+  }).join('');
+}
+let dragSrcEl = null;
+function dragStart(e){ dragSrcEl = e.currentTarget; e.dataTransfer.effectAllowed='move'; }
+function dragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; }
+function dropItem(e){ e.preventDefault(); const target = e.currentTarget; if(dragSrcEl && dragSrcEl!==target){ const list = target.parentNode; const items=[...list.children]; const srcIndex=items.indexOf(dragSrcEl); const tgtIndex=items.indexOf(target); if(srcIndex < tgtIndex){ list.insertBefore(dragSrcEl, target.nextSibling); } else { list.insertBefore(dragSrcEl, target); } } }
+function saveLayout(){
+  const items = [...document.querySelectorAll('#sections-list li')];
+  const sections_order = items.map(li => li.querySelector('span:last-of-type').textContent.trim());
+  const hidden_sections = items.filter(li => li.querySelector('input').checked).map(li => li.querySelector('span:last-of-type').textContent.trim());
+  fetch('/api/dashboard/layout', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify({sections_order, hidden_sections})})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification('Layout saved','success'); } else { showNotification(j.error||'Layout save failed','danger'); } });
+}
+// Initialize
+ document.addEventListener('DOMContentLoaded', fetchConfig);
+</script>
+{% endblock %}
