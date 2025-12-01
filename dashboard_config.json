@@ -1,0 +1,44 @@
+{
+    "users": [
+        {
+            "username": "admin",
+            "role": "admin"
+        }
+    ],
+    "roles": {
+        "admin": {
+            "manage_service": true,
+            "manage_config": true,
+            "view_metrics": true,
+            "view_recent_files": true,
+            "modify_layout": true
+        },
+        "operator": {
+            "manage_service": true,
+            "manage_config": false,
+            "view_metrics": true,
+            "view_recent_files": true,
+            "modify_layout": false
+        },
+        "viewer": {
+            "manage_service": false,
+            "manage_config": false,
+            "view_metrics": true,
+            "view_recent_files": true,
+            "modify_layout": false
+        }
+    },
+    "layout": {
+        "sections_order": [
+            "System Information",
+            "Service Status & Resource Usage",
+            "Task Manager (Top 5 by CPU)",
+            "Drive Space",
+            "Settings",
+            "Recent File Movements",
+            "File Categories",
+            "Logs (real-time)"
+        ],
+        "hidden_sections": []
+    }
+}

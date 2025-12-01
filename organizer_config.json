@@ -89,5 +89,21 @@
     "downloads_json": "C:\\Scripts\\downloads_dashboard.json",
     "file_moves_json": "C:\\Scripts\\file_moves.json",
     "dashboard_user": "admin",
-    "dashboard_pass_hash": "$2b$12$3/lsEL55WAKUFs27i5neKuGZAXYLWC9WVfwu8WokdzGFEZ5UGVID6"
+    "dashboard_pass_hash": "$2b$12$3/lsEL55WAKUFs27i5neKuGZAXYLWC9WVfwu8WokdzGFEZ5UGVID6",
+    "auth_method": "basic",
+    "auth_fallback_enabled": true,
+    "ldap_config": {
+        "server": "",
+        "base_dn": "",
+        "user_dn_template": "uid={username},{base_dn}",
+        "use_ssl": true,
+        "bind_dn": "",
+        "bind_password": "",
+        "search_filter": "(uid={username})",
+        "allowed_groups": []
+    },
+    "windows_auth_config": {
+        "domain": "",
+        "allowed_groups": []
+    }
 }

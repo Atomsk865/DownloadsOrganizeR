@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from OrganizerDashboard.auth.auth import requires_auth
+from OrganizerDashboard.auth.auth import requires_right
 import json
 import os
 
@@ -8,7 +8,7 @@ routes_update_config = Blueprint('routes_update_config', __name__)
 CONFIG_FILE = "organizer_config.json"
 
 @routes_update_config.route("/update", methods=["POST"])
-@requires_auth
+@requires_right('manage_config')
 def update_config():
     from OrganizerDashboard.helpers.helpers import update_log_paths
     import OrganizerDashboard

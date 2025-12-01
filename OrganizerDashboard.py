@@ -1,35 +1,30 @@
 
-from flask import Flask
 import os
-import json
 import sys
-import importlib.util
-import types
 
 # --- Package Name Collision Shim ---
 # When running this script directly as OrganizerDashboard.py, Python will prefer the file
-# over the package directory of the same name, breaking imports like
-# `from OrganizerDashboard.routes.auth_settings import routes_auth_settings`.
-# This shim force-loads the package module so submodule imports resolve properly.
+# over the package directory of the same name, breaking imports.
+# This shim ensures the package directory is treated as a proper package.
+_script_dir = os.path.dirname(os.path.abspath(__file__))
 _pkg_name = 'OrganizerDashboard'
-_pkg_dir = os.path.join(os.path.dirname(__file__), _pkg_name)
-if os.path.isdir(_pkg_dir) and _pkg_name not in sys.modules:
-    init_path = os.path.join(_pkg_dir, '__init__.py')
-    if os.path.isfile(init_path):
-        spec = importlib.util.spec_from_file_location(_pkg_name, init_path)
-        pkg = importlib.util.module_from_spec(spec)  # type: ignore
-        try:
-            spec.loader.exec_module(pkg)  # type: ignore
-        except Exception:
-            # Fallback to minimal namespace package if init execution fails
-            pkg = types.ModuleType(_pkg_name)
-            pkg.__path__ = [_pkg_dir]  # type: ignore
-        sys.modules[_pkg_name] = pkg
-    else:
-        # No __init__.py: create a namespace-like module
+_pkg_dir = os.path.join(_script_dir, _pkg_name)
+
+# Ensure script directory is in sys.path
+if _script_dir not in sys.path:
+    sys.path.insert(0, _script_dir)
+
+# Force package resolution by setting up the package module
+if os.path.isdir(_pkg_dir):
+    if _pkg_name not in sys.modules:
+        import types
         pkg = types.ModuleType(_pkg_name)
-        pkg.__path__ = [_pkg_dir]  # type: ignore
+        pkg.__path__ = [_pkg_dir]
+        pkg.__file__ = os.path.join(_pkg_dir, '__init__.py')
         sys.modules[_pkg_name] = pkg
+
+from flask import Flask
+import json
 
 """OrganizerDashboard
 
