@@ -1,0 +1,361 @@
+{% extends "dash/dashboard_base.html" %}
+{% block dashboard_content %}
+    <div class="text-end mb-2">
+        <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
+        <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
+        <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
+        <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
+    </div>
+    <!-- Unified Dashboard Card -->
+    <div class="card mb-4">
+        <div class="card-header"><b>Organizer Dashboard</b></div>
+        <div class="card-body p-2">
+            <!-- System Info -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSystemInfo" aria-expanded="true" aria-controls="collapseSystemInfo">
+                    <b>System Information</b>
+                </button>
+                <div class="collapse show" id="collapseSystemInfo">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <p class="mb-1"><small><b>Hostname:</b> {{ hostname }}</small></p>
+                        <p class="mb-1"><small><b>OS:</b> {{ os }}</small></p>
+                        <p class="mb-1"><small><b>CPU:</b> {{ cpu }}</small></p>
+                        <p class="mb-1"><small><b>RAM:</b> {{ ram_gb }} GB</small></p>
+                        <p class="mb-1"><small><b>GPU:</b> {{ gpu }}</small></p>
+                        <p class="mb-1"><small><b>Private IP:</b> {{ private_ip }}</small></p>
+                        <p class="mb-1"><small><b>Public IP:</b> {{ public_ip }}</small></p>
+                        <p class="mb-1"><small><b>Upload:</b> {{ upload_rate_kb }} KB/s</small></p>
+                        <p class="mb-1"><small><b>Download:</b> {{ download_rate_kb }} KB/s</small></p>
+                        <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm mt-1">Speed Test</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Service Status & Resource Usage -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServiceStatus" aria-expanded="false" aria-controls="collapseServiceStatus">
+                    <b>Service Status & Resource Usage</b>
+                </button>
+                <div class="collapse" id="collapseServiceStatus">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <div class="mb-2">
+                            <small><b>Status:</b></small>
+                            <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1">{{ service_status }}</span>
+                            <div class="d-inline-flex gap-2 ms-2">
+                                <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                                <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                                <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small><b>Memory Usage:</b></small>
+                            <span class="text-sm">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</span>
+                            <div class="progress mb-1" style="height:18px;">
+                                <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small><b>CPU Usage:</b></small>
+                            <span class="text-sm">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</span>
+                            <div class="progress mb-1" style="height:18px;">
+                                <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Task Manager -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTaskManager" aria-expanded="false" aria-controls="collapseTaskManager">
+                    <b>Task Manager (Top 5 by CPU)</b>
+                </button>
+                <div class="collapse" id="collapseTaskManager">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Name</th>
+                                    <th>CPU (%)</th>
+                                    <th>Memory (MB)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proc in tasks %}
+                                <tr>
+                                    <td><small>{{ proc.pid }}</small></td>
+                                    <td><small>{{ proc.name }}</small></td>
+                                    <td><small>{{ proc.cpu|round(1) }}</small></td>
+                                    <td><small>{{ proc.mem }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Drive Space -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDriveSpace" aria-expanded="false" aria-controls="collapseDriveSpace">
+                    <b>Drive Space</b>
+                </button>
+                <div class="collapse" id="collapseDriveSpace">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Total</th>
+                                    <th>Used</th>
+                                    <th>Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drive in drives %}
+                                <tr>
+                                    <td>{{ drive.device }}</td>
+                                    <td><small>{{ drive.total }}</small></td>
+                                    <td><small>{{ drive.used }}</small></td>
+                                    <td>
+                                        <div class="progress" style="min-width: 50px;">
+                                            <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}" role="progressbar" style="width: {{ drive.percent }}%; font-size:11px;">{{ drive.percent }}%</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Settings -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                    <b>Settings</b>
+                </button>
+                <div class="collapse" id="collapseSettings">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <form id="config-form-settings">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
+                                    <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
+                                    <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                                    <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Recent Files -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentFiles" aria-expanded="false" aria-controls="collapseRecentFiles">
+                    <b>Recent File Movements</b>
+                </button>
+                <div class="collapse" id="collapseRecentFiles">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <div class="d-flex justify-content-end mb-1">
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="recent-files-list" class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Filename</th>
+                                        <th>Category</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-files-tbody">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Loading recent files...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- File Categories -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFileCategories" aria-expanded="false" aria-controls="collapseFileCategories">
+                    <b>File Categories</b>
+                </button>
+                <div class="collapse" id="collapseFileCategories">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <form id="config-form">
+                            <table class="table table-sm mb-3">
+                                <thead>
+                                    <tr>
+                                        <th>Folder</th>
+                                        <th>Extensions (comma-separated)</th>
+                                        <th style="width: 80px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- ...existing file categories rows... -->
+                                    <!-- Images -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_1" value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- ...other categories as before... -->
+                                    <!-- Music -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_2" value="Music"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_2" value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Videos -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_3" value="Videos"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_3" value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Documents -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_4" value="Documents"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_4" value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Archives -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_5" value="Archives"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_5" value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Executables -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_6" value="Executables"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_6" value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Shortcuts -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_7" value="Shortcuts"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_7" value="lnk, url, desktop, webloc">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Scripts -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_8" value="Scripts"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_8" value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Fonts -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_9" value="Fonts"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_9" value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Logs -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_10" value="Logs"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_10" value="log, out, err">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Other -->
+                                    <tr>
+                                        <td><input class="form-control form-control-sm" type="text" name="folder_11" value="Other"></td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_11" value="">
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <!-- Add new -->
+                                    <tr>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="folder_new" placeholder="New folder">
+                                        </td>
+                                        <td>
+                                            <input class="form-control form-control-sm" type="text" name="exts_new" placeholder="Extensions">
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Logs -->
+            <div class="mb-2">
+                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogs" aria-expanded="false" aria-controls="collapseLogs">
+                    <b>Logs (real-time)</b>
+                </button>
+                <div class="collapse" id="collapseLogs">
+                    <div class="ps-2 pe-2 pt-2 pb-1">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="mb-1"><b>Stdout Log</b></div>
+                                <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stdout')">Clear Log</button>
+                                <pre id="stdout-log" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-1"><b>Stderr Log</b></div>
+                                <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stderr')">Clear Log</button>
+                                <pre id="stderr-log" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Login / Change-password Modal and scripts -->
+    {% include "dash/dashboard_scripts.html" %}
+{% endblock %}
