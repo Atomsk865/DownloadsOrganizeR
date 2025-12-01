@@ -60,6 +60,7 @@ function logout() {
     __authHeader = null;
     document.getElementById('login-btn').classList.remove('d-none');
     document.getElementById('logout-btn').classList.add('d-none');
+    document.getElementById('config-link').classList.add('d-none');
     showNotification('Logged out successfully', 'info');
 }
 
@@ -82,6 +83,10 @@ document.getElementById('login-submit').addEventListener('click', async function
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
             document.getElementById('login-btn').classList.add('d-none');
             document.getElementById('logout-btn').classList.remove('d-none');
+            // Show config link if user has manage_config or modify_layout rights
+            if (__rights.manage_config || __rights.modify_layout) {
+                document.getElementById('config-link').classList.remove('d-none');
+            }
             showNotification('Login successful', 'success');
             applyRights();
             if (__rights.view_recent_files) refreshRecentFiles();
