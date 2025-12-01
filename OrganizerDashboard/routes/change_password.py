@@ -10,7 +10,9 @@ CONFIG_FILE = "organizer_config.json"
 @routes_change_password.route("/change_password", methods=["POST"])
 @requires_auth
 def change_password():
-    from OrganizerDashboard.OrganizerDashboard import ADMIN_USER, config
+    import OrganizerDashboard
+    ADMIN_USER = OrganizerDashboard.ADMIN_USER
+    config = OrganizerDashboard.config
     try:
         data = request.get_json(force=True)
     except Exception:
@@ -26,8 +28,7 @@ def change_password():
             del config['dashboard_pass']
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=4)
-        from OrganizerDashboard.OrganizerDashboard import ADMIN_PASS_HASH
-        ADMIN_PASS_HASH = hashed.encode('utf-8')
+        OrganizerDashboard.ADMIN_PASS_HASH = hashed.encode('utf-8')
         return jsonify({"status": "success", "message": "Password changed"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Failed to save password: {e}"}), 500

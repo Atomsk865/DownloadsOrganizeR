@@ -8,8 +8,8 @@ routes_api_recent_files = Blueprint('routes_api_recent_files', __name__)
 @routes_api_recent_files.route("/api/recent_files")
 @requires_auth
 def recent_files():
-    from OrganizerDashboard.OrganizerDashboard import config
-    file_moves_path = config.get("file_moves_json", "C:/Scripts/file_moves.json")
+    import OrganizerDashboard
+    file_moves_path = OrganizerDashboard.config.get("file_moves_json", "C:/Scripts/file_moves.json")
     try:
         if not os.path.exists(file_moves_path):
             return jsonify([])

@@ -9,7 +9,9 @@ routes_clear_log = Blueprint('routes_clear_log', __name__)
 def clear_log(which):
     if which not in ("stdout", "stderr"):
         return jsonify({"status": "error", "message": "Invalid log type"}), 400
-    from OrganizerDashboard.OrganizerDashboard import STDOUT_LOG, STDERR_LOG
+    import OrganizerDashboard
+    STDOUT_LOG = OrganizerDashboard.STDOUT_LOG
+    STDERR_LOG = OrganizerDashboard.STDERR_LOG
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
     try:
         with open(path, "w", encoding="utf-8"):

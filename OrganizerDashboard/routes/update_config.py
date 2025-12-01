@@ -11,7 +11,8 @@ CONFIG_FILE = "organizer_config.json"
 @requires_auth
 def update_config():
     from OrganizerDashboard.helpers.helpers import update_log_paths
-    from OrganizerDashboard.OrganizerDashboard import config
+    import OrganizerDashboard
+    config = OrganizerDashboard.config
     new_routes = {}
     i = 1
     while True:
