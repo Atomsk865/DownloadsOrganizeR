@@ -50,14 +50,14 @@
                             <small><b>Memory Usage:</b></small>
                             <span class="text-sm">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</span>
                             <div class="progress mb-1" style="height:18px;">
-                                <div class="progress-bar bg-{{ 'success' if ram_percent < 50 else 'warning' if ram_percent < 80 else 'danger' }}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
+                                <div class="progress-bar {% if ram_percent < 50 %}bg-success{% elif ram_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
                             </div>
                         </div>
                         <div class="mb-2">
                             <small><b>CPU Usage:</b></small>
                             <span class="text-sm">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</span>
                             <div class="progress mb-1" style="height:18px;">
-                                <div class="progress-bar bg-{{ 'success' if total_cpu_percent < 50 else 'warning' if total_cpu_percent < 80 else 'danger' }}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
+                                <div class="progress-bar {% if total_cpu_percent < 50 %}bg-success{% elif total_cpu_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
                             </div>
                         </div>
                     </div>
@@ -117,7 +117,7 @@
                                     <td><small>{{ drive.used }}</small></td>
                                     <td>
                                         <div class="progress" style="min-width: 50px;">
-                                            <div class="progress-bar bg-{{ 'success' if drive.percent < 50 else 'warning' if drive.percent < 80 else 'danger' }}" role="progressbar" style="width: {{ drive.percent }}%; font-size:11px;">{{ drive.percent }}%</div>
+                                            <div class="progress-bar {% if drive.percent < 50 %}bg-success{% elif drive.percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ drive.percent }}%; font-size:11px;">{{ drive.percent }}%</div>
                                         </div>
                                     </td>
                                 </tr>
