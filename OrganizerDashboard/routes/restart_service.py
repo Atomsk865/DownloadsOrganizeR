@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from OrganizerDashboard.auth.auth import requires_auth
+from OrganizerDashboard.auth.auth import requires_right
 import sys
 import subprocess
 
@@ -8,7 +8,7 @@ routes_restart_service = Blueprint('routes_restart_service', __name__)
 SERVICE_NAME = "DownloadsOrganizer"
 
 @routes_restart_service.route("/restart", methods=["POST"])
-@requires_auth
+@requires_right('manage_service')
 def restart_service():
     if sys.platform != "win32":
         return jsonify({"status": "error", "message": "Service control unsupported on this platform"}), 400
