@@ -4,7 +4,7 @@
   <h5 class="mb-0">Dashboard Configuration</h5>
   <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
 </div>
-<div class="row g-3">
+<div class="row g-3" id="config-root" data-right="manage_config">
   <div class="col-md-5">
     <div class="card">
       <div class="card-header"><b>Users & Roles</b></div>
@@ -59,7 +59,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-7">
+  <div class="col-md-7" id="layout-editor" data-right="modify_layout">
     <div class="card">
       <div class="card-header"><b>Layout (Drag to Reorder)</b></div>
       <div class="card-body p-2">
@@ -72,6 +72,7 @@
     </div>
   </div>
 </div>
+{% include "dashboard_scripts.html" %}
 <script>
 let dashboardConfig = null;
 function fetchConfig() {
@@ -136,6 +137,22 @@ function saveLayout(){
     .then(({ok,j})=>{ if(ok){ showNotification('Layout saved','success'); } else { showNotification(j.error||'Layout save failed','danger'); } });
 }
 // Initialize
- document.addEventListener('DOMContentLoaded', fetchConfig);
+document.addEventListener('DOMContentLoaded', () => {
+  // Rights may not be loaded yet; if already loaded apply gating
+  if (typeof __rights !== 'undefined') applyConfigRights();
+  fetchConfig();
+});
+
+function applyConfigRights() {
+  if (!__rights.manage_config) {
+    document.querySelectorAll('#users-table button, #new-username, #new-role, #new-password').forEach(el => { if(el) el.disabled = true; });
+  }
+  if (!__rights.modify_layout) {
+    const saveBtn = document.querySelector('#layout-editor button.btn-success');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.title = 'Insufficient rights (modify_layout)'; }
+    // Disable drag by removing draggable attributes
+    document.querySelectorAll('#sections-list li').forEach(li => li.removeAttribute('draggable'));
+  }
+}
 </script>
 {% endblock %}

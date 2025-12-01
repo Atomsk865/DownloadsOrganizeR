@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from OrganizerDashboard.auth.auth import requires_right
 import psutil
 import sys
 from OrganizerDashboard.helpers.helpers import service_running, find_organizer_proc
@@ -6,6 +7,7 @@ from OrganizerDashboard.helpers.helpers import service_running, find_organizer_p
 routes_metrics = Blueprint('routes_metrics', __name__)
 
 @routes_metrics.route("/metrics")
+@requires_right('view_metrics')
 def metrics():
     running = service_running()
     mem_mb = 0.0
