@@ -174,6 +174,16 @@ else:
     except Exception:
         pass
 
+# --- Populate Package Namespace ---
+# Routes import OrganizerDashboard and expect these attributes to be available
+if _pkg_name in sys.modules:
+    pkg_module = sys.modules[_pkg_name]
+    pkg_module.config = config
+    pkg_module.dashboard_config = dashboard_config
+    pkg_module.STDOUT_LOG = STDOUT_LOG
+    pkg_module.STDERR_LOG = STDERR_LOG
+    pkg_module.LOGS_DIR = LOGS_DIR
+
 # --- Flask App and Blueprint Registration ---
 app = Flask(__name__, template_folder='dash')
 
