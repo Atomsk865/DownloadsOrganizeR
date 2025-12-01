@@ -114,6 +114,9 @@ def update_layout():
 
 def _persist_dashboard_config(dash_cfg, main_module):
     try:
+        # Increment version
+        current_version = dash_cfg.get('config_version', 1)
+        dash_cfg['config_version'] = current_version + 1
         with open(getattr(main_module, 'DASHBOARD_CONFIG_FILE', 'dashboard_config.json'), 'w', encoding='utf-8') as f:
             json.dump(dash_cfg, f, indent=4)
         main_module.dashboard_config = dash_cfg

@@ -88,6 +88,7 @@ update_log_paths()
 
 # --- Dashboard (Users/Roles/Layout) Config ---
 DASHBOARD_CONFIG_DEFAULT = {
+    "config_version": 1,
     "users": [
         {"username": ADMIN_USER, "role": "admin"}
     ],
@@ -174,6 +175,7 @@ from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
 from OrganizerDashboard.routes.api_open_file import routes_api_open_file
 from OrganizerDashboard.routes.auth_settings import routes_auth_settings
 from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
+from OrganizerDashboard.routes.auth_session import routes_auth_session
 
 app.register_blueprint(routes_dashboard)
 app.register_blueprint(routes_update_config)
@@ -195,6 +197,7 @@ app.register_blueprint(routes_api_recent_files)
 app.register_blueprint(routes_api_open_file)
 app.register_blueprint(routes_auth_settings)
 app.register_blueprint(routes_dashboard_config)
+app.register_blueprint(routes_auth_session)
 
 # Initialize authentication manager after all globals are set
 from OrganizerDashboard.auth.auth import initialize_auth_manager
