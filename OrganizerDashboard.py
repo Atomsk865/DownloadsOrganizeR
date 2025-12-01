@@ -2,6 +2,34 @@
 from flask import Flask
 import os
 import json
+import sys
+import importlib.util
+import types
+
+# --- Package Name Collision Shim ---
+# When running this script directly as OrganizerDashboard.py, Python will prefer the file
+# over the package directory of the same name, breaking imports like
+# `from OrganizerDashboard.routes.auth_settings import routes_auth_settings`.
+# This shim force-loads the package module so submodule imports resolve properly.
+_pkg_name = 'OrganizerDashboard'
+_pkg_dir = os.path.join(os.path.dirname(__file__), _pkg_name)
+if os.path.isdir(_pkg_dir) and _pkg_name not in sys.modules:
+    init_path = os.path.join(_pkg_dir, '__init__.py')
+    if os.path.isfile(init_path):
+        spec = importlib.util.spec_from_file_location(_pkg_name, init_path)
+        pkg = importlib.util.module_from_spec(spec)  # type: ignore
+        try:
+            spec.loader.exec_module(pkg)  # type: ignore
+        except Exception:
+            # Fallback to minimal namespace package if init execution fails
+            pkg = types.ModuleType(_pkg_name)
+            pkg.__path__ = [_pkg_dir]  # type: ignore
+        sys.modules[_pkg_name] = pkg
+    else:
+        # No __init__.py: create a namespace-like module
+        pkg = types.ModuleType(_pkg_name)
+        pkg.__path__ = [_pkg_dir]  # type: ignore
+        sys.modules[_pkg_name] = pkg
 
 """OrganizerDashboard
 
