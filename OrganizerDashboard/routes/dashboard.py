@@ -35,6 +35,48 @@ def dashboard():
         return redirect('/login')
 
     dashboard_data = load_dashboard_json()
+    
+    # Get top processes by CPU
+    top_processes = []
+    try:
+        num_cpus = psutil.cpu_count(logical=True)
+        procs = []
+        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info']):
+            try:
+                cpu = proc.info['cpu_percent'] / num_cpus if num_cpus else proc.info['cpu_percent']
+                procs.append({
+                    "pid": proc.info['pid'],
+                    "name": proc.info['name'],
+                    "user": proc.info.get('username', 'N/A'),
+                    "cpu": cpu,
+                    "mem": round(proc.info['memory_info'].rss / (1024*1024), 1)
+                })
+            except Exception:
+                continue
+        procs.sort(key=lambda x: x['cpu'], reverse=True)
+        top_processes = procs[:5]
+    except Exception:
+        pass
+    
+    # Get drive information
+    drives = []
+    try:
+        for part in psutil.disk_partitions():
+            try:
+                usage = psutil.disk_usage(part.mountpoint)
+                drives.append({
+                    "device": part.device,
+                    "mountpoint": part.mountpoint,
+                    "total": format_bytes(usage.total),
+                    "used": format_bytes(usage.used),
+                    "free": format_bytes(usage.free),
+                    "percent": round(usage.percent, 1)
+                })
+            except Exception:
+                continue
+    except Exception:
+        pass
+    
     return render_template(
         "dashboard.html",
         hostname=socket.gethostname(),
@@ -53,8 +95,8 @@ def dashboard():
         total_memory_gb=round(psutil.virtual_memory().total / (1024 * 1024 * 1024), 2),
         total_cpu_percent=psutil.cpu_percent(interval=0.2),
         ram_percent=psutil.virtual_memory().percent,
-        tasks=[],
-        drives=[],
+        top_processes=top_processes,
+        drives=drives,
         memory_threshold=0,
         cpu_threshold=0,
         logs_dir="",
