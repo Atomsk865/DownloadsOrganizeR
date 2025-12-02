@@ -96,18 +96,15 @@
             </div>
             <div class="row g-2">
               <div class="col-12">
-                {% if host_os == 'windows' %}
+                <!-- Show both OS options to avoid container/codespace mismatch -->
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="wf-win-downloads" value="C:/Users/%USERNAME%/Downloads">
                   <label class="form-check-label" for="wf-win-downloads"><small>Windows Downloads (`C:/Users/%USERNAME%/Downloads`)</small></label>
                 </div>
-                {% endif %}
-                {% if host_os == 'linux' %}
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="wf-linux-downloads" value="/home/%USER%/Downloads">
                   <label class="form-check-label" for="wf-linux-downloads"><small>Linux Downloads (`/home/%USER%/Downloads`)</small></label>
                 </div>
-                {% endif %}
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="wf-shared-incoming" value="/mnt/shared/incoming">
                   <label class="form-check-label" for="wf-shared-incoming"><small>Shared Incoming (`/mnt/shared/incoming`)</small></label>
@@ -379,6 +376,10 @@ document.addEventListener('DOMContentLoaded', function(){
       if(path.startsWith('C:/')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
       if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
     });
+    // Additionally auto-select based on client user agent
+    const ua = (navigator.userAgent || '').toLowerCase();
+    if(ua.includes('windows')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
+    if(ua.includes('linux')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
   } catch(e) { /* ignore */ }
   renderSelectedWatchFolders();
 });
