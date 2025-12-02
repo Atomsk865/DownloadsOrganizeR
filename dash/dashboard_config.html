@@ -2,7 +2,15 @@
 {% block dashboard_content %}
 <div class="mb-3 d-flex justify-content-between align-items-center">
   <h5 class="mb-0">Dashboard Configuration</h5>
-  <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+  <div>
+    <button class="btn btn-sm btn-danger me-2" onclick="factoryReset()" data-right="manage_config" title="Reset all settings to defaults">
+      <i class="bi bi-exclamation-triangle"></i> Factory Reset
+    </button>
+      <button class="btn btn-sm btn-outline-primary me-2" onclick="resetSetup()" data-right="manage_config" title="Re-run initial setup wizard">
+        <i class="bi bi-arrow-counterclockwise"></i> Re-run Setup
+      </button>
+    <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+  </div>
 </div>
 <div class="row g-3" id="config-root" data-right="manage_config">
   <div class="col-md-5">
@@ -60,6 +68,48 @@
     </div>
   </div>
   <div class="col-md-7" id="layout-editor" data-right="modify_layout">
+      <div class="col-md-7">
+        <div class="card mb-3" data-right="manage_service">
+          <div class="card-header"><b>Service Installation</b></div>
+          <div class="card-body p-2">
+            <div class="mb-2">
+              <label class="form-label mb-1"><small><b>Service Name</b></small></label>
+              <input id="service-name-input" class="form-control form-control-sm" value="DownloadsOrganizer">
+            </div>
+            <div class="mb-2">
+              <label class="form-label mb-1"><small><b>Scripts Root Directory</b></small></label>
+              <input id="scripts-root-input" class="form-control form-control-sm" value="C:\Scripts">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="form-label mb-1"><small><b>Memory Threshold (MB)</b></small></label>
+                <input id="memory-threshold-input" type="number" class="form-control form-control-sm" value="200">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label mb-1"><small><b>CPU Threshold (%)</b></small></label>
+                <input id="cpu-threshold-input" type="number" class="form-control form-control-sm" value="60">
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+              <button class="btn btn-primary btn-sm" onclick="installService()">
+                <i class="bi bi-download"></i> Install Service
+              </button>
+              <button class="btn btn-warning btn-sm" onclick="reinstallService()">
+                <i class="bi bi-arrow-repeat"></i> Reinstall
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="uninstallService()">
+                <i class="bi bi-trash"></i> Uninstall Service
+              </button>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">
+                <i class="bi bi-info-circle"></i> Service installation requires Windows and administrator privileges.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7" id="layout-editor" data-right="modify_layout">
     <div class="card">
       <div class="card-header"><b>Layout (Drag to Reorder)</b></div>
       <div class="card-body p-2">
@@ -91,6 +141,10 @@ function renderUsers(users){
   tbody.innerHTML = users.map(u => {
     return `<tr><td><small>${u.username}</small></td><td><small>${u.role}</small></td><td><button class='btn btn-sm btn-danger' onclick="deleteUser('${u.username}')">Del</button></td></tr>`;
   }).join('');
+  // Reapply rights after rendering dynamic content
+  if (typeof applyConfigRights === 'function') {
+    applyConfigRights();
+  }
 }
 function renderRoles(roleNames){
   const sel = document.getElementById('new-role');
@@ -123,6 +177,10 @@ function renderLayout(layout){
       <span>${sec}</span>
     </li>`;
   }).join('');
+  // Reapply rights after rendering dynamic content
+  if (typeof applyConfigRights === 'function') {
+    applyConfigRights();
+  }
 }
 let dragSrcEl = null;
 function dragStart(e){ dragSrcEl = e.currentTarget; e.dataTransfer.effectAllowed='move'; }
@@ -138,20 +196,124 @@ function saveLayout(){
 }
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  // Rights may not be loaded yet; if already loaded apply gating
-  if (typeof __rights !== 'undefined') applyConfigRights();
-  fetchConfig();
+  // Restore auth from sessionStorage if not already set
+  if (typeof __authHeader === 'undefined' || !__authHeader) {
+    try {
+      const storedAuth = sessionStorage.getItem('authHeader');
+      if (storedAuth) {
+        __authHeader = storedAuth;
+      }
+    } catch (e) {
+      console.warn('sessionStorage not available:', e);
+    }
+  }
+  
+  // Verify auth and load rights if we have credentials
+  if (__authHeader) {
+    fetch('/auth_check', {
+      credentials: 'include',
+      headers: { 'Authorization': __authHeader }
+    }).then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error('Auth check failed');
+      }
+    }).then(data => {
+      __rights = data.rights || {};
+      __configVersion = data.config_version || 0;
+      applyConfigRights();
+      // Fetch config AFTER rights are loaded to avoid race condition
+      fetchConfig();
+    }).catch(err => {
+      console.error('Auth check failed:', err);
+      showNotification('Authentication failed. Please login again.', 'danger');
+      setTimeout(() => { window.location.href = '/'; }, 2000);
+    });
+  } else {
+    showNotification('Not logged in. Redirecting...', 'warning');
+    setTimeout(() => { window.location.href = '/'; }, 2000);
+  }
 });
 
 function applyConfigRights() {
   if (!__rights.manage_config) {
-    document.querySelectorAll('#users-table button, #new-username, #new-role, #new-password').forEach(el => { if(el) el.disabled = true; });
+    // Disable all user management controls (table buttons, input fields, and save button)
+    document.querySelectorAll('#users-table button, #new-username, #new-role, #new-password, button[onclick="saveUser()"]').forEach(el => { 
+      if(el) {
+        el.disabled = true;
+        if (el.tagName === 'BUTTON') {
+          el.title = 'Insufficient rights (manage_config)';
+        }
+      }
+    });
+  }
+  // Add reset setup function in scope
+  function resetSetup(){
+    if(!confirm('Re-run setup wizard? Users will be redirected to setup page and must complete it again to access dashboard.')) return;
+    fetch('/api/setup/reset', {method:'POST', headers: getAuthHeaders()})
+      .then(r=>r.json().then(j=>({ok:r.ok,j})))
+      .then(({ok,j})=>{ if(ok && j.success){ showNotification('Setup reset. Redirecting to wizard...', 'success'); setTimeout(()=>{ window.location.href='/setup'; },1500); } else { showNotification(j.error||'Reset failed','danger'); } });
   }
   if (!__rights.modify_layout) {
     const saveBtn = document.querySelector('#layout-editor button.btn-success');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.title = 'Insufficient rights (modify_layout)'; }
     // Disable drag by removing draggable attributes
     document.querySelectorAll('#sections-list li').forEach(li => li.removeAttribute('draggable'));
+    if (!__rights.manage_service) {
+      document.querySelectorAll('#service-name-input, #scripts-root-input, #memory-threshold-input, #cpu-threshold-input').forEach(el => {
+        if (el) el.disabled = true;
+      });
+      document.querySelectorAll('button[onclick^="installService"], button[onclick^="reinstallService"], button[onclick^="uninstallService"]').forEach(el => {
+        if (el) { el.disabled = true; el.title = 'Insufficient rights (manage_service)'; }
+      });
+    }
+    if (!__rights.manage_config) {
+      const resetBtn = document.querySelector('button[onclick="factoryReset()"]');
+      if (resetBtn) resetBtn.style.display = 'none';
+    }
+  }
+  function installService() {
+    if (!confirm('Install the Organizer service? Requires administrator privileges.')) return;
+    const serviceName = document.getElementById('service-name-input').value.trim();
+    const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
+    const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
+    const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
+    showNotification('Installing service... This may take a minute.', 'info');
+    fetch('/api/service/install', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
+      .then(r => r.json().then(j => ({ok: r.ok, j})))
+      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service installed successfully!', 'success'); if (j.output) console.log('Install:', j.output); } else { showNotification(j.error || 'Installation failed', 'danger'); if (j.error_output) console.error('Install error:', j.error_output); } })
+      .catch(err => showNotification('Installation error: ' + err.message, 'danger'));
+  }
+  function uninstallService() {
+    if (!confirm('Uninstall the Organizer service? This will stop and remove it.')) return;
+    const serviceName = document.getElementById('service-name-input').value.trim();
+    showNotification('Uninstalling service...', 'info');
+    fetch('/api/service/uninstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName})})
+      .then(r => r.json().then(j => ({ok: r.ok, j})))
+      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service uninstalled successfully!', 'success'); } else { showNotification(j.error || 'Uninstallation failed', 'danger'); } })
+      .catch(err => showNotification('Uninstallation error: ' + err.message, 'danger'));
+  }
+  function reinstallService() {
+    if (!confirm('Reinstall the Organizer service? Will uninstall and reinstall with current settings.')) return;
+    const serviceName = document.getElementById('service-name-input').value.trim();
+    const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
+    const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
+    const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
+    showNotification('Reinstalling service... This may take a minute.', 'info');
+    fetch('/api/service/reinstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
+      .then(r => r.json().then(j => ({ok: r.ok, j})))
+      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service reinstalled successfully!', 'success'); if (j.output) console.log('Reinstall:', j.output); } else { showNotification(j.error || 'Reinstallation failed', 'danger'); if (j.error_output) console.error('Reinstall error:', j.error_output); } })
+      .catch(err => showNotification('Reinstallation error: ' + err.message, 'danger'));
+  }
+  function factoryReset() {
+    if (!confirm('⚠️ WARNING: Reset ALL configurations to defaults?\\n\\nIncludes:\\n- File organization rules\\n- User accounts (except admin)\\n- Dashboard layout\\n- All settings\\n\\nCannot be undone!')) return;
+    if (!confirm('Are you absolutely sure? This will erase all custom configurations!')) return;
+    showNotification('Performing factory reset...', 'info');
+    fetch('/api/factory-reset', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}})
+      .then(r => r.json().then(j => ({ok: r.ok, j})))
+      .then(({ok, j}) => { if (ok && j.success) { showNotification('Factory reset complete! Redirecting...', 'success'); setTimeout(() => { window.location.href = '/'; }, 2000); } else { showNotification(j.error || 'Factory reset failed', 'danger'); } })
+      .catch(err => showNotification('Factory reset error: ' + err.message, 'danger'));
   }
 }
 </script>

@@ -73,15 +73,9 @@ DEFAULT_CONFIG = {
     }
 }
 
-config = DEFAULT_CONFIG.copy()
-if os.path.exists(CONFIG_FILE):
-    try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            loaded = json.load(f)
-        if isinstance(loaded, dict):
-            config.update(loaded)
-    except Exception:
-        pass
+from OrganizerDashboard.config_runtime import initialize as rt_init, get_config, get_dashboard_config
+rt_init(CONFIG_FILE, DASHBOARD_CONFIG_FILE, DEFAULT_CONFIG, {})
+config = get_config()
 
 # --- Authentication Globals ---
 ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
@@ -115,6 +109,9 @@ DASHBOARD_CONFIG_DEFAULT = {
     "users": [
         {"username": ADMIN_USER, "role": "admin"}
     ],
+    # Indicates whether the initial setup wizard has been completed.
+    # When False, the dashboard will redirect all non-setup routes to /setup.
+    "setup_completed": False,
     "roles": {
         "admin": {
             "manage_service": True,
@@ -153,24 +150,11 @@ DASHBOARD_CONFIG_DEFAULT = {
     }
 }
 
-dashboard_config = DASHBOARD_CONFIG_DEFAULT.copy()
-if os.path.exists(DASHBOARD_CONFIG_FILE):
+from OrganizerDashboard.config_runtime import save_dashboard_config
+dashboard_config = get_dashboard_config()
+if not os.path.exists(DASHBOARD_CONFIG_FILE):
     try:
-        with open(DASHBOARD_CONFIG_FILE, "r", encoding="utf-8") as f:
-            loaded_dash = json.load(f)
-        if isinstance(loaded_dash, dict):
-            # Merge with defaults (shallow merge; roles preserved)
-            for k, v in DASHBOARD_CONFIG_DEFAULT.items():
-                if k not in loaded_dash:
-                    loaded_dash[k] = v
-            dashboard_config = loaded_dash
-    except Exception:
-        pass
-else:
-    # Persist initial default
-    try:
-        with open(DASHBOARD_CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(dashboard_config, f, indent=4)
+        save_dashboard_config()
     except Exception:
         pass
 
@@ -185,58 +169,74 @@ if _pkg_name in sys.modules:
     pkg_module.LOGS_DIR = LOGS_DIR
 
 # --- Flask App and Blueprint Registration ---
-app = Flask(__name__, template_folder='dash')
+def create_app():
+    """Application factory to create and configure the Flask app.
+    Ensures auth manager sees current config by setting __main__ to this module.
+    """
+    # Make this module the __main__ for auth manager expectations
+    import sys as _sys
+    _sys.modules['__main__'] = sys.modules[__name__]
 
-# Import and register all blueprints from routes
-from OrganizerDashboard.routes.dashboard import routes_dashboard
-from OrganizerDashboard.routes.update_config import routes_update_config
-from OrganizerDashboard.routes.metrics import routes_metrics
-from OrganizerDashboard.routes.service_name import routes_service_name
-from OrganizerDashboard.routes.auth_check import routes_auth_check
-from OrganizerDashboard.routes.restart_service import routes_restart_service
-from OrganizerDashboard.routes.stop_service import routes_stop_service
-from OrganizerDashboard.routes.start_service import routes_start_service
-from OrganizerDashboard.routes.tail import routes_tail
-from OrganizerDashboard.routes.stream import routes_stream
-from OrganizerDashboard.routes.clear_log import routes_clear_log
-from OrganizerDashboard.routes.change_password import routes_change_password
-from OrganizerDashboard.routes.drives import routes_drives
-from OrganizerDashboard.routes.network import routes_network
-from OrganizerDashboard.routes.tasks import routes_tasks
-from OrganizerDashboard.routes.hardware import routes_hardware
-from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
-from OrganizerDashboard.routes.api_open_file import routes_api_open_file
-from OrganizerDashboard.routes.auth_settings import routes_auth_settings
-from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
-from OrganizerDashboard.routes.auth_session import routes_auth_session
+    app = Flask(__name__, template_folder='dash')
 
-app.register_blueprint(routes_dashboard)
-app.register_blueprint(routes_update_config)
-app.register_blueprint(routes_metrics)
-app.register_blueprint(routes_service_name)
-app.register_blueprint(routes_auth_check)
-app.register_blueprint(routes_restart_service)
-app.register_blueprint(routes_stop_service)
-app.register_blueprint(routes_start_service)
-app.register_blueprint(routes_tail)
-app.register_blueprint(routes_stream)
-app.register_blueprint(routes_clear_log)
-app.register_blueprint(routes_change_password)
-app.register_blueprint(routes_drives)
-app.register_blueprint(routes_network)
-app.register_blueprint(routes_tasks)
-app.register_blueprint(routes_hardware)
-app.register_blueprint(routes_api_recent_files)
-app.register_blueprint(routes_api_open_file)
-app.register_blueprint(routes_auth_settings)
-app.register_blueprint(routes_dashboard_config)
-app.register_blueprint(routes_auth_session)
+    # Import and register all blueprints from routes
+    from OrganizerDashboard.routes.dashboard import routes_dashboard
+    from OrganizerDashboard.routes.update_config import routes_update_config
+    from OrganizerDashboard.routes.metrics import routes_metrics
+    from OrganizerDashboard.routes.service_name import routes_service_name
+    from OrganizerDashboard.routes.auth_check import routes_auth_check
+    from OrganizerDashboard.routes.restart_service import routes_restart_service
+    from OrganizerDashboard.routes.stop_service import routes_stop_service
+    from OrganizerDashboard.routes.start_service import routes_start_service
+    from OrganizerDashboard.routes.tail import routes_tail
+    from OrganizerDashboard.routes.stream import routes_stream
+    from OrganizerDashboard.routes.clear_log import routes_clear_log
+    from OrganizerDashboard.routes.change_password import routes_change_password
+    from OrganizerDashboard.routes.drives import routes_drives
+    from OrganizerDashboard.routes.network import routes_network
+    from OrganizerDashboard.routes.tasks import routes_tasks
+    from OrganizerDashboard.routes.hardware import routes_hardware
+    from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
+    from OrganizerDashboard.routes.api_open_file import routes_api_open_file
+    from OrganizerDashboard.routes.auth_settings import routes_auth_settings
+    from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
+    from OrganizerDashboard.routes.auth_session import routes_auth_session
+    from OrganizerDashboard.routes.service_install import routes_service_install
+    from OrganizerDashboard.routes.factory_reset import routes_factory_reset
+    from OrganizerDashboard.routes.setup import routes_setup
 
-# Initialize authentication manager after all globals are set
-from OrganizerDashboard.auth.auth import initialize_auth_manager
-initialize_auth_manager()
+    app.register_blueprint(routes_dashboard)
+    app.register_blueprint(routes_update_config)
+    app.register_blueprint(routes_metrics)
+    app.register_blueprint(routes_service_name)
+    app.register_blueprint(routes_auth_check)
+    app.register_blueprint(routes_restart_service)
+    app.register_blueprint(routes_stop_service)
+    app.register_blueprint(routes_start_service)
+    app.register_blueprint(routes_tail)
+    app.register_blueprint(routes_stream)
+    app.register_blueprint(routes_clear_log)
+    app.register_blueprint(routes_change_password)
+    app.register_blueprint(routes_drives)
+    app.register_blueprint(routes_network)
+    app.register_blueprint(routes_tasks)
+    app.register_blueprint(routes_hardware)
+    app.register_blueprint(routes_api_recent_files)
+    app.register_blueprint(routes_api_open_file)
+    app.register_blueprint(routes_auth_settings)
+    app.register_blueprint(routes_dashboard_config)
+    app.register_blueprint(routes_auth_session)
+    app.register_blueprint(routes_service_install)
+    app.register_blueprint(routes_factory_reset)
+    app.register_blueprint(routes_setup)
+
+    # Initialize authentication manager after all globals are set
+    from OrganizerDashboard.auth.auth import initialize_auth_manager
+    initialize_auth_manager()
+
+    return app
 
 # --- Main Entry Point ---
 if __name__ == "__main__":
     print("✅ Dashboard running at http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000)
+    create_app().run(host="0.0.0.0", port=5000)

@@ -58,6 +58,10 @@ function promptLogin() {
 
 function logout() {
     __authHeader = null;
+    // Clear stored credentials
+    try {
+        sessionStorage.removeItem('authHeader');
+    } catch (e) {}
     document.getElementById('login-btn').classList.remove('d-none');
     document.getElementById('logout-btn').classList.add('d-none');
     document.getElementById('config-link').classList.add('d-none');
@@ -69,6 +73,13 @@ document.getElementById('login-submit').addEventListener('click', async function
     const password = document.getElementById('login-password').value;
     const credentials = btoa(username + ':' + password);
     __authHeader = 'Basic ' + credentials;
+    
+    // Store credentials in sessionStorage for page navigation
+    try {
+        sessionStorage.setItem('authHeader', __authHeader);
+    } catch (e) {
+        console.warn('sessionStorage not available:', e);
+    }
     
     try {
         const response = await fetch('/auth_check', {
@@ -159,6 +170,10 @@ function applyRights() {
             setBtn.disabled = true;
             setBtn.title = 'Insufficient rights (manage_config)';
         }
+    }
+    // Call page-specific rights application if available (e.g., for config page)
+    if (typeof applyConfigRights === 'function') {
+        applyConfigRights();
     }
 }
 
@@ -479,6 +494,80 @@ async function removeRecentFile(index) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Restore auth from sessionStorage if available
+    try {
+        const storedAuth = sessionStorage.getItem('authHeader');
+        if (storedAuth) {
+            __authHeader = storedAuth;
+            // Verify stored auth is still valid
+            fetch('/auth_check', {
+                credentials: 'include',
+                headers: { 'Authorization': __authHeader }
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    __authHeader = null;
+                    sessionStorage.removeItem('authHeader');
+                    throw new Error('Stored auth invalid');
+                }
+            }).then(data => {
+                __rights = data.rights || {};
+                __configVersion = data.config_version || 0;
+                document.getElementById('login-btn').classList.add('d-none');
+                document.getElementById('logout-btn').classList.remove('d-none');
+                if (__rights.manage_config || __rights.modify_layout) {
+                    document.getElementById('config-link').classList.remove('d-none');
+                }
+                applyRights();
+                if (__rights.view_recent_files) refreshRecentFiles();
+                if (__rights.view_metrics) {
+                    updateServiceStatus();
+                    streamLog('stdout');
+                    streamLog('stderr');
+                }
+            }).catch(err => {
+                console.log('Auth restoration failed:', err);
+            });
+        }
+    } catch (e) {
+        console.warn('sessionStorage not available:', e);
+    }
+    
+    // Intercept config link clicks to use fetch with auth header
+    const configLink = document.getElementById('config-link');
+    if (configLink) {
+        configLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!__authHeader) {
+                showNotification('Please login first', 'warning');
+                return;
+            }
+            // Navigate with auth by fetching and loading the page
+            fetch('/config', {
+                credentials: 'include',
+                headers: { 'Authorization': __authHeader }
+            }).then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else if (response.status === 401) {
+                    showNotification('Authentication required', 'danger');
+                    throw new Error('Unauthorized');
+                } else {
+                    throw new Error('Failed to load config page');
+                }
+            }).then(html => {
+                // Replace page content with fetched HTML
+                document.open();
+                document.write(html);
+                document.close();
+            }).catch(err => {
+                console.error('Config page load failed:', err);
+                showNotification('Failed to load config page: ' + err.message, 'danger');
+            });
+        });
+    }
+    
     fetchServiceName();
     // Start polling rights periodically
     setInterval(pollRights, __rightsPollIntervalMs);
