@@ -312,19 +312,12 @@
                                             <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
                                         </td>
                                     </tr>
-                                    <!-- Add new -->
-                                    <tr>
-                                        <td>
-                                            <input class="form-control form-control-sm" type="text" name="folder_new" placeholder="New folder">
-                                        </td>
-                                        <td>
-                                            <input class="form-control form-control-sm" type="text" name="exts_new" placeholder="Extensions">
-                                        </td>
-                                        <td></td>
-                                    </tr>
                                 </tbody>
                             </table>
-                            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" type="button" onclick="addCategoryRow()">Add Category</button>
+                                <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
+                            </div>
                         </form>
                         </div>
                     </div>
@@ -344,21 +337,13 @@
                                     </tr>
                                 </thead>
                                 <tbody id="custom-routes-tbody">
-                                    <!-- Example row; actual rows will be loaded dynamically if needed -->
-                                    <tr>
-                                        <td><input class="form-control form-control-sm" type="text" name="ext_1" placeholder="mp4"></td>
-                                        <td><input class="form-control form-control-sm" type="text" name="path_1" placeholder="C:/Media/Videos"></td>
-                                        <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
-                                    </tr>
-                                    <!-- Add new -->
-                                    <tr>
-                                        <td><input class="form-control form-control-sm" type="text" name="ext_new" placeholder="ext"></td>
-                                        <td><input class="form-control form-control-sm" type="text" name="path_new" placeholder="C:/Target/Folder"></td>
-                                        <td></td>
-                                    </tr>
+                                    <!-- Rows will be populated dynamically from config or added by user -->
                                 </tbody>
                             </table>
-                            <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Custom Routes</button>
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" type="button" onclick="addCustomRouteRow()">Add Route</button>
+                                <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
+                            </div>
                         </form>
                         <small class="text-muted">Custom routes take precedence over category routing. Ensure paths exist and are writable.</small>
                         </div>

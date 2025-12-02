@@ -329,42 +329,36 @@ async function saveConfiguration() {
     // Build routes dict from category form
     const routes = {};
     let i = 1;
-    while (true) {
+    let foundAny = true;
+    while (foundAny) {
         const folder = catData.get(`folder_${i}`);
         const exts = catData.get(`exts_${i}`);
-        if (folder && exts !== null) {
+        if (folder !== null && exts !== null) {
             const list = (exts || '').split(',').map(s => s.trim()).filter(Boolean);
             if (folder.trim()) routes[folder.trim()] = list;
             i++;
         } else {
-            break;
+            foundAny = false;
         }
-    }
-    const newFolder = catData.get('folder_new');
-    const newExts = catData.get('exts_new');
-    if (newFolder && newFolder.trim()) {
-        routes[newFolder.trim()] = (newExts || '').split(',').map(s => s.trim()).filter(Boolean);
     }
 
     // Build custom_routes dict from custom form
     const custom_routes = {};
-    let j = 1;
-    while (true) {
-        const ext = customData.get(`ext_${j}`);
-        const path = customData.get(`path_${j}`);
-        if (ext || path) {
-            if (ext && path && ext.trim() && path.trim()) {
-                custom_routes[ext.trim()] = path.trim();
+    if (customForm) {
+        let j = 1;
+        let foundAny = true;
+        while (foundAny) {
+            const ext = customData.get(`ext_${j}`);
+            const path = customData.get(`path_${j}`);
+            if (ext !== null || path !== null) {
+                if (ext && path && ext.trim() && path.trim()) {
+                    custom_routes[ext.trim()] = path.trim();
+                }
+                j++;
+            } else {
+                foundAny = false;
             }
-            j++;
-        } else {
-            break;
         }
-    }
-    const newExt = customData.get('ext_new');
-    const newPath = customData.get('path_new');
-    if (newExt && newPath && newExt.trim() && newPath.trim()) {
-        custom_routes[newExt.trim()] = newPath.trim();
     }
 
     // Prepare JSON payload
@@ -422,6 +416,76 @@ async function saveSettings() {
 
 function deleteRow(btn) {
     btn.closest('tr').remove();
+}
+
+// Add new category row to File Categories table
+function addCategoryRow() {
+    const tbody = document.querySelector('#config-form tbody');
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input class="form-control form-control-sm" type="text" name="folder_${rowCount}" placeholder="Folder name"></td>
+        <td><input class="form-control form-control-sm" type="text" name="exts_${rowCount}" placeholder="ext1, ext2, ext3"></td>
+        <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
+    `;
+    tbody.appendChild(newRow);
+}
+
+// Add new custom route row to Custom Routes table
+function addCustomRouteRow() {
+    const tbody = document.getElementById('custom-routes-tbody');
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input class="form-control form-control-sm" type="text" name="ext_${rowCount}" placeholder="mp4"></td>
+        <td><input class="form-control form-control-sm" type="text" name="path_${rowCount}" placeholder="C:/Media/Videos"></td>
+        <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
+    `;
+    tbody.appendChild(newRow);
+}
+
+// Load custom routes from config on page load
+function loadCustomRoutes(customRoutes) {
+    const tbody = document.getElementById('custom-routes-tbody');
+    if (!tbody) return; // Not on dashboard page
+    
+    tbody.innerHTML = ''; // Clear existing rows
+    
+    if (customRoutes && Object.keys(customRoutes).length > 0) {
+        let index = 1;
+        for (const [ext, path] of Object.entries(customRoutes)) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input class="form-control form-control-sm" type="text" name="ext_${index}" value="${ext}"></td>
+                <td><input class="form-control form-control-sm" type="text" name="path_${index}" value="${path}"></td>
+                <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
+            `;
+            tbody.appendChild(row);
+            index++;
+        }
+    }
+}
+
+// Initialize custom routes table on page load
+async function initializeCustomRoutes() {
+    const tbody = document.getElementById('custom-routes-tbody');
+    if (!tbody) return; // Not on dashboard page
+    
+    try {
+        const response = await fetch('/config', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const html = await response.text();
+            // Parse the response to extract custom_routes if available
+            // For now, we'll just make sure the table is ready for user input
+            // The actual loading will happen when the user logs in
+        }
+    } catch (error) {
+        console.log('Could not load custom routes:', error);
+    }
 }
 
 // Log streaming
@@ -647,6 +711,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     streamLog('stdout');
                     streamLog('stderr');
                 }
+                // Initialize custom routes table if present
+                initializeCustomRoutes();
             }).catch(err => {
                 console.log('Auth restoration failed:', err);
             });
@@ -654,6 +720,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
         console.warn('sessionStorage not available:', e);
     }
+    
+    // Initialize custom routes table on dashboard load
+    initializeCustomRoutes();
     
     // Intercept config link clicks to use fetch with auth header
     const configLink = document.getElementById('config-link');
