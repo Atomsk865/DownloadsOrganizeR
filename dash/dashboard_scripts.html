@@ -1,5 +1,7 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Login / Change-password Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -45,6 +47,8 @@ let __rights = {};
 let __configVersion = 0;
 let __rightsPollIntervalMs = 60000; // 60s polling
 let __csrfToken = null;
+let __organizerFeatures = { virustotal_enabled: true, duplicates_enabled: true, reports_enabled: true };
+let __vtApiKey = '';
 
 // Fetch CSRF token on page load
 async function fetchCSRFToken() {
@@ -374,13 +378,75 @@ function extractPublicIP() {
 }
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initDragAndDrop();
     loadDashboardLayout();
     loadCustomWidget();
     loadHiddenModules();
+    await loadOrganizerConfig();
     extractPublicIP();
 });
+
+// Load organizer config and apply feature gating
+async function loadOrganizerConfig() {
+    try {
+        const resp = await fetch('/api/organizer/config', { credentials: 'include', headers: getAuthHeaders() });
+        if (!resp.ok) return;
+        const cfg = await resp.json();
+        const features = cfg.features || {};
+        __organizerFeatures = {
+            virustotal_enabled: !!features.virustotal_enabled,
+            duplicates_enabled: !!features.duplicates_enabled,
+            reports_enabled: !!features.reports_enabled
+        };
+        __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';
+        applyFeatureGating();
+    } catch (e) {
+        console.warn('Failed to load organizer config:', e);
+    }
+}
+
+function applyFeatureGating() {
+    // Duplicates gating
+    const dupBanner = document.getElementById('duplicates-disabled-banner');
+    const dupBody = document.getElementById('duplicates-body');
+    if (dupBanner && dupBody) {
+        if (!__organizerFeatures.duplicates_enabled) {
+            dupBanner.classList.remove('d-none');
+            dupBody.style.display = 'none';
+            const b = document.getElementById('badge-duplicates-state');
+            if (b) { b.textContent = 'Off'; b.className = 'badge bg-secondary ms-2'; }
+        } else {
+            dupBanner.classList.add('d-none');
+            dupBody.style.display = '';
+            const b = document.getElementById('badge-duplicates-state');
+            if (b) { b.textContent = 'On'; b.className = 'badge bg-success ms-2'; }
+        }
+    }
+    // Reports/statistics gating
+    const repBanner = document.getElementById('reports-disabled-banner');
+    const statsBody = document.getElementById('statistics-body');
+    if (repBanner && statsBody) {
+        if (!__organizerFeatures.reports_enabled) {
+            repBanner.classList.remove('d-none');
+            statsBody.style.display = 'none';
+            const b = document.getElementById('badge-reports-state');
+            if (b) { b.textContent = 'Off'; b.className = 'badge bg-secondary ms-2'; }
+        } else {
+            repBanner.classList.add('d-none');
+            statsBody.style.display = '';
+            const b = document.getElementById('badge-reports-state');
+            if (b) { b.textContent = 'On'; b.className = 'badge bg-success ms-2'; }
+        }
+    }
+    // Virustotal gating in recent files (button visibility)
+    const vtButtons = document.querySelectorAll('[data-action="vt-scan"]');
+    vtButtons.forEach(btn => {
+        const enabled = __organizerFeatures.virustotal_enabled && !!__vtApiKey;
+        btn.style.display = enabled ? '' : 'none';
+        if (!enabled) btn.title = 'VirusTotal disabled or API key missing';
+    });
+}
 
 function applyRights() {
     document.querySelectorAll('[data-right]').forEach(el => {
@@ -848,7 +914,7 @@ async function clearLog(which) {
     }
 }
 
-// Show notification
+// Show notification in fixed container
 function showNotification(message, type) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -857,15 +923,34 @@ function showNotification(message, type) {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    const container = document.querySelector('.container');
-    container.insertBefore(alertDiv, container.firstChild);
+    const container = document.getElementById('notification-container');
+    if (container) {
+        container.appendChild(alertDiv);
+    } else {
+        // Fallback for pages without notification container
+        const mainContainer = document.querySelector('.container');
+        mainContainer.insertBefore(alertDiv, mainContainer.firstChild);
+    }
     
     setTimeout(() => {
         alertDiv.remove();
-    }, 3000);
+    }, 5000);
 }
 
 // Recent Files Functions
+async function loadOrganizerConfig(){
+    try {
+        const resp = await fetch('/organizer_config.json', { cache: 'no-store' });
+        if (resp.ok) {
+            const cfg = await resp.json();
+            __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';
+            const feats = cfg.features || {};
+            __organizerFeatures.virustotal_enabled = feats.virustotal_enabled !== false;
+            __organizerFeatures.duplicates_enabled = feats.duplicates_enabled !== false;
+            __organizerFeatures.reports_enabled = feats.reports_enabled !== false;
+        }
+    } catch (e) { /* ignore */ }
+}
 async function refreshRecentFiles() {
     try {
         const response = await fetch('/api/recent_files', {
@@ -915,6 +1000,7 @@ function displayRecentFiles(files) {
                     <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
                         <i class="bi bi-folder"></i> Show
                     </button>
+                    ${(__organizerFeatures.virustotal_enabled && __vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
                 </td>
                 <td>
                     <button class="btn btn-sm btn-outline-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
@@ -1087,5 +1173,1021 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchCSRFToken();
     // Start polling rights periodically
     setInterval(pollRights, __rightsPollIntervalMs);
+    // Load dashboard data with feature gating
+    if (__organizerFeatures.reports_enabled) {
+        loadStatistics();
+    } else {
+        const el = document.getElementById('chart-category');
+        if (el) {
+            const parent = el.closest('.card-body');
+            if (parent) parent.insertAdjacentHTML('afterbegin', '<div class="alert alert-warning alert-sm py-1 px-2"><small>Reports & Analytics are disabled in Features.</small></div>');
+        }
+    }
+    if (__organizerFeatures.duplicates_enabled) {
+        loadDuplicates();
+    } else {
+        showNotification('Duplicate Detection is disabled in Features.', 'warning');
+    }
+    loadWatchedFolders();
+});
+
+// Statistics Charts
+// Duplicate Files Management
+async function loadDuplicates() {
+    try {
+        const res = await fetch('/api/duplicates', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            
+            // Update badges
+            document.getElementById('duplicates-count').textContent = 
+                `${data.total_duplicates} duplicate group${data.total_duplicates !== 1 ? 's' : ''}`;
+            document.getElementById('wasted-space').textContent = 
+                `${data.wasted_space_human} wasted`;
+            
+            // Render duplicate groups
+            const container = document.getElementById('duplicates-container');
+            
+            if (data.duplicates.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-success">
+                        <i class="bi bi-check-circle fs-1"></i>
+                        <p>No duplicate files found!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            data.duplicates.forEach((group, index) => {
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>${group.count} files</strong> - ${group.total_size_human}
+                                    <small class="text-muted">(Hash: ${group.hash.substring(0, 12)}...)</small>
+                                </span>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})">
+                                        <i class="bi bi-clock"></i> Keep Newest
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})">
+                                        <i class="bi bi-file-earmark"></i> Keep Largest
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAllDuplicates(${index})">
+                                        <i class="bi bi-trash"></i> Delete All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th width="30"><input type="checkbox" onchange="toggleGroupSelection(${index}, this.checked)"></th>
+                                        <th>Name</th>
+                                        <th>Size</th>
+                                        <th>Modified</th>
+                                        <th>Path</th>
+                                        <th width="80">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                group.files.forEach((file, fileIndex) => {
+                    html += `
+                        <tr>
+                            <td><input type="checkbox" data-group="${index}" data-file="${fileIndex}" data-path="${file.path}"></td>
+                            <td><i class="bi bi-file-earmark"></i> ${file.name}</td>
+                            <td>${file.size_human}</td>
+                            <td>${file.modified_human}</td>
+                            <td><small class="text-muted">${file.path}</small></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile('${file.path}')" title="Delete this file">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Store data globally for action functions
+            window.duplicatesData = data;
+        } else {
+            showToast('Failed to load duplicates', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading duplicates:', error);
+        showToast('Error loading duplicates: ' + error.message, 'error');
+    }
+}
+
+async function loadWatchedFolders() {
+    try {
+        const res = await fetch('/api/watch_folders', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const folders = Array.isArray(data.folders) ? data.folders : [];
+        const badge = document.getElementById('watched-folders-badge');
+        const list = document.getElementById('watched-folders-list');
+        const ul = document.getElementById('watched-folders-ul');
+        if (badge) badge.textContent = `watching ${folders.length}`;
+        if (ul) {
+            ul.innerHTML = folders.map(f => `<li><small class="text-muted">${f}</small></li>`).join('');
+        }
+        if (list) list.style.display = folders.length ? 'block' : 'none';
+    } catch (e) {
+        console.error('Failed to load watched folders', e);
+    }
+}
+
+function toggleGroupSelection(groupIndex, checked) {
+    document.querySelectorAll(`input[data-group="${groupIndex}"]`).forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
+
+async function keepNewest(groupIndex) {
+    if (!window.duplicatesData) return;
+    
+    const group = window.duplicatesData.duplicates[groupIndex];
+    if (!group || group.files.length < 2) return;
+    
+    // Keep first file (newest by sort), delete rest
+    const filesToDelete = group.files.slice(1).map(f => f.path);
+    
+    if (!confirm(`Delete ${filesToDelete.length} older duplicate(s) and keep the newest?`)) {
+        return;
+    }
+    
+    await resolveDuplicates(filesToDelete);
+}
+
+async function keepLargest(groupIndex) {
+    if (!window.duplicatesData) return;
+    
+    const group = window.duplicatesData.duplicates[groupIndex];
+    if (!group || group.files.length < 2) return;
+    
+    // Find largest file
+    let largest = group.files[0];
+    group.files.forEach(f => {
+        if (f.size > largest.size) largest = f;
+    });
+    
+    // Delete all except largest
+    const filesToDelete = group.files.filter(f => f.path !== largest.path).map(f => f.path);
+    
+    if (!confirm(`Delete ${filesToDelete.length} duplicate(s) and keep the largest (${largest.size_human})?`)) {
+        return;
+    }
+    
+    await resolveDuplicates(filesToDelete);
+}
+
+async function deleteAllDuplicates(groupIndex) {
+    if (!window.duplicatesData) return;
+    
+    const group = window.duplicatesData.duplicates[groupIndex];
+    if (!group) return;
+    
+    const filesToDelete = group.files.map(f => f.path);
+    
+    if (!confirm(`Delete ALL ${filesToDelete.length} files in this duplicate group? This cannot be undone!`)) {
+        return;
+    }
+    
+    await resolveDuplicates(filesToDelete);
+}
+
+async function deleteSingleFile(filePath) {
+    if (!confirm(`Delete this file?\n${filePath}\n\nThis cannot be undone!`)) {
+        return;
+    }
+    
+    await resolveDuplicates([filePath]);
+}
+
+async function deleteSelectedFiles() {
+    const selected = Array.from(document.querySelectorAll('input[data-path]:checked')).map(cb => cb.dataset.path);
+    
+    if (selected.length === 0) {
+        showToast('No files selected', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Delete ${selected.length} selected file(s)? This cannot be undone!`)) {
+        return;
+    }
+    
+    await resolveDuplicates(selected);
+}
+
+async function resolveDuplicates(filePaths) {
+    try {
+        const res = await fetch('/api/duplicates/resolve', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': __authHeader,
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({
+                action: 'delete',
+                files: filePaths
+            })
+        });
+        
+        if (res.ok) {
+            const result = await res.json();
+            showToast(result.message, 'success');
+            
+            // Reload duplicates
+            loadDuplicates();
+        } else {
+            const error = await res.json();
+            showToast('Failed to delete files: ' + (error.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error resolving duplicates:', error);
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+async function scanVirusTotal(filePath, fileName) {
+    try {
+        const res = await fetch('/api/recent_files/virustotal', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': __authHeader,
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({ path: filePath })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            const attrs = data.data && data.data.attributes;
+            const stats = attrs && attrs.last_analysis_stats;
+            // Toast summary
+            if (stats) {
+                showToast(`VT: ${fileName} clean:${stats.undetected} malicious:${stats.malicious} suspicious:${stats.suspicious||0}`, 'info');
+            } else {
+                showToast('VirusTotal scan requested. Check VT for detailed report.', 'info');
+            }
+            // Populate modal details
+            try {
+                const engines = attrs && attrs.last_analysis_results ? attrs.last_analysis_results : {};
+                const rows = Object.keys(engines).map(name => {
+                    const r = engines[name] || {};
+                    const c = r.category || 'unknown';
+                    const verdict = r.result || '';
+                    const badge = c === 'malicious' ? 'badge bg-danger' : c === 'suspicious' ? 'badge bg-warning text-dark' : 'badge bg-success';
+                    return `<tr><td><small>${name}</small></td><td><span class="${badge}">${c}</span></td><td><small>${verdict}</small></td></tr>`;
+                }).join('');
+                const sha256 = attrs && attrs.sha256 ? attrs.sha256 : '';
+                const link = sha256 ? `https://www.virustotal.com/gui/file/${sha256}` : '#';
+                const bodyHtml = `
+                    <div class="mb-2"><strong>${escapeHtml(fileName)}</strong></div>
+                    ${stats ? `<div class="mb-3">Malicious: ${stats.malicious} • Suspicious: ${stats.suspicious||0} • Undetected: ${stats.undetected} • Harmless: ${stats.harmless||0}</div>` : ''}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>Engine</th><th>Status</th><th>Verdict</th></tr></thead>
+                            <tbody>${rows || '<tr><td colspan="3" class="text-muted">No engine results</td></tr>'}</tbody>
+                        </table>
+                    </div>`;
+                const modalBody = document.getElementById('vtModalBody');
+                const modalLink = document.getElementById('vtReportLink');
+                if (modalBody) modalBody.innerHTML = bodyHtml;
+                if (modalLink) modalLink.href = link;
+                // Show modal
+                const modalEl = document.getElementById('vtModal');
+                if (modalEl && typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            } catch (e) {
+                console.warn('Failed to render VT modal:', e);
+            }
+        } else {
+            showToast('VirusTotal error: ' + (data.error || res.status), 'error');
+        }
+    } catch (e) {
+        showToast('VirusTotal request failed: ' + e.message, 'error');
+    }
+}
+// Statistics Charts
+let chartCategory, chartExtensions, chartTimeline, chartHourly;
+
+async function loadStatistics() {
+    try {
+        // Load overview stats
+        const overviewRes = await fetch('/api/statistics/overview', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (overviewRes.ok) {
+            const overview = await overviewRes.json();
+            document.getElementById('stat-total-files').textContent = overview.total_files || 0;
+            document.getElementById('stat-today').textContent = overview.today_count || 0;
+            document.getElementById('stat-week').textContent = overview.week_count || 0;
+            document.getElementById('stat-month').textContent = overview.month_count || 0;
+            document.getElementById('stat-categories').textContent = overview.total_categories || 0;
+            document.getElementById('stat-avg-day').textContent = overview.avg_per_day || 0;
+        }
+        
+        // Load category chart
+        const categoryRes = await fetch('/api/statistics/by-category', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (categoryRes.ok) {
+            const categoryData = await categoryRes.json();
+            const ctx = document.getElementById('chart-category');
+            if (ctx) {
+                if (chartCategory) chartCategory.destroy();
+                chartCategory = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryData.labels || [],
+                        datasets: [{
+                            data: categoryData.data || [],
+                            backgroundColor: [
+                                '#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545',
+                                '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Load extensions chart
+        const extRes = await fetch('/api/statistics/by-extension', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (extRes.ok) {
+            const extData = await extRes.json();
+            const ctx = document.getElementById('chart-extensions');
+            if (ctx) {
+                if (chartExtensions) chartExtensions.destroy();
+                chartExtensions = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: extData.labels || [],
+                        datasets: [{
+                            label: 'Files',
+                            data: extData.data || [],
+                            backgroundColor: '#0d6efd'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Load timeline chart
+        const timelineRes = await fetch('/api/statistics/timeline', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (timelineRes.ok) {
+            const timelineData = await timelineRes.json();
+            const ctx = document.getElementById('chart-timeline');
+            if (ctx) {
+                if (chartTimeline) chartTimeline.destroy();
+                chartTimeline = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timelineData.labels || [],
+                        datasets: [{
+                            label: 'Files Organized',
+                            data: timelineData.data || [],
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Load hourly activity chart
+        const hourlyRes = await fetch('/api/statistics/hourly-activity', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (hourlyRes.ok) {
+            const hourlyData = await hourlyRes.json();
+            const ctx = document.getElementById('chart-hourly');
+            if (ctx) {
+                if (chartHourly) chartHourly.destroy();
+                chartHourly = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hourlyData.labels || [],
+                        datasets: [{
+                            label: 'Files',
+                            data: hourlyData.data || [],
+                            backgroundColor: '#0dcaf0'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+    } catch (err) {
+        console.error('Failed to load statistics:', err);
+    }
+}
+
+// Notification Center Functions
+let notificationCenterOpen = false;
+
+async function loadNotificationCenter() {
+    try {
+        const response = await fetch('/api/notifications', {
+            credentials: 'include',
+            headers: { 'Authorization': __authHeader }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateNotificationBadge(data.unread);
+            renderNotifications(data.notifications);
+        }
+    } catch (err) {
+        console.error('Failed to load notifications:', err);
+    }
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function renderNotifications(notifications) {
+    const body = document.getElementById('notification-body');
+    if (!body) return;
+    
+    if (notifications.length === 0) {
+        body.innerHTML = `
+            <div class="notification-empty">
+                <i class="bi bi-bell-slash"></i>
+                <p>No notifications</p>
+            </div>
+        `;
+        return;
+    }
+    
+    body.innerHTML = notifications.map(notif => {
+        const unreadClass = notif.read ? '' : 'unread';
+        const typeIcon = getNotificationIcon(notif.type);
+        const time = formatNotificationTime(notif.timestamp);
+        
+        return `
+            <div class="notification-item ${unreadClass}" onclick="markNotificationRead('${notif.id}')">
+                <div class="notification-message">
+                    <i class="bi ${typeIcon}"></i> ${notif.message}
+                </div>
+                <div class="notification-time">${time}</div>
+                <i class="bi bi-x-circle notification-delete" onclick="event.stopPropagation(); deleteNotification('${notif.id}')"></i>
+            </div>
+        `;
+    }).join('');
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'success': 'bi-check-circle-fill text-success',
+        'danger': 'bi-exclamation-triangle-fill text-danger',
+        'warning': 'bi-exclamation-circle-fill text-warning',
+        'info': 'bi-info-circle-fill text-info'
+    };
+    return icons[type] || icons.info;
+}
+
+function formatNotificationTime(timestamp) {
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    } catch (err) {
+        return '';
+    }
+}
+
+function toggleNotificationCenter() {
+    const dropdown = document.getElementById('notification-dropdown');
+    if (!dropdown) return;
+    
+    notificationCenterOpen = !notificationCenterOpen;
+    
+    if (notificationCenterOpen) {
+        dropdown.classList.add('show');
+        loadNotificationCenter();
+        // Close when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', closeNotificationCenter);
+        }, 100);
+    } else {
+        dropdown.classList.remove('show');
+        document.removeEventListener('click', closeNotificationCenter);
+    }
+}
+
+function closeNotificationCenter(event) {
+    const dropdown = document.getElementById('notification-dropdown');
+    const bell = document.querySelector('.notification-bell');
+    
+    if (dropdown && bell && !dropdown.contains(event.target) && !bell.contains(event.target)) {
+        dropdown.classList.remove('show');
+        notificationCenterOpen = false;
+        document.removeEventListener('click', closeNotificationCenter);
+    }
+}
+
+async function markNotificationRead(notificationId) {
+    try {
+        await fetch(`/api/notifications/${notificationId}/read`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 
+                'Authorization': __authHeader,
+                'Content-Type': 'application/json'
+            }
+        });
+        loadNotificationCenter();
+    } catch (err) {
+        console.error('Failed to mark notification as read:', err);
+    }
+}
+
+async function markAllNotificationsRead() {
+    try {
+        await fetch('/api/notifications/mark-all-read', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 
+                'Authorization': __authHeader,
+                'Content-Type': 'application/json'
+            }
+        });
+        loadNotificationCenter();
+        showNotification('All notifications marked as read', 'success');
+    } catch (err) {
+        console.error('Failed to mark all as read:', err);
+    }
+}
+
+async function clearAllNotifications() {
+    if (!confirm('Clear all notifications? This cannot be undone.')) return;
+    
+    try {
+        await fetch('/api/notifications/clear', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 
+                'Authorization': __authHeader,
+                'Content-Type': 'application/json'
+            }
+        });
+        loadNotificationCenter();
+        showNotification('All notifications cleared', 'success');
+    } catch (err) {
+        console.error('Failed to clear notifications:', err);
+    }
+}
+
+async function deleteNotification(notificationId) {
+    try {
+        await fetch(`/api/notifications/${notificationId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 
+                'Authorization': __authHeader,
+                'Content-Type': 'application/json'
+            }
+        });
+        loadNotificationCenter();
+    } catch (err) {
+        console.error('Failed to delete notification:', err);
+    }
+}
+
+// Enhanced showNotification to also save to notification center
+const originalShowNotification = showNotification;
+function showNotification(message, type) {
+    // Show toast notification
+    originalShowNotification(message, type);
+    
+    // Save to notification center
+    fetch('/api/notifications', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 
+            'Authorization': __authHeader,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, type })
+    }).then(() => {
+        // Update badge count
+        loadNotificationCenter();
+    }).catch(err => {
+        console.error('Failed to save notification:', err);
+    });
+}
+
+// Load notification center on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotificationCenter();
+    // Refresh notification center every 30 seconds
+    setInterval(loadNotificationCenter, 30000);
+    // Check if we should show intro
+    checkShowIntro();
+});
+
+// Keyboard Shortcuts and Command Palette
+const commands = [
+    { name: 'Toggle Dark Mode', icon: 'bi-moon-stars', shortcut: 'Ctrl+D', action: () => toggleTheme() },
+    { name: 'Refresh Dashboard', icon: 'bi-arrow-clockwise', shortcut: 'Ctrl+R', action: () => location.reload() },
+    { name: 'Open Notifications', icon: 'bi-bell', shortcut: 'Ctrl+N', action: () => toggleNotificationCenter() },
+    { name: 'Show Keyboard Shortcuts', icon: 'bi-keyboard', shortcut: '?', action: () => showHelpModal() },
+    { name: 'View Changelog', icon: 'bi-clock-history', shortcut: 'Ctrl+L', action: () => showChangelog() },
+    { name: 'About Dashboard', icon: 'bi-info-circle', shortcut: 'Ctrl+H', action: () => showAboutModal() },
+    { name: 'Go to Config Page', icon: 'bi-gear', shortcut: '', action: () => window.location.href = '/config' },
+    { name: 'Refresh Statistics', icon: 'bi-graph-up', shortcut: '', action: () => loadStatistics() },
+    { name: 'Reset Dashboard Layout', icon: 'bi-arrow-counterclockwise', shortcut: '', action: () => resetDashboardLayout() },
+    { name: 'Show Hidden Modules', icon: 'bi-eye', shortcut: '', action: () => showHiddenModules() },
+    { name: 'Logout', icon: 'bi-box-arrow-right', shortcut: '', action: () => logout() }
+];
+
+let selectedCommandIndex = 0;
+
+// Global keyboard shortcut handler
+document.addEventListener('keydown', function(e) {
+    // Ctrl+K - Command Palette
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        openCommandPalette();
+        return;
+    }
+    
+    // Ctrl+D - Toggle Dark Mode
+    if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        toggleTheme();
+        return;
+    }
+    
+    // Ctrl+R - Refresh (allow default but show notification)
+    if (e.ctrlKey && e.key === 'r') {
+        // Let browser handle refresh
+        return;
+    }
+    
+    // Ctrl+N - Open Notifications
+    if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        toggleNotificationCenter();
+        return;
+    }
+    
+    // Ctrl+L - Changelog
+    if (e.ctrlKey && e.key === 'l') {
+        e.preventDefault();
+        showChangelog();
+        return;
+    }
+    
+    // Ctrl+H - About
+    if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        showAboutModal();
+        return;
+    }
+    
+    // ? - Show Help (when not in input field)
+    if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+        e.preventDefault();
+        showHelpModal();
+        return;
+    }
+    
+    // Escape - Close all modals
+    if (e.key === 'Escape') {
+        closeCommandPalette();
+        closeHelpModal();
+        closeAboutModal();
+        closeChangelogModal();
+        closeIntroModal();
+        if (notificationCenterOpen) {
+            toggleNotificationCenter();
+        }
+        return;
+    }
+    
+    // Arrow keys in command palette
+    if (document.getElementById('command-palette-overlay').classList.contains('show')) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedCommandIndex = Math.min(selectedCommandIndex + 1, commands.length - 1);
+            updateCommandSelection();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedCommandIndex = Math.max(selectedCommandIndex - 1, 0);
+            updateCommandSelection();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            executeSelectedCommand();
+        }
+    }
+});
+
+function openCommandPalette() {
+    const overlay = document.getElementById('command-palette-overlay');
+    const input = document.getElementById('command-palette-input');
+    overlay.classList.add('show');
+    input.value = '';
+    input.focus();
+    selectedCommandIndex = 0;
+    renderCommands(commands);
+}
+
+function closeCommandPalette() {
+    const overlay = document.getElementById('command-palette-overlay');
+    overlay.classList.remove('show');
+}
+
+function renderCommands(commandList) {
+    const results = document.getElementById('command-palette-results');
+    
+    if (commandList.length === 0) {
+        results.innerHTML = '<div class="command-palette-empty">No commands found</div>';
+        return;
+    }
+    
+    results.innerHTML = commandList.map((cmd, index) => `
+        <div class="command-palette-item ${index === selectedCommandIndex ? 'selected' : ''}" 
+             onclick="executeCommand(${index})" 
+             data-index="${index}">
+            <i class="bi ${cmd.icon}"></i>
+            <span class="command-name">${cmd.name}</span>
+            ${cmd.shortcut ? `<span class="command-shortcut">${cmd.shortcut}</span>` : ''}
+        </div>
+    `).join('');
+}
+
+function updateCommandSelection() {
+    document.querySelectorAll('.command-palette-item').forEach((item, index) => {
+        if (index === selectedCommandIndex) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+function executeCommand(index) {
+    if (commands[index]) {
+        closeCommandPalette();
+        commands[index].action();
+    }
+}
+
+function executeSelectedCommand() {
+    executeCommand(selectedCommandIndex);
+}
+
+// Command palette search
+document.getElementById('command-palette-input').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    const filtered = commands.filter(cmd => 
+        cmd.name.toLowerCase().includes(query) || 
+        cmd.shortcut.toLowerCase().includes(query)
+    );
+    selectedCommandIndex = 0;
+    renderCommands(filtered);
+});
+
+// Help Modal Functions
+function showHelpModal() {
+    document.getElementById('help-modal-overlay').classList.add('show');
+}
+
+function closeHelpModal() {
+    document.getElementById('help-modal-overlay').classList.remove('show');
+}
+
+// About Modal Functions
+function showAboutModal() {
+    document.getElementById('about-modal-overlay').classList.add('show');
+}
+
+function closeAboutModal() {
+    document.getElementById('about-modal-overlay').classList.remove('show');
+}
+
+// Changelog Functions
+async function showChangelog() {
+    const overlay = document.getElementById('changelog-modal-overlay');
+    const content = document.getElementById('changelog-content');
+    
+    overlay.classList.add('show');
+    
+    try {
+        const response = await fetch('/CHANGELOG.md');
+        if (response.ok) {
+            let markdown = await response.text();
+            // Simple markdown to HTML conversion
+            content.innerHTML = markdownToHtml(markdown);
+        } else {
+            content.innerHTML = '<p class="text-danger">Failed to load changelog.</p>';
+        }
+    } catch (err) {
+        content.innerHTML = '<p class="text-danger">Error loading changelog: ' + err.message + '</p>';
+    }
+}
+
+function closeChangelogModal() {
+    document.getElementById('changelog-modal-overlay').classList.remove('show');
+}
+
+function markdownToHtml(markdown) {
+    return markdown
+        .replace(/^### (.+)$/gm, '<h5 class="mt-3">$1</h5>')
+        .replace(/^## (.+)$/gm, '<h4 class="mt-4">$1</h4>')
+        .replace(/^# (.+)$/gm, '<h3 class="mt-4">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(?!<[h|u|l])/gm, '<p>')
+        .replace(/(?<![>])$/gm, '</p>')
+        .replace(/<p><\/p>/g, '')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+}
+
+// Intro Modal Functions
+function checkShowIntro() {
+    const dontShow = localStorage.getItem('dontShowIntro');
+    if (!dontShow) {
+        setTimeout(() => {
+            document.getElementById('intro-modal-overlay').classList.add('show');
+        }, 1000);
+    }
+}
+
+function closeIntroModal() {
+    const dontShow = document.getElementById('dont-show-intro').checked;
+    if (dontShow) {
+        localStorage.setItem('dontShowIntro', 'true');
+    }
+    document.getElementById('intro-modal-overlay').classList.remove('show');
+}
+
+// Mobile Collapsible Cards
+function initMobileCollapsible() {
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.dashboard-module .card-header, .config-module .card-header').forEach(header => {
+            // Only add click handler once
+            if (!header.dataset.collapsibleInit) {
+                header.dataset.collapsibleInit = 'true';
+                header.addEventListener('click', function(e) {
+                    // Don't collapse if clicking on a button or input
+                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || 
+                        e.target.closest('button') || e.target.closest('.drag-handle') || 
+                        e.target.closest('.hide-toggle')) {
+                        return;
+                    }
+                    const module = this.closest('.dashboard-module, .config-module');
+                    if (module) {
+                        module.classList.toggle('collapsed');
+                    }
+                });
+            }
+        });
+    }
+}
+
+// Re-init on resize
+let resizeTimer;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+        initMobileCollapsible();
+    }, 250);
+});
+
+// Initialize mobile features on load
+document.addEventListener('DOMContentLoaded', function() {
+    initMobileCollapsible();
 });
 </script>

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DownloadsOrganizeR.ServiceHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a6bcb294f4f4112479e634765bfe8970ca42c28b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4244be90548cfe7f2b43ab7e1219d454aeaa6c9c")]
 [assembly: System.Reflection.AssemblyProductAttribute("DownloadsOrganizeR.ServiceHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DownloadsOrganizeR.ServiceHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

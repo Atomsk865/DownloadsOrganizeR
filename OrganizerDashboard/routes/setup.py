@@ -26,7 +26,33 @@ def setup_page():
             available_methods.append('windows')
     except Exception:
         pass
-    return render_template('dashboard_setup.html', available_methods=available_methods)
+    # Detect host OS (server side)
+    import platform
+    sys_platform = platform.system().lower()  # 'windows', 'linux', 'darwin'
+    host_os = 'windows' if 'windows' in sys_platform else ('linux' if 'linux' in sys_platform else 'other')
+    # Recommend default folders based on host OS
+    recommended = []
+    import os
+    default_download = ''
+    if host_os == 'windows':
+        recommended = [
+            'C:/Users/%USERNAME%/Downloads'
+        ]
+        user = os.getenv('USERNAME') or '%USERNAME%'
+        default_download = f'C:/Users/{user}/Downloads'
+    elif host_os == 'linux':
+        recommended = [
+            '/home/%USER%/Downloads'
+        ]
+        user = os.getenv('USER') or '%USER%'
+        default_download = f'/home/{user}/Downloads'
+    return render_template(
+        'dashboard_setup.html',
+        available_methods=available_methods,
+        host_os=host_os,
+        recommended_watch_folders=recommended,
+        default_download_path=default_download
+    )
 
 def _validate_username(name: str) -> str:
     import re

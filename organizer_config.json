@@ -20,7 +20,7 @@
         "credentials": {
             "nas_default": {
                 "username": "",
-                "password_b64": "" 
+                "password_b64": ""
             }
         },
         "retry_queue": {
@@ -102,8 +102,8 @@
     },
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
-    "logs_dir": "C:\\Scripts\\service-logs",
-    "auth_method": "windows",
+    "logs_dir": "./logs",
+    "auth_method": "basic",
     "auth_fallback_enabled": true,
     "ldap_config": {
         "server": "",
@@ -119,8 +119,11 @@
         "domain": "",
         "allowed_groups": ""
     },
-    "downloads_json": "C:\\Scripts\\downloads_dashboard.json",
-    "file_moves_json": "C:\\Scripts\\file_moves.json",
+    "custom_routes": {},
+    "watch_folders": [],
+    "downloads_json": "./config/json/downloads_dashboard.json",
+    "file_moves_json": "./config/json/file_moves.json",
+    "virustotal_api_key": "",
     "dashboard_user": "admin",
-    "dashboard_pass_hash": "$2b$12$D1hFIdZNw3wV/9X1HlfmSuUP35FptUzT2vqD5z5p6QHlZh4clpzlm"
+    "dashboard_pass_hash": "$2b$12$6U/e8V8ytahwO5UojW7CK.nytXu4UkF0KW9F0NAsmKTsxMAK/zHHq"
 }

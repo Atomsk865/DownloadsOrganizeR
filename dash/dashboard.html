@@ -15,7 +15,7 @@
             min-width: 400px;
             transition: all 0.3s ease;
             position: relative;
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 0.375rem;
         }
         .dashboard-module.dragging {
@@ -38,7 +38,7 @@
         .drop-zone {
             position: relative;
             min-height: 50px;
-            border: 2px dashed #dee2e6;
+            border: 2px dashed var(--border-color);
             border-radius: 0.375rem;
             background-color: rgba(0, 123, 255, 0.03);
             transition: all 0.2s ease;
@@ -72,7 +72,7 @@
             cursor: move;
             padding: 4px 10px;
             font-size: 1.1rem;
-            color: #6c757d;
+            color: var(--text-secondary);
             transition: color 0.2s;
         }
         .drag-handle:hover {
@@ -82,7 +82,7 @@
             cursor: pointer;
             padding: 4px 10px;
             font-size: 0.95rem;
-            color: #6c757d;
+            color: var(--text-secondary);
             margin-left: 8px;
             transition: color 0.2s;
         }
@@ -102,6 +102,82 @@
             #dashboard-grid {
                 width: 100%;
                 padding: 0.5rem;
+                gap: 0.75rem;
+            }
+            .dashboard-module {
+                min-width: 0;
+            }
+            .dashboard-module .card-header {
+                padding: 0.85rem 1rem;
+                font-size: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .dashboard-module .card-body {
+                padding: 0.75rem;
+            }
+            .dashboard-module table {
+                font-size: 0.85rem;
+            }
+            .dashboard-module td,
+            .dashboard-module th {
+                padding: 0.5rem 0.4rem;
+            }
+            /* Make tables horizontally scrollable */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            /* Larger buttons on mobile */
+            .btn {
+                min-height: 44px;
+                padding: 0.5rem 0.875rem;
+            }
+            .btn-sm {
+                min-height: 44px;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.95rem;
+            }
+            /* Stack action buttons vertically */
+            .text-end.mb-3 {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+            .text-end.mb-3 .btn,
+            .text-end.mb-3 a {
+                width: 100%;
+                text-align: center;
+            }
+            /* Collapsible card headers on mobile */
+            .dashboard-module .card-header {
+                cursor: pointer;
+                user-select: none;
+            }
+            .dashboard-module .card-header::after {
+                content: '\f282';
+                font-family: 'bootstrap-icons';
+                float: right;
+                transition: transform 0.3s;
+            }
+            .dashboard-module.collapsed .card-header::after {
+                transform: rotate(-90deg);
+            }
+            .dashboard-module.collapsed .card-body {
+                display: none;
+            }
+        }
+        @media (max-width: 480px) {
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+            .dashboard-module .card-header {
+                font-size: 0.95rem;
+            }
+            .dashboard-module table {
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -118,7 +194,7 @@
     
     <!-- Main Dashboard Container -->
     <div class="container-fluid px-3">
-        <div id="dashboard-grid">
+        <div id="dashboard-grid" style="margin: 0 auto; max-width: 1600px;">
             <!-- System Info Card -->
             <div class="dashboard-module full-width" data-module="system-info" draggable="false">
                 <div class="card">
@@ -184,6 +260,142 @@
                     
             </div>
             
+            <!-- File Organization Statistics -->
+            <!-- Duplicate Files Detection -->
+            <div class="dashboard-module full-width" data-module="duplicates" draggable="true">
+                    <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <b><i class="bi bi-files"></i> Duplicate Files</b>
+                        <span id="badge-duplicates-state" class="badge bg-secondary ms-2">Unknown</span>
+                        <a href="/docs/duplicate-detection" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
+                            <small><i class="bi bi-book"></i> Docs</small>
+                        </a>
+                        <span class="hide-toggle" onclick="toggleHideModule('duplicates')" title="Hide module"><i class="bi bi-x-circle"></i></span>
+                        <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                    </div>
+                    <div id="duplicates-disabled-banner" class="alert alert-warning m-3 d-none" role="alert">
+                        <i class="bi bi-slash-circle"></i> Duplicates feature is disabled. Enable it in Features & Integrations.
+                    </div>
+                    <div class="card-body" id="duplicates-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="badge bg-warning" id="duplicates-count">0 duplicate groups</span>
+                                <span class="badge bg-danger" id="wasted-space">0 B wasted</span>
+                                <span class="badge bg-info" id="watched-folders-badge" title="Watched folders">watching 0</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="loadDuplicates()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div id="duplicates-container">
+                            <div class="text-center text-muted">
+                                <i class="bi bi-hourglass-split fs-1"></i>
+                                <p>Loading duplicates...</p>
+                            </div>
+                        </div>
+                        <div class="mt-2" id="watched-folders-list" style="display:none">
+                            <small class="text-muted">Watched folders:</small>
+                            <ul class="mb-0" id="watched-folders-ul"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Organization Statistics -->
+            <div class="dashboard-module full-width" data-module="statistics" draggable="true">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <b><i class="bi bi-graph-up"></i> File Organization Statistics</b>
+                        <span id="badge-reports-state" class="badge bg-secondary ms-2">Unknown</span>
+                        <span class="hide-toggle" onclick="toggleHideModule('statistics')" title="Hide module"><i class="bi bi-x-circle"></i></span>
+                        <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                    </div>
+                    <div id="reports-disabled-banner" class="alert alert-warning m-3 d-none" role="alert">
+                        <i class="bi bi-slash-circle"></i> Reports feature is disabled. Enable it in Features & Integrations.
+                    </div>
+                    <div class="card-body" id="statistics-body">
+                        <!-- Overview Stats -->
+                        <div class="row mb-3">
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-total-files">0</h4>
+                                        <small>Total Files</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-today">0</h4>
+                                        <small>Today</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-week">0</h4>
+                                        <small>This Week</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-month">0</h4>
+                                        <small>This Month</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-secondary text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-categories">0</h4>
+                                        <small>Categories</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6 text-center">
+                                <div class="card bg-dark text-white">
+                                    <div class="card-body p-2">
+                                        <h4 class="mb-0" id="stat-avg-day">0</h4>
+                                        <small>Avg/Day</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts Row -->
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <h6>Files by Category</h6>
+                                <canvas id="chart-category" height="200"></canvas>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <h6>Top 10 File Extensions</h6>
+                                <canvas id="chart-extensions" height="200"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <h6>Activity Timeline (Last 30 Days)</h6>
+                                <canvas id="chart-timeline" height="80"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Activity by Hour of Day</h6>
+                                <canvas id="chart-hourly" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="col-12 col-xl-6 dashboard-module" data-module="task-manager" draggable="true">
                     <!-- Task Manager Card -->
                     <div class="card mb-3">
@@ -194,11 +406,14 @@
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
                                 <thead>
-                                    <tr>
-                                        <th>PID</th>
-                                        <th>Name</th>
-                                        <th>CPU (%)</th>
-                                        <th>Memory (MB)</th>
+                                    <td class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="scanVirusTotal('${file.path}', '${file.name}')" title="Scan with VirusTotal">
+                                            <i class="bi bi-shield-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile('${file.path}')" title="Delete this file">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -221,6 +436,9 @@
                     <div class="card mb-3">
                         <div class="card-header d-flex align-items-center">
                             <b>Recent File Movements</b>
+                            <a href="/docs/recent-files" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
+                                <small><i class="bi bi-book"></i> Docs</small>
+                            </a>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -558,29 +776,28 @@
                         </div>
                     </div>
             </div>
-                
-                <!-- Logs Card (Right) - Full Width Below -->
-                <div class="col-12">
-                    <div class="card mb-3">
-                        <div class="card-header"><b>Logs (real-time)</b></div>
-                        <div class="card-body p-2">
-                            <div class="row g-2">
-                            <div class="col-md-6">
-                                <div class="mb-1"><b>Stdout Log</b></div>
-                                <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stdout')">Clear Log</button>
-                                <pre id="stdout-log" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">{{ stdout_log }}</pre>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-1"><b>Stderr Log</b></div>
-                                <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stderr')">Clear Log</button>
-                                <pre id="stderr-log" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
-                            </div>
+        </div>
+    </div>
+        <!-- VirusTotal Modal -->
+        <div class="modal fade" id="vtModal" tabindex="-1" aria-labelledby="vtModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="vtModalLabel">VirusTotal Scan Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="vtModalBody">
+                            <div class="text-muted">No data</div>
                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a id="vtReportLink" href="#" target="_blank" class="btn btn-outline-secondary">Open VT Report</a>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     <!-- Login / Change-password Modal and scripts -->
     {% include "dashboard_scripts.html" %}
 {% endblock %}
