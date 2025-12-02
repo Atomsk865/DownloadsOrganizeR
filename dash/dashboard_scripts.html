@@ -114,6 +114,12 @@ document.getElementById('login-submit').addEventListener('click', async function
             }
             showNotification('Login successful', 'success');
             applyRights();
+            // Show reset layout button after login
+            const resetBtn = document.getElementById('reset-layout-btn');
+            if (resetBtn) resetBtn.classList.remove('d-none');
+            // Reload user-specific layout and widgets
+            loadDashboardLayout();
+            loadCustomWidget();
             if (__rights.view_recent_files) refreshRecentFiles();
             if (__rights.view_metrics) {
                 updateServiceStatus();
@@ -140,57 +146,113 @@ function getAuthHeaders() {
     return headers;
 }
 
-// Drag & Drop grid order persistence
-document.addEventListener('DOMContentLoaded', () => {
-    const grid = document.getElementById('dashboard-grid');
-    if (!grid) return;
-    let dragEl = null;
-    grid.addEventListener('dragstart', e => {
-        const item = e.target.closest('.grid-item');
-        if (!item) return;
-        dragEl = item;
-        item.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
+// Drag & Drop for Dashboard Modules
+let draggedElement = null;
+
+function initDragAndDrop() {
+    const modules = document.querySelectorAll('.dashboard-module[draggable="true"]');
+    modules.forEach(module => {
+        module.addEventListener('dragstart', handleDragStart);
+        module.addEventListener('dragover', handleDragOver);
+        module.addEventListener('drop', handleDrop);
+        module.addEventListener('dragend', handleDragEnd);
     });
-    grid.addEventListener('dragend', e => {
-        const item = e.target.closest('.grid-item');
-        if (item) item.classList.remove('dragging');
-        dragEl = null;
-        persistOrder();
-    });
-    grid.addEventListener('dragover', e => {
-        e.preventDefault();
-        const after = getDragAfterElement(grid, e.clientY, e.clientX);
-        if (!dragEl) return;
-        if (after == null) {
-            grid.appendChild(dragEl);
+}
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (draggedElement !== this) {
+        const grid = document.getElementById('dashboard-grid');
+        const allModules = Array.from(grid.children);
+        const draggedIndex = allModules.indexOf(draggedElement);
+        const targetIndex = allModules.indexOf(this);
+        
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedElement, this.nextSibling);
         } else {
-            grid.insertBefore(dragEl, after);
+            this.parentNode.insertBefore(draggedElement, this);
         }
-    });
-    function getDragAfterElement(container, y, x) {
-        const items = [...container.querySelectorAll('.grid-item:not(.dragging)')];
-        return items.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = (y - box.top - box.height/2) + (x - box.left - box.width/2);
-            if (offset < 0 && offset > closest.offset) {
-                return { offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+        
+        saveDashboardLayout();
     }
-    async function persistOrder(){
-        const sections_order = [...grid.querySelectorAll('.grid-item')].map(el => el.dataset.section);
-        try {
-            await fetch('/api/dashboard/layout', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sections_order, hidden_sections: [] })
-            });
-        } catch(e) { /* ignore */ }
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+}
+
+function saveDashboardLayout() {
+    const grid = document.getElementById('dashboard-grid');
+    const layout = Array.from(grid.children).map(el => el.dataset.module).filter(m => m);
+    localStorage.setItem('dashboardLayout_' + (__authHeader || 'default'), JSON.stringify(layout));
+}
+
+function loadDashboardLayout() {
+    const savedLayout = localStorage.getItem('dashboardLayout_' + (__authHeader || 'default'));
+    if (!savedLayout) return;
+    
+    try {
+        const layout = JSON.parse(savedLayout);
+        const grid = document.getElementById('dashboard-grid');
+        if (!grid) return;
+        
+        layout.forEach(moduleId => {
+            const module = grid.querySelector(`[data-module="${moduleId}"]`);
+            if (module) grid.appendChild(module);
+        });
+    } catch (e) {
+        console.error('Error loading dashboard layout:', e);
     }
+}
+
+function resetDashboardLayout() {
+    if (confirm('Reset dashboard to default layout? This will reload the page.')) {
+        localStorage.removeItem('dashboardLayout_' + (__authHeader || 'default'));
+        location.reload();
+    }
+}
+
+// Custom Widget Functions
+function editCustomWidget() {
+    const content = document.getElementById('custom-widget-content');
+    if (!content) return;
+    
+    const currentHtml = content.innerHTML;
+    const newHtml = prompt('Enter custom HTML, embed code, or text:\n\n(Tip: You can use iframes, images, or any HTML)', currentHtml);
+    
+    if (newHtml !== null) {
+        content.innerHTML = newHtml;
+        localStorage.setItem('customWidget_' + (__authHeader || 'default'), newHtml);
+    }
+}
+
+function loadCustomWidget() {
+    const saved = localStorage.getItem('customWidget_' + (__authHeader || 'default'));
+    const content = document.getElementById('custom-widget-content');
+    if (saved && content) {
+        content.innerHTML = saved;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initDragAndDrop();
+    loadDashboardLayout();
+    loadCustomWidget();
 });
 
 function applyRights() {
