@@ -147,7 +147,11 @@ def setup_initialize():
         return jsonify({'error': f'Failed to save organizer config: {e}'}), 500
 
     # Prepare dashboard_config
-    dash_cfg['users'] = [{ 'username': admin_username, 'role': 'admin' }]
+    dash_cfg['users'] = [{ 
+        'username': admin_username, 
+        'role': 'admin',
+        'password_hash': password_hash
+    }]
     dash_cfg['setup_completed'] = True
     # Increment config version
     dash_cfg['config_version'] = int(dash_cfg.get('config_version', 1)) + 1
