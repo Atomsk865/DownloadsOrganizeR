@@ -23,16 +23,24 @@ def get_dashboard_config():
     def _inner():
         main = sys.modules['__main__']
         dash_cfg = getattr(main, 'dashboard_config', {})
+        org_cfg = getattr(main, 'config', {})
         # Do not expose password hashes directly (mask them)
         users = []
         for u in dash_cfg.get('users', []):
             sanitized = {k: v for k, v in u.items() if k != 'password_hash'}
             sanitized['has_password'] = 'password_hash' in u and bool(u['password_hash'])
             users.append(sanitized)
+        # Organizer config excerpts for prefilling NAS and SMTP UI
+        network_targets = org_cfg.get('network_targets', {})
+        credentials = org_cfg.get('credentials', {})
+        smtp = org_cfg.get('smtp', {})
         return jsonify({
             'users': users,
             'roles': dash_cfg.get('roles', {}),
-            'layout': dash_cfg.get('layout', {})
+            'layout': dash_cfg.get('layout', {}),
+            'network_targets': network_targets,
+            'credentials': credentials,
+            'smtp': smtp
         })
     return _inner()
 

@@ -122,21 +122,36 @@ DASHBOARD_CONFIG_DEFAULT = {
             "manage_config": True,
             "view_metrics": True,
             "view_recent_files": True,
-            "modify_layout": True
+            "modify_layout": True,
+            "test_smtp": True,
+            "test_nas": True,
+            "manage_network_targets": True,
+            "manage_credentials": True,
+            "send_reports": True
         },
         "operator": {
             "manage_service": True,
             "manage_config": False,
             "view_metrics": True,
             "view_recent_files": True,
-            "modify_layout": False
+            "modify_layout": False,
+            "test_smtp": False,
+            "test_nas": False,
+            "manage_network_targets": False,
+            "manage_credentials": False,
+            "send_reports": False
         },
         "viewer": {
             "manage_service": False,
             "manage_config": False,
             "view_metrics": True,
             "view_recent_files": True,
-            "modify_layout": False
+            "modify_layout": False,
+            "test_smtp": False,
+            "test_nas": False,
+            "manage_network_targets": False,
+            "manage_credentials": False,
+            "send_reports": False
         }
     },
     "layout": {
@@ -248,6 +263,8 @@ def create_app():
     from OrganizerDashboard.routes.admin_tools import routes_admin_tools
     from OrganizerDashboard.routes.login import routes_login
     from OrganizerDashboard.routes.csrf_token import routes_csrf
+    from OrganizerDashboard.routes.user_links import routes_user_links
+    from OrganizerDashboard.routes.reports import reports_bp
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config)
@@ -276,6 +293,8 @@ def create_app():
     app.register_blueprint(routes_login)
     app.register_blueprint(routes_admin_tools)
     app.register_blueprint(routes_csrf)
+    app.register_blueprint(routes_user_links)
+    app.register_blueprint(reports_bp)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)

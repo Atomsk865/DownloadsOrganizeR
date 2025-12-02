@@ -33,3 +33,29 @@
 </div>
 </body>
 </html>
+
+    <script>
+        // Initialize Bootstrap tooltips globally
+        document.addEventListener('DOMContentLoaded', function(){
+            if(window.bootstrap && typeof bootstrap.Tooltip === 'function'){
+                // Ensure any element with a title gets a tooltip by default
+                document.querySelectorAll('[title]:not([data-bs-toggle])').forEach(function(el){
+                    el.setAttribute('data-bs-toggle','tooltip');
+                    el.setAttribute('data-bs-placement', el.getAttribute('data-bs-placement') || 'top');
+                });
+                const tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+            }
+        });
+    </script>
+    <style>
+        /* Global modern UI polish */
+        .card { border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+        .form-control, .form-select { transition: box-shadow 0.2s ease, transform 0.08s ease; }
+        .form-control:hover, .form-select:hover { box-shadow: 0 0 0 4px rgba(13,110,253,0.1); }
+        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 4px rgba(13,110,253,0.2); }
+        .btn { transition: transform 0.08s ease, box-shadow 0.2s ease; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .progress { border-radius: 10px; overflow: hidden; }
+    </style>

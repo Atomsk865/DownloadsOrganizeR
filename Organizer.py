@@ -18,6 +18,8 @@ import logging
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import threading
+from base64 import b64decode
 from datetime import datetime
 
 
@@ -120,6 +122,56 @@ def get_unique_path(dest_dir: Path, filename: str) -> str:
     return str(candidate)
 
 
+class RetryQueue:
+    """Simple in-memory retry queue for failed moves to inaccessible destinations.
+
+    Periodically attempts to move queued files. Intended primarily for network
+    destinations (e.g., NAS/SMB paths) that may be temporarily unavailable.
+    """
+    def __init__(self, cfg: dict):
+        rq = cfg.get("retry_queue", {})
+        self.enabled = bool(rq.get("enabled", True))
+        self.interval = int(rq.get("interval_seconds", 600))
+        self.max_retries = int(rq.get("max_retries", 10))
+        self.queue = []
+        self.lock = threading.Lock()
+        self.thread = None
+
+    def start(self):
+        if not self.enabled:
+            return
+        if self.thread and self.thread.is_alive():
+            return
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
+
+    def add(self, src: str, dest: str):
+        with self.lock:
+            logger.info(f"Queuing move for retry: {src} -> {dest}")
+            self.queue.append({"src": src, "dest": dest, "retries": 0})
+
+    def _run(self):
+        while True:
+            time.sleep(self.interval)
+            with self.lock:
+                remaining = []
+                for item in self.queue:
+                    s, d, r = item["src"], item["dest"], item["retries"]
+                    try:
+                        Path(d).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.move(s, d)
+                        logger.info(f"Retry successful: {s} -> {d}")
+                    except Exception as e:
+                        r += 1
+                        item["retries"] = r
+                        if r < self.max_retries:
+                            logger.warning(f"Retry {r} failed for {s} -> {d}: {e}")
+                            remaining.append(item)
+                        else:
+                            logger.error(f"Max retries reached for {s} -> {d}: {e}")
+                self.queue = remaining
+
+
 def log_file_move(original_path: str, destination_path: str, category: str) -> None:
     """Log a file move to the file moves JSON for dashboard reference.
     
@@ -158,6 +210,11 @@ def log_file_move(original_path: str, destination_path: str, category: str) -> N
         logger.error(f"Failed to log file move: {e}")
 
 
+def is_network_path(path: Path) -> bool:
+    p = str(path)
+    return p.startswith('\\\\') or p.startswith('\\')
+
+
 def organize_file(file_path: str) -> None:
     """Move a single file into the matching category folder under Downloads.
 
@@ -192,10 +249,14 @@ def organize_file(file_path: str) -> None:
     try:
         shutil.move(str(p), dest_path)
         logger.info(f"Moved {file_path} → {dest_path}")
-        # Log the file move for dashboard reference
         log_file_move(file_path, dest_path, category_label)
     except Exception as e:
-        logger.error(f"Error moving {file_path}: {e}")
+        logger.warning(f"Move failed: {file_path} -> {dest_path}: {e}")
+        # If destination is network or currently inaccessible, queue for retry
+        if RETRY_QUEUE and (is_network_path(dest_dir)):
+            RETRY_QUEUE.add(str(p), dest_path)
+        else:
+            logger.error(f"Error moving {file_path}: {e}")
 
 
 def update_dashboard_json(downloads_path: Path) -> None:
@@ -246,6 +307,9 @@ class DownloadsHandler(FileSystemEventHandler):
 # -----------------------------
 if __name__ == "__main__":
     DOWNLOADS_PATH.mkdir(parents=True, exist_ok=True)
+    # Initialize retry queue
+    RETRY_QUEUE = RetryQueue(CONFIG)
+    RETRY_QUEUE.start()
     initial_scan(DOWNLOADS_PATH)
     event_handler = DownloadsHandler(DOWNLOADS_PATH)
     observer = Observer()

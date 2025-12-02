@@ -127,6 +127,126 @@
       </div>
     </div>
   </div>
+  <div class="col-md-7">
+    <div class="card mt-3" data-right="manage_config">
+      <div class="card-header"><b>Network Targets (NAS/SMB)</b></div>
+      <div class="card-body p-2">
+        <div class="mb-2">
+          <label class="form-label mb-1"><small><b>Template</b></small></label>
+          <select class="form-select form-select-sm" id="nas-template" onchange="applyNASTemplate()" title="Quick setup for common NAS types">
+            <option value="">-- Select a template --</option>
+            <option value="synology">Synology NAS</option>
+            <option value="qnap">QNAP NAS</option>
+            <option value="windows">Windows Share</option>
+            <option value="generic">Generic SMB/CIFS</option>
+          </select>
+        </div>
+        <table class="table table-sm" id="network-targets-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>UNC Path</th>
+              <th>Credential Key</th>
+              <th style="width:80px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="network-targets-tbody"></tbody>
+        </table>
+        <hr class="mt-2 mb-2"/>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <input id="nt-name" class="form-control form-control-sm" placeholder="Name" title="Reference name for the network target">
+            <div class="invalid-feedback">Name is required.</div>
+          </div>
+          <div class="col-md-5">
+            <input id="nt-path" class="form-control form-control-sm" placeholder="\\\\NAS\\Share\\Downloads" title="UNC path to the NAS/SMB share">
+            <div class="invalid-feedback">Provide a valid UNC path, e.g., \\server\\share\\folder</div>
+          </div>
+          <div class="col-md-3">
+            <input id="nt-cred" class="form-control form-control-sm" placeholder="credential_key" title="Key to credentials in config">
+            <div class="invalid-feedback">Credential key is required.</div>
+          </div>
+        </div>
+        <div class="mt-2 d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="addNetworkTarget()" title="Add or update network target">Save Target</button>
+          <button class="btn btn-info btn-sm" onclick="testNAS()" title="Test selected network target">Test NAS</button>
+          <button class="btn btn-success btn-sm" onclick="saveNetworkConfig()" title="Persist network targets and credentials to organizer config">Persist Network Config</button>
+        </div>
+        <div class="mt-2">
+          <small class="text-muted">Credentials are referenced by key. Configure below in SMTP & Credentials.</small>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3" data-right="manage_config">
+      <div class="card-header"><b>SMTP & Credentials</b></div>
+      <div class="card-body p-2">
+        <div class="mb-2">
+          <label class="form-label mb-1"><small><b>SMTP Template</b></small></label>
+          <select class="form-select form-select-sm" id="smtp-template" onchange="applySMTPTemplate()" title="Quick setup for common email providers">
+            <option value="">-- Select a template --</option>
+            <option value="gmail">Gmail</option>
+            <option value="outlook">Outlook.com</option>
+            <option value="office365">Office 365</option>
+            <option value="yahoo">Yahoo Mail</option>
+            <option value="generic">Generic SMTP</option>
+          </select>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <input id="smtp-host" class="form-control form-control-sm" placeholder="SMTP Host" title="Mail server hostname">
+            <div class="invalid-feedback">SMTP host is required.</div>
+          </div>
+          <div class="col-md-2">
+            <input id="smtp-port" type="number" class="form-control form-control-sm" placeholder="587" title="SMTP port">
+            <div class="invalid-feedback">Port must be between 1 and 65535.</div>
+          </div>
+          <div class="col-md-3">
+            <input id="smtp-from" class="form-control form-control-sm" placeholder="from@example.com" title="Sender address">
+            <div class="invalid-feedback">Enter a valid email address.</div>
+          </div>
+          <div class="col-md-4">
+            <input id="smtp-to" class="form-control form-control-sm" placeholder="to@example.com" title="Recipient address (comma-separated)">
+            <div class="invalid-feedback">Enter one or more valid email addresses.</div>
+          </div>
+          <div class="col-md-3"><input id="smtp-user" class="form-control form-control-sm" placeholder="Username" title="SMTP username"></div>
+          <div class="col-md-3"><input id="smtp-pass" type="password" class="form-control form-control-sm" placeholder="Password" title="SMTP password"></div>
+          <div class="col-md-2 form-check d-flex align-items-center ms-2">
+            <input class="form-check-input" type="checkbox" id="smtp-tls" checked title="Use STARTTLS">
+            <label class="form-check-label ms-1"><small>TLS</small></label>
+          </div>
+        </div>
+        <hr class="mt-2 mb-2"/>
+        <div class="mb-2"><b>Stored Credentials</b> <small class="text-muted">(Base64 password; consider OS vault for production)</small></div>
+        <table class="table table-sm" id="credentials-table">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Username</th>
+              <th>Password (base64)</th>
+              <th style="width:80px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="credentials-tbody"></tbody>
+        </table>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <input id="cred-key" class="form-control form-control-sm" placeholder="nas_default" title="Credential key">
+            <div class="invalid-feedback">Credential key is required.</div>
+          </div>
+          <div class="col-md-3"><input id="cred-user" class="form-control form-control-sm" placeholder="user" title="Username"></div>
+          <div class="col-md-6">
+            <input id="cred-pass-b64" class="form-control form-control-sm" placeholder="cGFzc3dvcmQ=" title="Base64-encoded password">
+            <div class="invalid-feedback">Password must be base64-encoded.</div>
+          </div>
+        </div>
+        <div class="mt-2 d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="addCredential()" title="Add or update credential">Save Credential</button>
+          <button class="btn btn-info btn-sm" onclick="testSMTP()" title="Send a test email">Test SMTP</button>
+          <button class="btn btn-success btn-sm" onclick="saveSmtpAndCredentials()" title="Persist SMTP and credentials">Persist SMTP & Credentials</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% include "dashboard_scripts.html" %}
 <script>
@@ -139,6 +259,9 @@ function fetchConfig() {
       renderUsers(data.users);
       renderRoles(Object.keys(data.roles));
       renderLayout(data.layout);
+      renderNetworkTargets(data.network_targets || {});
+      renderCredentials(data.credentials || {});
+      renderSmtp(data.smtp || {});
     })
     .catch(err => showNotification('Load failed: ' + err.message, 'danger'));
 }
@@ -199,6 +322,36 @@ function saveLayout(){
   fetch('/api/dashboard/layout', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify({sections_order, hidden_sections})})
     .then(r=>r.json().then(j=>({ok:r.ok,j})))
     .then(({ok,j})=>{ if(ok){ showNotification('Layout saved','success'); } else { showNotification(j.error||'Layout save failed','danger'); } });
+}
+
+// ---- Validation helpers ----
+function setInvalid(id, msg){
+  const el = document.getElementById(id);
+  if(!el) return false;
+  el.classList.add('is-invalid');
+  const fb = el.parentElement.querySelector('.invalid-feedback');
+  if(fb && msg) fb.textContent = msg;
+  return false;
+}
+function clearInvalid(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('is-invalid');
+}
+function isValidUNC(p){
+  // \\server\share or \\server\share\path
+  return /^\\\\[^\\\/]+\\[^\\\/]+(\\.*)?$/.test(p || '');
+}
+function isValidEmail(e){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||'').trim());
+}
+function validateEmails(list){
+  const items = (list||'').split(/[,;]+/).map(s=>s.trim()).filter(Boolean);
+  return items.length>0 && items.every(isValidEmail);
+}
+function isValidBase64(s){
+  if(!s) return true; // allow empty
+  try { atob(s); return true; } catch(e){ return false; }
 }
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -356,6 +509,218 @@ function applyConfigRights() {
     } catch (e) {
       showNotification('Auth state error: ' + e.message, 'danger');
     }
+  }
+}
+
+function renderNetworkTargets(targets){
+  const tbody = document.getElementById('network-targets-tbody');
+  const rows = Object.entries(targets).map(([name, cfg]) => {
+    const path = (cfg && cfg.path) || '';
+    const credential_key = (cfg && cfg.credential_key) || '';
+    return `<tr>
+      <td><small>${name}</small></td>
+      <td><small>${path}</small></td>
+      <td><small>${credential_key}</small></td>
+      <td><button class='btn btn-sm btn-danger' onclick="deleteNetworkTarget('${name}')" title="Delete target">Del</button></td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+}
+function addNetworkTarget(){
+  const name = document.getElementById('nt-name').value.trim();
+  const path = document.getElementById('nt-path').value.trim();
+  const credential_key = document.getElementById('nt-cred').value.trim();
+  clearInvalid('nt-name'); clearInvalid('nt-path'); clearInvalid('nt-cred');
+  if(!name){ return setInvalid('nt-name', 'Name is required.'); }
+  if(!isValidUNC(path)){ return setInvalid('nt-path', 'Provide a valid UNC path, e.g., \\server\\share'); }
+  if(!credential_key){ return setInvalid('nt-cred', 'Credential key is required.'); }
+  dashboardConfig.network_targets = dashboardConfig.network_targets || {};
+  dashboardConfig.network_targets[name] = { path, credential_key };
+  renderNetworkTargets(dashboardConfig.network_targets);
+}
+function deleteNetworkTarget(name){
+  if(!confirm('Delete network target '+name+'?')) return;
+  if(dashboardConfig.network_targets){ delete dashboardConfig.network_targets[name]; }
+  renderNetworkTargets(dashboardConfig.network_targets||{});
+}
+function saveNetworkConfig(){
+  // Ensure there is at least one target when saving (optional)
+  const payload = { network_targets: dashboardConfig.network_targets || {}, credentials: dashboardConfig.credentials || {} };
+  fetch('/api/dashboard/update-config', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify(payload)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification('Network config saved','success'); } else { showNotification(j.error||'Save failed','danger'); } });
+}
+
+function renderCredentials(creds){
+  const tbody = document.getElementById('credentials-tbody');
+  const rows = Object.entries(creds).map(([key, c]) => {
+    return `<tr>
+      <td><small>${key}</small></td>
+      <td><small>${c.username||''}</small></td>
+      <td><small>${c.password_b64||''}</small></td>
+      <td><button class='btn btn-sm btn-danger' onclick="deleteCredential('${key}')" title="Delete credential">Del</button></td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+}
+function addCredential(){
+  const key = document.getElementById('cred-key').value.trim();
+  const username = document.getElementById('cred-user').value.trim();
+  const password_b64 = document.getElementById('cred-pass-b64').value.trim();
+  clearInvalid('cred-key'); clearInvalid('cred-pass-b64');
+  if(!key){ return setInvalid('cred-key', 'Credential key is required.'); }
+  if(password_b64 && !isValidBase64(password_b64)){ return setInvalid('cred-pass-b64', 'Password must be base64-encoded.'); }
+  dashboardConfig.credentials = dashboardConfig.credentials || {};
+  dashboardConfig.credentials[key] = { username, password_b64 };
+  renderCredentials(dashboardConfig.credentials);
+}
+function deleteCredential(key){
+  if(!confirm('Delete credential '+key+'?')) return;
+  if(dashboardConfig.credentials){ delete dashboardConfig.credentials[key]; }
+  renderCredentials(dashboardConfig.credentials||{});
+}
+function renderSmtp(smtp){
+  document.getElementById('smtp-host').value = smtp.host || '';
+  document.getElementById('smtp-port').value = smtp.port || 587;
+  document.getElementById('smtp-from').value = smtp.from || '';
+  document.getElementById('smtp-to').value = smtp.to || '';
+  document.getElementById('smtp-user').value = smtp.username || '';
+  document.getElementById('smtp-pass').value = smtp.password || '';
+  document.getElementById('smtp-tls').checked = (smtp.tls !== false);
+}
+function saveSmtpAndCredentials(){
+  const smtp = {
+    host: document.getElementById('smtp-host').value.trim(),
+    port: parseInt(document.getElementById('smtp-port').value) || 587,
+    from: document.getElementById('smtp-from').value.trim(),
+    to: document.getElementById('smtp-to').value.trim(),
+    username: document.getElementById('smtp-user').value.trim(),
+    password: document.getElementById('smtp-pass').value,
+    tls: document.getElementById('smtp-tls').checked
+  };
+  // Validate SMTP fields
+  clearInvalid('smtp-host'); clearInvalid('smtp-port'); clearInvalid('smtp-from'); clearInvalid('smtp-to');
+  if(!smtp.host){ return setInvalid('smtp-host', 'SMTP host is required.'); }
+  if(!(smtp.port>=1 && smtp.port<=65535)){ return setInvalid('smtp-port', 'Port must be between 1 and 65535.'); }
+  if(!isValidEmail(smtp.from)){ return setInvalid('smtp-from', 'Enter a valid email address.'); }
+  if(!validateEmails(smtp.to)){ return setInvalid('smtp-to', 'Enter one or more valid email addresses.'); }
+  const payload = { smtp, credentials: dashboardConfig.credentials || {} };
+  fetch('/api/dashboard/update-config', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify(payload)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification('SMTP & credentials saved','success'); } else { showNotification(j.error||'Save failed','danger'); } });
+}
+function testSMTP(){
+  const smtp = {
+    host: document.getElementById('smtp-host').value.trim(),
+    port: parseInt(document.getElementById('smtp-port').value) || 587,
+    from: document.getElementById('smtp-from').value.trim(),
+    to: document.getElementById('smtp-to').value.trim(),
+    username: document.getElementById('smtp-user').value.trim(),
+    password: document.getElementById('smtp-pass').value,
+    tls: document.getElementById('smtp-tls').checked
+  };
+  clearInvalid('smtp-host'); clearInvalid('smtp-port'); clearInvalid('smtp-from'); clearInvalid('smtp-to');
+  if(!smtp.host){ return setInvalid('smtp-host', 'SMTP host is required.'); }
+  if(!(smtp.port>=1 && smtp.port<=65535)){ return setInvalid('smtp-port', 'Port must be between 1 and 65535.'); }
+  if(!isValidEmail(smtp.from)){ return setInvalid('smtp-from', 'Enter a valid email address.'); }
+  if(!validateEmails(smtp.to)){ return setInvalid('smtp-to', 'Enter one or more valid email addresses.'); }
+  showNotification('Sending test email...', 'info');
+  fetch('/api/test/smtp', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify(smtp)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification(j.message||'SMTP test succeeded','success'); } else { showNotification(j.error||'SMTP test failed','danger'); } })
+    .catch(e=>showNotification('SMTP test error: '+e.message,'danger'));
+}
+function testNAS(){
+  const path = document.getElementById('nt-path').value.trim();
+  const credential_key = document.getElementById('nt-cred').value.trim();
+  clearInvalid('nt-path');
+  if(!isValidUNC(path)){ return setInvalid('nt-path', 'Provide a valid UNC path.'); }
+  showNotification('Testing NAS path...', 'info');
+  fetch('/api/test/nas', {method:'POST', headers:{'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify({path, credential_key})})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok){ showNotification(j.message||'NAS test succeeded','success'); } else { showNotification(j.error||'NAS test failed','danger'); } })
+    .catch(e=>showNotification('NAS test error: '+e.message,'danger'));
+}
+
+function applyNASTemplate(){
+  const template = document.getElementById('nas-template').value;
+  if(!template) return;
+  const templates = {
+    synology: {
+      name: 'synology_nas',
+      path: '\\\\synology.local\\downloads',
+      credential_key: 'synology_admin',
+      hint: 'Replace synology.local with your NAS hostname/IP'
+    },
+    qnap: {
+      name: 'qnap_nas',
+      path: '\\\\qnap.local\\Public\\Downloads',
+      credential_key: 'qnap_admin',
+      hint: 'Replace qnap.local with your NAS hostname/IP'
+    },
+    windows: {
+      name: 'windows_share',
+      path: '\\\\SERVER\\SharedFolder',
+      credential_key: 'domain_user',
+      hint: 'Replace SERVER and SharedFolder with your share details'
+    },
+    generic: {
+      name: 'nas_target',
+      path: '\\\\192.168.1.100\\share',
+      credential_key: 'nas_default',
+      hint: 'Generic SMB/CIFS share template'
+    }
+  };
+  const t = templates[template];
+  if(t){
+    document.getElementById('nt-name').value = t.name;
+    document.getElementById('nt-path').value = t.path;
+    document.getElementById('nt-cred').value = t.credential_key;
+    showNotification(t.hint, 'info');
+  }
+}
+
+function applySMTPTemplate(){
+  const template = document.getElementById('smtp-template').value;
+  if(!template) return;
+  const templates = {
+    gmail: {
+      host: 'smtp.gmail.com',
+      port: 587,
+      tls: true,
+      hint: 'Gmail requires an App Password (not your account password). Enable 2FA and generate one at myaccount.google.com/apppasswords'
+    },
+    outlook: {
+      host: 'smtp-mail.outlook.com',
+      port: 587,
+      tls: true,
+      hint: 'Outlook.com SMTP settings. Use your full email and password.'
+    },
+    office365: {
+      host: 'smtp.office365.com',
+      port: 587,
+      tls: true,
+      hint: 'Office 365 SMTP. Use your organizational email and password.'
+    },
+    yahoo: {
+      host: 'smtp.mail.yahoo.com',
+      port: 587,
+      tls: true,
+      hint: 'Yahoo Mail requires an App Password. Generate one in Account Security settings.'
+    },
+    generic: {
+      host: 'smtp.example.com',
+      port: 587,
+      tls: true,
+      hint: 'Generic SMTP template. Update host and credentials.'
+    }
+  };
+  const t = templates[template];
+  if(t){
+    document.getElementById('smtp-host').value = t.host;
+    document.getElementById('smtp-port').value = t.port;
+    document.getElementById('smtp-tls').checked = t.tls;
+    showNotification(t.hint, 'info');
   }
 }
 </script>

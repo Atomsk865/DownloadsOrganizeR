@@ -7,12 +7,16 @@
         <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
         <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
     </div>
-    <!-- Unified Dashboard Card -->
-    <div class="card mb-4">
-        <div class="card-header"><b>Organizer Dashboard</b></div>
-        <div class="card-body p-2">
+        <!-- Card Grid Layout -->
+                <style>
+                    .grid-container { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+                    .grid-item { cursor: move; }
+                    .grid-item.dragging { opacity: 0.6; }
+                </style>
+                <div class="container-fluid">
+                        <div class="grid-container" id="dashboard-grid">
             <!-- System Info -->
-            <div class="mb-2" id="section-system-info" data-right="view_metrics">
+            <div class="grid-item" draggable="true" data-section="System Information">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSystemInfo" aria-expanded="true" aria-controls="collapseSystemInfo">
                     <b>System Information</b>
                 </button>
@@ -31,7 +35,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Service Status & Resource Usage -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Service Status & Resource Usage Card -->
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header"><b>Service Status & Resource Usage</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-service-status" data-right="view_metrics">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServiceStatus" aria-expanded="false" aria-controls="collapseServiceStatus">
                     <b>Service Status & Resource Usage</b>
@@ -64,7 +75,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Task Manager -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Task Manager Card -->
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header"><b>Task Manager (Top 5 by CPU)</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-task-manager" data-right="view_metrics">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTaskManager" aria-expanded="false" aria-controls="collapseTaskManager">
                     <b>Task Manager (Top 5 by CPU)</b>
@@ -78,13 +96,9 @@
                                     <th>Name</th>
                                     <th>CPU (%)</th>
                                     <th>Memory (MB)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for proc in tasks %}
-                                <tr>
-                                    <td><small>{{ proc.pid }}</small></td>
-                                    <td><small>{{ proc.name }}</small></td>
+                                </div>
+                                    <!-- Service Status & Resource Usage Card -->
+                                    <div class="grid-item" draggable="true" data-section="Service Status & Resource Usage">
                                     <td><small>{{ proc.cpu|round(1) }}</small></td>
                                     <td><small>{{ proc.mem }}</small></td>
                                 </tr>
@@ -94,7 +108,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Drive Space -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Drive Space Card -->
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header"><b>Drive Space</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-drive-space" data-right="view_metrics">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDriveSpace" aria-expanded="false" aria-controls="collapseDriveSpace">
                     <b>Drive Space</b>
@@ -128,7 +149,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Settings -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Settings Card -->
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header"><b>Settings</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-settings" data-right="manage_config">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
                     <b>Settings</b>
@@ -155,7 +183,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Recent Files -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Recent Files Card -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><b>Recent File Movements</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-recent-files" data-right="view_recent_files">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentFiles" aria-expanded="false" aria-controls="collapseRecentFiles">
                     <b>Recent File Movements</b>
@@ -188,7 +223,14 @@
                     </div>
                 </div>
             </div>
-            <!-- File Categories -->
+                        </div>
+                    </div>
+                </div>
+                <!-- File Categories Card -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><b>File Categories</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-file-categories" data-right="manage_config">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFileCategories" aria-expanded="false" aria-controls="collapseFileCategories">
                     <b>File Categories</b>
@@ -334,7 +376,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Custom Routes -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Custom Routes Card -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><b>Custom Routes (Per-Extension Destination Folders)</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-custom-routes" data-right="manage_config">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCustomRoutes" aria-expanded="false" aria-controls="collapseCustomRoutes">
                     <b>Custom Routes (Per-Extension Destination Folders)</b>
@@ -371,7 +420,14 @@
                     </div>
                 </div>
             </div>
-            <!-- Logs -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Logs Card -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><b>Logs (real-time)</b></div>
+                        <div class="card-body p-2">
             <div class="mb-2" id="section-logs" data-right="view_metrics">
                 <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogs" aria-expanded="false" aria-controls="collapseLogs">
                     <b>Logs (real-time)</b>
@@ -393,8 +449,11 @@
                     </div>
                 </div>
             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
     <!-- Login / Change-password Modal and scripts -->
     {% include "dashboard_scripts.html" %}
 {% endblock %}

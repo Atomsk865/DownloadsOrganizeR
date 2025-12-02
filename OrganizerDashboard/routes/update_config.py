@@ -38,6 +38,17 @@ def update_config():
         custom_routes = data.get('custom_routes')
         if isinstance(custom_routes, dict):
             config['custom_routes'] = custom_routes
+        # network_targets and credentials
+        network_targets = data.get('network_targets')
+        if isinstance(network_targets, dict):
+            config['network_targets'] = network_targets
+        credentials = data.get('credentials')
+        if isinstance(credentials, dict):
+            config['credentials'] = credentials
+        # smtp settings
+        smtp = data.get('smtp')
+        if isinstance(smtp, dict):
+            config['smtp'] = smtp
     else:
         # Legacy form support
         new_routes = {}

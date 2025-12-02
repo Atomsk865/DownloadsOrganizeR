@@ -11,6 +11,23 @@
             "webp",
             "heic"
         ],
+        "network_targets": {
+            "example": {
+                "path": "\\\\NAS\\Share\\Downloads",
+                "credential_key": "nas_default"
+            }
+        },
+        "credentials": {
+            "nas_default": {
+                "username": "",
+                "password_b64": "" 
+            }
+        },
+        "retry_queue": {
+            "enabled": true,
+            "interval_seconds": 600,
+            "max_retries": 10
+        },
         "Music": [
             "mp3",
             "wav",
