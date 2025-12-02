@@ -46,12 +46,24 @@ def setup_page():
         ]
         user = os.getenv('USER') or '%USER%'
         default_download = f'/home/{user}/Downloads'
+    # Load current organizer config for vt_api_key and features defaults
+    try:
+        from OrganizerDashboard.config_runtime import get_config
+        cfg = get_config()
+        vt_api_key = cfg.get('vt_api_key') or cfg.get('virustotal_api_key') or ''
+        features = cfg.get('features') or { 'virustotal_enabled': False, 'duplicates_enabled': True, 'reports_enabled': True }
+    except Exception:
+        vt_api_key = ''
+        features = { 'virustotal_enabled': False, 'duplicates_enabled': True, 'reports_enabled': True }
+
     return render_template(
         'dashboard_setup.html',
         available_methods=available_methods,
         host_os=host_os,
         recommended_watch_folders=recommended,
-        default_download_path=default_download
+        default_download_path=default_download,
+        vt_api_key=vt_api_key,
+        features=features
     )
 
 def _validate_username(name: str) -> str:
