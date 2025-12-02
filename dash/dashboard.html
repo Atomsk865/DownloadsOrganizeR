@@ -32,6 +32,11 @@
             flex: 1 1 100%;
             min-width: 100%;
         }
+        .dashboard-module.wide {
+            flex: 1 1 80%;
+            min-width: 0;
+            max-width: 80%;
+        }
         .dashboard-module.drag-over {
             border: 3px solid #0d6efd;
             background-color: rgba(13, 110, 253, 0.05);
@@ -218,7 +223,7 @@
         <div id="dashboard-grid" style="margin: 0 auto;">
             <!-- Button Bar -->
             <div class="dashboard-module full-width" data-module="button-bar" draggable="false">
-                <div class="d-flex justify-content-end gap-2 mb-3 flex-wrap">
+                <div class="d-flex justify-content-between gap-2 mb-3 flex-wrap">
                     <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
                     <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
                     <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
@@ -230,7 +235,7 @@
                 </div>
             </div>
             <!-- System Info Card (Top, non-draggable) -->
-            <div class="dashboard-module full-width" data-module="system-info" draggable="false">
+            <div class="dashboard-module wide" data-module="system-info" draggable="false">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b>System Information</b>
@@ -276,7 +281,7 @@
             </div>
             
             <!-- Service Status -->
-            <div class="dashboard-module" data-module="service-status" draggable="true">
+            <div class="dashboard-module wide" data-module="service-status" draggable="true">
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Service Status & Resource Usage</b>
@@ -314,7 +319,7 @@
             
             <!-- File Organization Statistics -->
             <!-- Duplicate Files Detection -->
-            <div class="dashboard-module full-width" data-module="duplicates" draggable="true">
+            <div class="dashboard-module wide" data-module="duplicates" draggable="true">
                     <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b><i class="bi bi-files"></i> Duplicate Files</b>
@@ -355,7 +360,7 @@
             </div>
             
             <!-- File Organization Statistics -->
-            <div class="dashboard-module full-width" data-module="statistics" draggable="true">
+            <div class="dashboard-module wide" data-module="statistics" draggable="true">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b><i class="bi bi-graph-up"></i> File Organization Statistics</b>
@@ -480,7 +485,7 @@
                     </div>
             </div>
                     
-            <div class="col-12 col-xl-6 dashboard-module" data-module="recent-files" draggable="true">
+            <div class="dashboard-module wide" data-module="recent-files" draggable="true">
                     <!-- Recent Files Card -->
                     <div class="card mb-3">
                         <div class="card-header d-flex align-items-center">
