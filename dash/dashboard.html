@@ -43,38 +43,29 @@
                     <div class="card h-100">
                         <div class="card-header"><b>Service Status & Resource Usage</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-service-status" data-right="view_metrics">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServiceStatus" aria-expanded="false" aria-controls="collapseServiceStatus">
-                    <b>Service Status & Resource Usage</b>
-                </button>
-                <div class="collapse" id="collapseServiceStatus">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <div class="mb-2">
-                            <small><b>Status:</b></small>
-                            <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1">{{ service_status }}</span>
-                            <div class="d-inline-flex gap-2 ms-2">
-                                <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
-                                <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
-                                <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
+                            <div class="mb-2">
+                                <small><b>Status:</b></small>
+                                <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1">{{ service_status }}</span>
+                                <div class="d-inline-flex gap-2 ms-2">
+                                    <button class="btn btn-success btn-sm" onclick="serviceAction('start')">Start</button>
+                                    <button class="btn btn-warning btn-sm" onclick="serviceAction('stop')">Stop</button>
+                                    <button class="btn btn-primary btn-sm" onclick="serviceAction('restart')">Restart</button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-2">
-                            <small><b>Memory Usage:</b></small>
-                            <span class="text-sm">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</span>
-                            <div class="progress mb-1" style="height:18px;">
-                                <div class="progress-bar {% if ram_percent < 50 %}bg-success{% elif ram_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
+                            <div class="mb-2">
+                                <small><b>Memory Usage:</b></small>
+                                <span class="text-sm">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</span>
+                                <div class="progress mb-1" style="height:18px;">
+                                    <div class="progress-bar {% if ram_percent < 50 %}bg-success{% elif ram_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-2">
-                            <small><b>CPU Usage:</b></small>
-                            <span class="text-sm">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</span>
-                            <div class="progress mb-1" style="height:18px;">
-                                <div class="progress-bar {% if total_cpu_percent < 50 %}bg-success{% elif total_cpu_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
+                            <div class="mb-2">
+                                <small><b>CPU Usage:</b></small>
+                                <span class="text-sm">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</span>
+                                <div class="progress mb-1" style="height:18px;">
+                                    <div class="progress-bar {% if total_cpu_percent < 50 %}bg-success{% elif total_cpu_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -83,31 +74,26 @@
                     <div class="card h-100">
                         <div class="card-header"><b>Task Manager (Top 5 by CPU)</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-task-manager" data-right="view_metrics">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTaskManager" aria-expanded="false" aria-controls="collapseTaskManager">
-                    <b>Task Manager (Top 5 by CPU)</b>
-                </button>
-                <div class="collapse" id="collapseTaskManager">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>PID</th>
-                                    <th>Name</th>
-                                    <th>CPU (%)</th>
-                                    <th>Memory (MB)</th>
-                                </div>
-                                    <!-- Service Status & Resource Usage Card -->
-                                    <div class="grid-item" draggable="true" data-section="Service Status & Resource Usage">
-                                    <td><small>{{ proc.cpu|round(1) }}</small></td>
-                                    <td><small>{{ proc.mem }}</small></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>PID</th>
+                                        <th>Name</th>
+                                        <th>CPU (%)</th>
+                                        <th>Memory (MB)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for proc in top_processes %}
+                                    <tr>
+                                        <td><small>{{ proc.pid }}</small></td>
+                                        <td><small>{{ proc.name }}</small></td>
+                                        <td><small>{{ proc.cpu|round(1) }}</small></td>
+                                        <td><small>{{ proc.mem }}</small></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -116,13 +102,7 @@
                     <div class="card h-100">
                         <div class="card-header"><b>Drive Space</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-drive-space" data-right="view_metrics">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDriveSpace" aria-expanded="false" aria-controls="collapseDriveSpace">
-                    <b>Drive Space</b>
-                </button>
-                <div class="collapse" id="collapseDriveSpace">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <table class="table table-sm mb-0">
+                            <table class="table table-sm mb-0">
                             <thead>
                                 <tr>
                                     <th>Device</th>
@@ -146,9 +126,6 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -157,12 +134,6 @@
                     <div class="card h-100">
                         <div class="card-header"><b>Settings</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-settings" data-right="manage_config">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
-                    <b>Settings</b>
-                </button>
-                <div class="collapse" id="collapseSettings">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
                         <form id="config-form-settings">
                             <div class="row">
                                 <div class="col-md-4">
@@ -180,9 +151,6 @@
                             </div>
                             <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveSettings()">Save Settings</button>
                         </form>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -191,13 +159,7 @@
                     <div class="card">
                         <div class="card-header"><b>Recent File Movements</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-recent-files" data-right="view_recent_files">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentFiles" aria-expanded="false" aria-controls="collapseRecentFiles">
-                    <b>Recent File Movements</b>
-                </button>
-                <div class="collapse" id="collapseRecentFiles">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <div class="d-flex justify-content-end mb-1">
+                            <div class="d-flex justify-content-end mb-1">
                             <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
@@ -220,9 +182,6 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -231,13 +190,7 @@
                     <div class="card">
                         <div class="card-header"><b>File Categories</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-file-categories" data-right="manage_config">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFileCategories" aria-expanded="false" aria-controls="collapseFileCategories">
-                    <b>File Categories</b>
-                </button>
-                <div class="collapse" id="collapseFileCategories">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <form id="config-form">
+                            <form id="config-form">
                             <table class="table table-sm mb-3">
                                 <thead>
                                     <tr>
@@ -373,9 +326,6 @@
                             </table>
                             <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Configuration</button>
                         </form>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -384,13 +334,7 @@
                     <div class="card">
                         <div class="card-header"><b>Custom Routes (Per-Extension Destination Folders)</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-custom-routes" data-right="manage_config">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCustomRoutes" aria-expanded="false" aria-controls="collapseCustomRoutes">
-                    <b>Custom Routes (Per-Extension Destination Folders)</b>
-                </button>
-                <div class="collapse" id="collapseCustomRoutes">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <form id="custom-routes-form">
+                            <form id="custom-routes-form">
                             <table class="table table-sm mb-3">
                                 <thead>
                                     <tr>
@@ -417,9 +361,6 @@
                             <button class="btn btn-primary btn-sm mt-2" type="button" onclick="saveConfiguration()">Save Custom Routes</button>
                         </form>
                         <small class="text-muted">Custom routes take precedence over category routing. Ensure paths exist and are writable.</small>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
@@ -428,13 +369,7 @@
                     <div class="card">
                         <div class="card-header"><b>Logs (real-time)</b></div>
                         <div class="card-body p-2">
-            <div class="mb-2" id="section-logs" data-right="view_metrics">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogs" aria-expanded="false" aria-controls="collapseLogs">
-                    <b>Logs (real-time)</b>
-                </button>
-                <div class="collapse" id="collapseLogs">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <div class="row g-2">
+                            <div class="row g-2">
                             <div class="col-md-6">
                                 <div class="mb-1"><b>Stdout Log</b></div>
                                 <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stdout')">Clear Log</button>
@@ -445,10 +380,6 @@
                                 <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stderr')">Clear Log</button>
                                 <pre id="stderr-log" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">{{ stderr_log }}</pre>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
                         </div>
                     </div>
                 </div>
