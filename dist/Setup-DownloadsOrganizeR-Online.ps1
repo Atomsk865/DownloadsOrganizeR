@@ -8,6 +8,7 @@ Run as Administrator.
 param(
   [string]$TargetRoot = 'C:\Scripts',
   [switch]$InstallService,
+  [switch]$InstallDotnetService,
   [switch]$NoStartDashboard,
   [string]$ServiceName = 'DownloadsOrganizer',
   [string]$PythonExe = 'python',
@@ -28,6 +29,7 @@ function Ensure-Admin {
     $psi.Verb = 'runas'
     $psi.Arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -TargetRoot $TargetRoot"
     if ($InstallService) { $psi.Arguments += ' -InstallService' }
+    if ($InstallDotnetService) { $psi.Arguments += ' -InstallDotnetService' }
     if ($NoStartDashboard) { $psi.Arguments += ' -NoStartDashboard' }
     [System.Diagnostics.Process]::Start($psi) | Out-Null
     exit
@@ -133,6 +135,22 @@ function Install-Service {
   & $nssm start $ServiceName
 }
 
+function Install-DotnetService {
+  param([string]$Root, [string]$ServiceName)
+  Write-Host "Installing Windows service $ServiceName via .NET Service Host ..." -ForegroundColor Cyan
+  $installScript = Join-Path $Root 'dotnet\DownloadsOrganizeR.ServiceHost\Install-Service.ps1'
+  $venvPython = Join-Path $Root 'venv\Scripts\python.exe'
+  $svcScript = Join-Path $Root 'Organizer.py'
+  if (-not (Test-Path $installScript)) {
+    throw "Service host installer not found: $installScript"
+  }
+  & PowerShell -ExecutionPolicy Bypass -File $installScript `
+    -ServiceName $ServiceName `
+    -PythonExe $venvPython `
+    -ScriptPath $svcScript `
+    -WorkingDirectory $Root
+}
+
 function Start-Dashboard {
   param([string]$Root)
   Write-Host 'Starting Dashboard...'
@@ -153,7 +171,11 @@ Copy-RepoFiles -Source $downloadedSource -Target $TargetRoot
 $venvPath = Ensure-Venv -Root $TargetRoot
 Pip-Install -Root $TargetRoot
 Init-Configs -Root $TargetRoot
-if ($InstallService) { Install-Service -Root $TargetRoot -ServiceName $ServiceName }
+if ($InstallDotnetService) { 
+  Install-DotnetService -Root $TargetRoot -ServiceName $ServiceName 
+} elseif ($InstallService) { 
+  Install-Service -Root $TargetRoot -ServiceName $ServiceName 
+}
 if (-not $NoStartDashboard) { Start-Dashboard -Root $TargetRoot }
 
 Write-Host @"
