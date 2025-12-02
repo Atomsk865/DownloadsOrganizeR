@@ -348,6 +348,17 @@ def initialize_auth_manager():
     try:
         from OrganizerDashboard.config_runtime import get_config
         cfg = get_config()
+        # Ensure __main__ carries current admin credentials for any legacy lookups
+        try:
+            import sys as _sys
+            _main = _sys.modules.get('__main__')
+            if _main is not None:
+                # Use setattr to avoid static analysis warnings on dynamic attributes
+                setattr(_main, 'ADMIN_USER', cfg.get('dashboard_user', 'admin'))
+                dash_hash = cfg.get('dashboard_pass_hash')
+                setattr(_main, 'ADMIN_PASS_HASH', dash_hash.encode('utf-8') if isinstance(dash_hash, str) else None)
+        except Exception:
+            pass
         _auth_manager = AuthManager(cfg)
     except Exception:
         # Fallback to legacy behavior using __main__ if available
