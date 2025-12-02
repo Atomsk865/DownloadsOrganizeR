@@ -43,6 +43,19 @@
         .hide-toggle:hover {
             color: #dc3545;
         }
+        .width-toggle {
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-left: 8px;
+        }
+        .width-toggle:hover {
+            color: #0d6efd;
+        }
+        .dashboard-module.double-width {
+            grid-column: span 2;
+        }
         .custom-widget-content {
             min-height: 150px;
         }
@@ -101,6 +114,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Service Status & Resource Usage</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('service-status')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('service-status')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -207,6 +221,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Drive Space</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('drive-space')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('drive-space')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -244,6 +259,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Settings</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('settings')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('settings')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -284,6 +300,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>File Categories</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('file-categories')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('file-categories')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -429,6 +446,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Custom Routes (Per-Extension)</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('custom-routes')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('custom-routes')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -461,6 +479,7 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Tag Routes (Filename-Based Routing)</b>
+                            <span class="width-toggle" onclick="toggleModuleWidth('tag-routes')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('tag-routes')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
@@ -499,6 +518,7 @@
                             <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget()">
                                 <i class="bi bi-pencil"></i> Edit
                             </button>
+                            <span class="width-toggle" onclick="toggleModuleWidth('custom-widget')" title="Toggle width"><i class="bi bi-arrows-expand"></i></span>
                             <span class="hide-toggle" onclick="toggleHideModule('custom-widget')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>

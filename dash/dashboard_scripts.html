@@ -121,6 +121,7 @@ document.getElementById('login-submit').addEventListener('click', async function
             loadDashboardLayout();
             loadCustomWidget();
             loadHiddenModules();
+            loadModuleWidths();
             if (__rights.view_recent_files) refreshRecentFiles();
             if (__rights.view_metrics) {
                 updateServiceStatus();
@@ -221,10 +222,11 @@ function loadDashboardLayout() {
 }
 
 function resetDashboardLayout() {
-    if (confirm('Reset dashboard to default layout? This will reload the page and show all hidden modules.')) {
+    if (confirm('Reset dashboard to default layout? This will reload the page and restore all settings.')) {
         localStorage.removeItem('dashboardLayout_' + (__authHeader || 'default'));
         localStorage.removeItem('hiddenModules_' + (__authHeader || 'default'));
         localStorage.removeItem('customWidget_' + (__authHeader || 'default'));
+        localStorage.removeItem('moduleWidths_' + (__authHeader || 'default'));
         location.reload();
     }
 }
@@ -318,12 +320,58 @@ function updateShowHiddenButton() {
     }
 }
 
+// Width Toggle Functions
+function toggleModuleWidth(moduleId) {
+    const module = document.querySelector(`[data-module="${moduleId}"]`);
+    if (!module) return;
+    
+    const icon = module.querySelector('.width-toggle i');
+    if (!icon) return;
+    
+    if (module.classList.contains('double-width')) {
+        module.classList.remove('double-width');
+        icon.className = 'bi bi-arrows-expand';
+    } else {
+        module.classList.add('double-width');
+        icon.className = 'bi bi-arrows-collapse';
+    }
+    
+    saveModuleWidths();
+}
+
+function saveModuleWidths() {
+    const doubleWidthModules = Array.from(document.querySelectorAll('.dashboard-module.double-width'))
+        .map(el => el.dataset.module)
+        .filter(m => m);
+    localStorage.setItem('moduleWidths_' + (__authHeader || 'default'), JSON.stringify(doubleWidthModules));
+}
+
+function loadModuleWidths() {
+    const saved = localStorage.getItem('moduleWidths_' + (__authHeader || 'default'));
+    if (!saved) return;
+    
+    try {
+        const doubleWidthModules = JSON.parse(saved);
+        doubleWidthModules.forEach(moduleId => {
+            const module = document.querySelector(`[data-module="${moduleId}"]`);
+            if (module && !module.classList.contains('full-width')) {
+                module.classList.add('double-width');
+                const icon = module.querySelector('.width-toggle i');
+                if (icon) icon.className = 'bi bi-arrows-collapse';
+            }
+        });
+    } catch (e) {
+        console.error('Error loading module widths:', e);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
     loadDashboardLayout();
     loadCustomWidget();
     loadHiddenModules();
+    loadModuleWidths();
 });
 
 function applyRights() {
