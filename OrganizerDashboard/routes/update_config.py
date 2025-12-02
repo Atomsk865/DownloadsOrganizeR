@@ -70,7 +70,7 @@ def update_config():
             feats['reports_enabled'] = bool(features.get('reports_enabled', feats.get('reports_enabled', True)))
             config['features'] = feats
     else:
-        # Legacy form support
+        # Legacy form support (including feature toggles and vt_api_key)
         new_routes = {}
         i = 1
         while True:
@@ -88,23 +88,44 @@ def update_config():
         new_exts = request.form.get("exts_new", "").strip()
         if new_folder:
             new_routes[new_folder] = [e.strip() for e in new_exts.split(",") if e.strip()]
-        mem = request.form.get("memory_threshold", str(config['memory_threshold_mb'])).strip()
-        cpu = request.form.get("cpu_threshold", str(config['cpu_threshold_percent'])).strip()
-        logs = request.form.get("logs_dir", config.get('logs_dir', '')).strip()
-        watch_folder = request.form.get("watch_folder", config.get('watch_folder', '')).strip()
+        mem = (request.form.get("memory_threshold", str(config.get('memory_threshold_mb', '')) ) or "").strip()
+        cpu = (request.form.get("cpu_threshold", str(config.get('cpu_threshold_percent', '')) ) or "").strip()
+        logs = (request.form.get("logs_dir", config.get('logs_dir', '')) or "").strip()
+        watch_folder = (request.form.get("watch_folder", config.get('watch_folder', '')) or "").strip()
         try:
             config['memory_threshold_mb'] = int(mem)
         except ValueError:
-            return jsonify({"status": "error", "message": "Invalid memory threshold value"}), 400
+            pass
         try:
             config['cpu_threshold_percent'] = int(cpu)
         except ValueError:
-            return jsonify({"status": "error", "message": "Invalid CPU threshold value"}), 400
+            pass
         if logs:
             config['logs_dir'] = logs
         if watch_folder:
             config['watch_folder'] = watch_folder
         config['routes'] = new_routes
+
+        # vt_api_key and feature toggles (checkboxes submit 'on' or values)
+        vt_api_key = request.form.get('vt_api_key', '').strip()
+        if vt_api_key:
+            config['vt_api_key'] = vt_api_key
+        feats = config.get('features') or {}
+        # Interpret truthy presence for checkboxes
+        def _truthy(val):
+            if val is None:
+                return False
+            return str(val).lower() in ('1', 'true', 'on', 'yes')
+        virustotal_enabled = request.form.get('virustotal_enabled')
+        duplicates_enabled = request.form.get('duplicates_enabled')
+        reports_enabled = request.form.get('reports_enabled')
+        if virustotal_enabled is not None:
+            feats['virustotal_enabled'] = _truthy(virustotal_enabled)
+        if duplicates_enabled is not None:
+            feats['duplicates_enabled'] = _truthy(duplicates_enabled)
+        if reports_enabled is not None:
+            feats['reports_enabled'] = _truthy(reports_enabled)
+        config['features'] = feats
 
     # Save to all config file locations to ensure service picks it up
     saved_count = 0
