@@ -265,6 +265,14 @@ def create_app():
     from OrganizerDashboard.routes.csrf_token import routes_csrf
     from OrganizerDashboard.routes.user_links import routes_user_links
     from OrganizerDashboard.routes.reports import reports_bp
+    from OrganizerDashboard.routes.branding import routes_branding
+    from OrganizerDashboard.routes.statistics import routes_statistics
+    from OrganizerDashboard.routes.notifications import routes_notifications
+    from OrganizerDashboard.routes.changelog import routes_changelog
+    from OrganizerDashboard.routes.config_backup import routes_config_backup
+    from OrganizerDashboard.routes.watch_folders import routes_watch_folders
+    from OrganizerDashboard.routes.duplicates import routes_duplicates
+    from OrganizerDashboard.routes.docs import routes_docs
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config)
@@ -293,8 +301,16 @@ def create_app():
     app.register_blueprint(routes_login)
     app.register_blueprint(routes_admin_tools)
     app.register_blueprint(routes_csrf)
+    app.register_blueprint(routes_branding)
     app.register_blueprint(routes_user_links)
     app.register_blueprint(reports_bp)
+    app.register_blueprint(routes_statistics)
+    app.register_blueprint(routes_notifications)
+    app.register_blueprint(routes_changelog)
+    app.register_blueprint(routes_config_backup)
+    app.register_blueprint(routes_watch_folders)
+    app.register_blueprint(routes_docs)
+    app.register_blueprint(routes_duplicates)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)

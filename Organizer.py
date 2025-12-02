@@ -16,6 +16,8 @@ import shutil
 import json
 import logging
 import time
+import hashlib
+from typing import Dict, List, Optional
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import threading
@@ -52,9 +54,21 @@ if not downloads_path_str:
         downloads_path_str = str(Path.home() / "Downloads")
 
 DOWNLOADS_PATH = Path(downloads_path_str)
-DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", "C:/Scripts/downloads_dashboard.json"))
-ORGANIZER_LOG = CONFIG.get("organizer_log", "organizer.log")
-FILE_MOVES_JSON = Path(CONFIG.get("file_moves_json", "C:/Scripts/file_moves.json"))
+WATCH_FOLDERS = [DOWNLOADS_PATH]
+wf = CONFIG.get("watch_folders")
+if isinstance(wf, list) and wf:
+    try:
+        WATCH_FOLDERS = [Path(p) for p in wf]
+    except Exception:
+        WATCH_FOLDERS = [DOWNLOADS_PATH]
+DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", SCRIPT_DIR / "config" / "json" / "downloads_dashboard.json"))
+# Organizer log path under ./logs directory
+LOGS_DIR = Path(CONFIG.get("logs_dir", SCRIPT_DIR / "logs"))
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+ORGANIZER_LOG = str(LOGS_DIR / "organizer.log")
+FILE_MOVES_JSON = Path(CONFIG.get("file_moves_json", SCRIPT_DIR / "config" / "json" / "file_moves.json"))
+FILE_HASHES_JSON = Path(CONFIG.get("file_hashes_json", SCRIPT_DIR / "config" / "json" / "file_hashes.json"))
+NOTIFICATION_HISTORY_JSON = Path(CONFIG.get("notification_history_json", SCRIPT_DIR / "notification_history.json"))
 
 # Load extension map from config if available and normalize to dot-prefixed lower-case
 if CONFIG.get("routes"):
@@ -225,7 +239,152 @@ def is_network_path(path: Path) -> bool:
     return p.startswith('\\\\') or p.startswith('\\')
 
 
-def organize_file(file_path: str) -> None:
+def calculate_file_hash(file_path: str) -> str:
+    """Calculate SHA256 hash of a file.
+    
+    Args:
+        file_path: Path to the file to hash
+        
+    Returns:
+        Hex string of the file's SHA256 hash
+    """
+    sha256_hash = hashlib.sha256()
+    try:
+        with open(file_path, "rb") as f:
+            # Read file in chunks to handle large files efficiently
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    except Exception as e:
+        logger.error(f"Failed to calculate hash for {file_path}: {e}")
+        return ""
+
+
+def load_file_hashes() -> Dict[str, List[str]]:
+    """Load the file hashes database from JSON.
+    
+    Returns:
+        Dictionary mapping SHA256 hashes to lists of file paths
+    """
+    if not FILE_HASHES_JSON.exists():
+        return {}
+    try:
+        with FILE_HASHES_JSON.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to load file hashes: {e}")
+        return {}
+
+
+def save_file_hashes(hashes: Dict[str, List[str]]) -> None:
+    """Save the file hashes database to JSON.
+    
+    Args:
+        hashes: Dictionary mapping SHA256 hashes to lists of file paths
+    """
+    try:
+        FILE_HASHES_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with FILE_HASHES_JSON.open("w", encoding="utf-8") as f:
+            json.dump(hashes, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Failed to save file hashes: {e}")
+
+
+def check_duplicate(file_path: str, file_hash: str) -> Optional[List[str]]:
+    """Check if a file is a duplicate based on its hash.
+    
+    Args:
+        file_path: Path to the file being checked
+        file_hash: SHA256 hash of the file
+        
+    Returns:
+        List of existing file paths with the same hash, or None if no duplicates
+    """
+    hashes = load_file_hashes()
+    existing_files = hashes.get(file_hash, [])
+    
+    # Filter out the current file path and non-existent files
+    duplicates = [f for f in existing_files if f != file_path and Path(f).exists()]
+    
+    return duplicates if duplicates else None
+
+
+def register_file_hash(file_path: str, file_hash: str) -> None:
+    """Register a file's hash in the database.
+    
+    Args:
+        file_path: Path to the file
+        file_hash: SHA256 hash of the file
+    """
+    if not file_hash:
+        return
+        
+    hashes = load_file_hashes()
+    
+    if file_hash not in hashes:
+        hashes[file_hash] = []
+    
+    # Add file path if not already present
+    if file_path not in hashes[file_hash]:
+        hashes[file_hash].append(file_path)
+    
+    save_file_hashes(hashes)
+
+
+def send_notification(message: str, notification_type: str = "info") -> None:
+    """Send a notification to the dashboard notification center.
+    
+    Args:
+        message: Notification message text
+        notification_type: Type of notification (info, success, warning, error)
+    """
+    try:
+        # Load existing notifications
+        notifications = []
+        if NOTIFICATION_HISTORY_JSON.exists():
+            with NOTIFICATION_HISTORY_JSON.open("r", encoding="utf-8") as f:
+                notifications = json.load(f)
+        
+        # Create new notification
+        notification = {
+            "id": f"notif_{int(datetime.now().timestamp() * 1000)}",
+            "message": message,
+            "type": notification_type,
+            "timestamp": datetime.now().isoformat(),
+            "read": False
+        }
+        
+        # Add to beginning (most recent first)
+        notifications.insert(0, notification)
+        
+        # Keep only 100 most recent
+        notifications = notifications[:100]
+        
+        # Save back to file
+        NOTIFICATION_HISTORY_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with NOTIFICATION_HISTORY_JSON.open("w", encoding="utf-8") as f:
+            json.dump(notifications, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Failed to send notification: {e}")
+
+
+def format_file_size(size_bytes: float) -> str:
+    """Format file size in human-readable format.
+    
+    Args:
+        size_bytes: File size in bytes
+        
+    Returns:
+        Formatted string (e.g., "1.5 MB")
+    """
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.1f} PB"
+
+
+def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
     """Move a single file into the matching category folder under Downloads.
 
     Priority order:
@@ -234,7 +393,7 @@ def organize_file(file_path: str) -> None:
     3. Category-based routes (by extension)
     
     The function is careful to skip incomplete downloads and explicitly
-    ignored files.
+    ignored files. Also calculates file hash and detects duplicates.
     """
     p = Path(file_path)
     if not p.is_file():
@@ -245,6 +404,24 @@ def organize_file(file_path: str) -> None:
 
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
         return
+
+    # Calculate file hash before organizing
+    file_hash = calculate_file_hash(file_path)
+    if file_hash:
+        # Check for duplicates
+        duplicates = check_duplicate(file_path, file_hash)
+        if duplicates:
+            logger.warning(f"Duplicate file detected: {filename}")
+            logger.warning(f"  New file: {file_path}")
+            logger.warning(f"  Existing: {', '.join(duplicates)}")
+            
+            # Send notification about duplicate
+            file_size = Path(file_path).stat().st_size if Path(file_path).exists() else 0
+            size_human = format_file_size(file_size)
+            send_notification(
+                f"Duplicate file detected: {filename} ({size_human}) - {len(duplicates)} existing copy/copies found",
+                "warning"
+            )
 
     # Priority 1: Check for tag-based routes (highest priority)
     tag_matched = False
@@ -268,7 +445,7 @@ def organize_file(file_path: str) -> None:
                 if ext in extensions:
                     target_dir = category
                     break
-            dest_dir = DOWNLOADS_PATH / target_dir
+            dest_dir = base_path / target_dir
             category_label = target_dir
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = get_unique_path(dest_dir, filename)
@@ -276,6 +453,10 @@ def organize_file(file_path: str) -> None:
         shutil.move(str(p), dest_path)
         logger.info(f"Moved {file_path} → {dest_path}")
         log_file_move(file_path, dest_path, category_label)
+        
+        # Register file hash after successful move
+        if file_hash:
+            register_file_hash(dest_path, file_hash)
     except Exception as e:
         logger.warning(f"Move failed: {file_path} -> {dest_path}: {e}")
         # If destination is network or currently inaccessible, queue for retry
@@ -316,15 +497,15 @@ class DownloadsHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         if not event.is_directory:
-            organize_file(str(event.src_path))
+            organize_file(str(event.src_path), self.downloads_path)
             update_dashboard_json(self.downloads_path)
     def on_moved(self, event):
         if not event.is_directory:
-            organize_file(str(event.dest_path))
+            organize_file(str(event.dest_path), self.downloads_path)
             update_dashboard_json(self.downloads_path)
     def on_modified(self, event):
         if not event.is_directory:
-            organize_file(str(event.src_path))
+            organize_file(str(event.src_path), self.downloads_path)
             update_dashboard_json(self.downloads_path)
 
 
@@ -332,22 +513,31 @@ class DownloadsHandler(FileSystemEventHandler):
 # Main entrypoint
 # -----------------------------
 if __name__ == "__main__":
-    DOWNLOADS_PATH.mkdir(parents=True, exist_ok=True)
+    # Ensure all watch folders exist
+    for folder in WATCH_FOLDERS:
+        folder.mkdir(parents=True, exist_ok=True)
     # Initialize retry queue
     RETRY_QUEUE = RetryQueue(CONFIG)
     RETRY_QUEUE.start()
-    initial_scan(DOWNLOADS_PATH)
-    event_handler = DownloadsHandler(DOWNLOADS_PATH)
-    observer = Observer()
-    observer.schedule(event_handler, str(DOWNLOADS_PATH), recursive=False)
-    observer.start()
-    logger.info(f"Monitoring {DOWNLOADS_PATH} started")
-    print(f"Monitoring {DOWNLOADS_PATH}... Press Ctrl+C to stop.")
+    # Initial scan for each folder
+    for folder in WATCH_FOLDERS:
+        initial_scan(folder)
+    # Create observers per folder
+    observers = []
+    for folder in WATCH_FOLDERS:
+        event_handler = DownloadsHandler(folder)
+        observer = Observer()
+        observer.schedule(event_handler, str(folder), recursive=False)
+        observer.start()
+        observers.append(observer)
+        logger.info(f"Monitoring {folder} started")
+    print(f"Monitoring {len(WATCH_FOLDERS)} folder(s)... Press Ctrl+C to stop.")
     try:
-        # Sleep in the loop to avoid a busy-wait and reduce CPU usage
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        for obs in observers:
+            obs.stop()
+        for obs in observers:
+            obs.join()
     logger.info("Monitoring stopped")

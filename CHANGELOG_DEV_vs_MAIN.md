@@ -1,10 +1,20 @@
 # Changelog: Prod-Beta vs main
 
+## December 2, 2025
+
+- Dashboard UX: Added feature state badges (On/Off) to Duplicate Files and File Organization Statistics cards.
+- Feature gating: Introduced consistent disabled banners and JS gating for Duplicates and Reports based on `organizer_config.json` feature flags.
+- VirusTotal UI: VT scan buttons now hide when VirusTotal is disabled or API key is missing.
+- Docs links: Added local docs link to the Duplicates card header (`/docs/duplicate-detection`).
+
+These changes improve admin clarity and reduce UI clutter when optional features are turned off.
+
 This document summarizes all functional and structural changes introduced on `Prod-Beta` branch relative to `main`.
 
 ## Added (December 2025)
 
 ### User Links Feature
+
 - **User Links Manager** (`/user-links`) - Create and manage custom quick-access links
   - Categorized link organization (Work, Personal, Tools, Reference, Other)
   - Link descriptions and metadata
@@ -14,6 +24,7 @@ This document summarizes all functional and structural changes introduced on `Pr
 - API endpoints: `/api/user-links` (GET, POST, PUT, DELETE)
 
 ### Reports & Analytics Feature
+
 - **Comprehensive Reports Dashboard** (`/reports`) with advanced analytics:
   - File organization statistics with date range filtering
   - Category-based analysis (Images, Videos, Documents, etc.)
@@ -26,6 +37,7 @@ This document summarizes all functional and structural changes introduced on `Pr
 - API endpoints: `/api/reports/summary`, `/api/reports/category-stats`, `/api/reports/file-sizes`
 
 ### Recent Files Enhancement
+
 - Enhanced Recent File Movements viewer with quick actions:
   - Open file directly from dashboard
   - Reveal file in folder/explorer
@@ -35,6 +47,7 @@ This document summarizes all functional and structural changes introduced on `Pr
 - New blueprints: `routes_api_open_file`, `routes_api_recent_files`
 
 ### Configuration & Setup Features
+
 - Dashboard configuration page (`/config`) with:
   - Drag-and-drop layout ordering
   - Hide/show sections via checkboxes
@@ -57,18 +70,21 @@ This document summarizes all functional and structural changes introduced on `Pr
 ## Bug Fixes (December 2025)
 
 ### Template Fixes
+
 - **Fixed Jinja2 template syntax errors** in `dashboard.html`
   - Removed duplicate collapsible section structures causing `{% endfor %}` / `{% endblock %}` mismatch
   - Cleaned up card body structures for all dashboard sections
   - Simplified HTML hierarchy for better maintainability
 
 ### Config Page Fixes
+
 - **Fixed non-functional buttons** in dashboard configuration page
   - Moved scoped functions to global scope: `resetSetup()`, `installService()`, `uninstallService()`, `reinstallService()`, `factoryReset()`, `repairAuth()`, `viewAuthState()`
   - Functions were trapped inside `applyConfigRights()` making them inaccessible to onclick handlers
   - Separated rights enforcement logic from function definitions
 
 ### Security Enhancements
+
 - **Added CSRF protection** with flask-wtf integration
   - Implemented CSRF token management across all forms
   - Added CSRF token endpoint for AJAX requests
@@ -84,6 +100,7 @@ This document summarizes all functional and structural changes introduced on `Pr
 - Dashboard features list expanded (layout editor, role management, rights enforcement, reports, user links)
 
 ## Security / Access Control
+
 - Introduced rights gating rather than single boolean authentication for sensitive operations.
 - Passwords for additional users stored only as bcrypt hashes (`password_hash`).
 - Fallback authentication remains configurable (`auth_fallback_enabled`).
@@ -104,10 +121,12 @@ This document summarizes all functional and structural changes introduced on `Pr
 - `RECENT_FILES_QUICKSTART.md`
 
 ## Removed / Deprecated
+
 - Implicit assumption of single admin user for all operations (now role-based).
 - Direct modification of service/config routes without rights checks.
 
 ## Pending / Future (Not yet enforced on dev)
+
 - Rights enforcement for view-only endpoints (`view_metrics`, `view_recent_files`).
 - UI state disabling actions based on user rights.
 - Password rotation & recovery flows.

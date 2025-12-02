@@ -14,9 +14,12 @@
           <div class="col-md-6">
             <label class="form-label mb-1 d-flex align-items-center justify-content-between">
               <small><b>Admin Password</b></small>
-              <span class="ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#6c757d;color:#fff;text-align:center;line-height:18px;font-size:12px;">
-                i
-              </span>
+              <div class="d-flex align-items-center gap-2">
+                <a href="/docs/authentication" target="_blank" class="text-decoration-none"><small><i class="bi bi-book"></i> Docs</small></a>
+                <span class="ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#6c757d;color:#fff;text-align:center;line-height:18px;font-size:12px;">
+                  i
+                </span>
+              </div>
             </label>
             <div class="input-group input-group-sm">
               <input type="password" class="form-control" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
@@ -51,7 +54,89 @@
             </select>
           </div>
           <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-primary btn-sm w-100" onclick="submitSetup()">Complete Setup</button>
+            <div class="d-flex w-100 align-items-center">
+              <button class="btn btn-primary btn-sm flex-grow-1" onclick="submitSetup()">Complete Setup</button>
+              <a href="/docs/readme" target="_blank" class="btn btn-outline-dark btn-sm ms-2"><i class="bi bi-book"></i> Docs</a>
+            </div>
+          </div>
+        </div>
+        <hr/>
+        <!-- Optional Integrations & Features -->
+        <div id="features-section" class="mt-2">
+          <div class="border rounded p-2 bg-light">
+            <div class="mb-2 d-flex align-items-center justify-content-between">
+              <small><b>Optional Integrations & Feature Toggles</b></small>
+              <small class="text-muted">Configure non-essential features and API keys</small>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-8">
+                <label class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
+                <input class="form-control form-control-sm" id="vt-api-key" placeholder="Paste your VirusTotal API key" value="{{ vt_api_key }}">
+                <small class="text-muted">Used for hash lookups in Recent Files. If empty, VT features are disabled.</small>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label mb-1"><small><b>Feature Toggles</b></small></label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="feat-virustotal" {% if features.virustotal_enabled %}checked{% endif %}>
+                  <label class="form-check-label"><small>Enable VirusTotal integration</small></label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="feat-duplicates" {% if features.duplicates_enabled %}checked{% endif %}>
+                  <label class="form-check-label"><small>Enable Duplicate Detection</small></label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="feat-reports" {% if features.reports_enabled %}checked{% endif %}>
+                  <label class="form-check-label"><small>Enable Reports & Analytics</small></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <hr/>
+        <!-- Recommended Watch Folders -->
+        <div id="watch-folders-section" class="mt-2">
+          <div class="border rounded p-2 bg-light">
+            <div class="mb-2 d-flex align-items-center justify-content-between">
+              <small><b>Recommended Watch Folders</b></small>
+              <small class="text-muted">Detected host OS: {{ host_os|capitalize }} — select folders to monitor</small>
+            </div>
+            <div class="row g-2">
+              <div class="col-12">
+                {% if host_os == 'windows' %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="wf-win-downloads" value="C:/Users/%USERNAME%/Downloads">
+                  <label class="form-check-label" for="wf-win-downloads"><small>Windows Downloads (`C:/Users/%USERNAME%/Downloads`)</small></label>
+                </div>
+                {% endif %}
+                {% if host_os == 'linux' %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="wf-linux-downloads" value="/home/%USER%/Downloads">
+                  <label class="form-check-label" for="wf-linux-downloads"><small>Linux Downloads (`/home/%USER%/Downloads`)</small></label>
+                </div>
+                {% endif %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="wf-shared-incoming" value="/mnt/shared/incoming">
+                  <label class="form-check-label" for="wf-shared-incoming"><small>Shared Incoming (`/mnt/shared/incoming`)</small></label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="wf-custom-enable">
+                  <label class="form-check-label" for="wf-custom-enable"><small>Add a custom folder</small></label>
+                </div>
+                <div class="input-group input-group-sm mt-1">
+                  <input type="text" class="form-control" id="wf-custom-path" placeholder="Enter path (e.g., C:/Incoming or /data/downloads)" disabled value="{{ default_download_path }}">
+                  <button class="btn btn-outline-secondary" type="button" onclick="addCustomWatchFolder()" id="wf-custom-add" disabled>Add</button>
+                  <button class="btn btn-outline-info" type="button" onclick="prefillDefaultDownload()" id="wf-custom-prefill" disabled>Use Default</button>
+                  <button class="btn btn-outline-success" type="button" onclick="addDefaultToSelection()" id="wf-custom-add-default" disabled>Add Default to Selection</button>
+                </div>
+                <div class="mt-1">
+                  <small class="text-muted">Default detected: <code id="wf-default-hint">{{ default_download_path }}</code></small>
+                </div>
+                <div class="mt-2">
+                  <small class="text-muted">You can change these anytime in Configuration → Watched Folders.</small>
+                </div>
+                <div id="wf-selected" class="mt-2"></div>
+              </div>
+            </div>
           </div>
         </div>
         <!-- LDAP Section -->
@@ -207,8 +292,30 @@ function submitSetup(){
         return {ok: false, j: {error: 'Server returned invalid response: ' + text.substring(0, 200)}};
       }
     })
-    .then(({ok,j})=>{
+    .then(async ({ok,j})=>{
       if(ok && j.success){
+        // Persist selected watch folders
+        const selected = getSelectedWatchFolders();
+        const vtApiKey = document.getElementById('vt-api-key').value.trim();
+        const features = {
+          virustotal_enabled: document.getElementById('feat-virustotal').checked,
+          duplicates_enabled: document.getElementById('feat-duplicates').checked,
+          reports_enabled: document.getElementById('feat-reports').checked
+        };
+        try{
+          const r2 = await fetch('/api/setup/save', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ watch_folders: selected, vt_api_key: vtApiKey, features })
+          });
+          if(r2.ok){
+            showNotification('Setup preferences saved', 'success');
+          } else {
+            const err2 = await r2.json().catch(()=>({}));
+            showNotification('Failed to save setup preferences: ' + (err2.message||r2.status), 'warning');
+          }
+        } catch(e){
+          showNotification('Error saving setup preferences: ' + e.message, 'warning');
+        }
         showNotification('Setup complete! Redirecting to login...', 'success');
         setTimeout(()=>{ window.location.href='/login'; },1500);
       } else {
@@ -223,7 +330,13 @@ function showNotification(msg, type){
   alert.className = 'alert alert-' + (type||'info') + ' alert-dismissible fade show';
   alert.role = 'alert';
   alert.innerHTML = '<small>' + msg + '</small><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-  document.querySelector('.card-body').prepend(alert);
+  const container = document.getElementById('notification-container');
+  if (container) {
+    container.appendChild(alert);
+  } else {
+    document.querySelector('.card-body').prepend(alert);
+  }
+  setTimeout(() => { alert.remove(); }, 5000);
 }
 // Initialize Bootstrap tooltips if available
 document.addEventListener('DOMContentLoaded', function(){
@@ -233,6 +346,123 @@ document.addEventListener('DOMContentLoaded', function(){
       new bootstrap.Tooltip(tooltipTriggerEl);
     });
   }
+  const customEnable = document.getElementById('wf-custom-enable');
+  const customInput = document.getElementById('wf-custom-path');
+  const customAdd = document.getElementById('wf-custom-add');
+  customEnable.addEventListener('change', function(){
+    const en = customEnable.checked;
+    customInput.disabled = !en;
+    customAdd.disabled = !en;
+    const prefillBtn = document.getElementById('wf-custom-prefill');
+    if(prefillBtn) prefillBtn.disabled = !en;
+    const addDefaultBtn = document.getElementById('wf-custom-add-default');
+    if(addDefaultBtn) addDefaultBtn.disabled = !en;
+  });
+  ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', renderSelectedWatchFolders);
+  });
+  // Auto-select based on server OS recommendations
+  try {
+    const recommended = {{ recommended_watch_folders|tojson }};
+    recommended.forEach(path => {
+      if(path.startsWith('C:/')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
+      if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
+    });
+  } catch(e) { /* ignore */ }
+  renderSelectedWatchFolders();
 });
+
+function prefillDefaultDownload(){
+  const input = document.getElementById('wf-custom-path');
+  const def = {{ default_download_path|tojson }};
+  if(def){ input.value = def; }
+}
+
+function addDefaultToSelection(){
+  const def = {{ default_download_path|tojson }};
+  if(!def){ showNotification('No default path available', 'warning'); return; }
+  const input = document.getElementById('wf-custom-path');
+  input.value = def;
+  addCustomWatchFolder();
+}
+
+function getSelectedWatchFolders(){
+  const ids = ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'];
+  const selected = ids.map(id=>{
+    const el = document.getElementById(id);
+    return el.checked ? el.value : null;
+  }).filter(Boolean);
+  // Collect custom entries listed in wf-selected list items with data-path
+  document.querySelectorAll('#wf-selected li[data-path]').forEach(li=>{
+    selected.push(li.getAttribute('data-path'));
+  });
+  // Deduplicate
+  return Array.from(new Set(selected));
+}
+
+function renderSelectedWatchFolders(){
+  const list = document.getElementById('wf-selected');
+  const selected = getSelectedWatchFolders();
+  if(!selected.length){
+    list.innerHTML = '<small class="text-muted">No folders selected yet.</small>';
+    return;
+  }
+  list.innerHTML = '<small><b>Selected:</b></small>\n<ul class="mt-1 mb-0">' + selected.map(p=>
+    `<li data-path="${p}"><code>${p}</code> <button class="btn btn-sm btn-outline-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${p}')">Remove</button></li>`
+  ).join('') + '</ul>';
+}
+
+function addCustomWatchFolder(){
+  const input = document.getElementById('wf-custom-path');
+  const val = input.value.trim();
+  if(!val){ showNotification('Enter a folder path', 'danger'); return; }
+  // Basic validation: must be absolute path
+  const isWin = /^[A-Za-z]:\//.test(val);
+  const isUnix = val.startsWith('/');
+  if(!(isWin||isUnix)){
+    showNotification('Please enter an absolute path (e.g., C:/Incoming or /data/downloads)', 'danger');
+    return;
+  }
+  // Add to selected list
+  const list = document.getElementById('wf-selected');
+  const current = getSelectedWatchFolders();
+  if(current.includes(val)){
+    showNotification('Folder already selected', 'warning'); return;
+  }
+  const li = document.createElement('li');
+  li.setAttribute('data-path', val);
+  li.innerHTML = `<code>${val}</code> <button class="btn btn-sm btn-outline-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${val}')">Remove</button>`;
+  const ul = list.querySelector('ul');
+  if(ul){ ul.appendChild(li); }
+  else {
+    list.innerHTML = '<small><b>Selected:</b></small>\n<ul class="mt-1 mb-0"></ul>';
+    list.querySelector('ul').appendChild(li);
+  }
+}
+
+function removeSelectedWatchFolder(path){
+  const list = document.getElementById('wf-selected');
+  const li = Array.from(list.querySelectorAll('li')).find(el=> el.getAttribute('data-path') === path);
+  if(li){ li.remove(); }
+  renderSelectedWatchFolders();
+}
 </script>
+{% if host_os == 'windows' %}
+<div class="container mt-2" style="max-width: 900px;">
+  <div class="alert alert-secondary">
+    <small>
+      Tip: On Windows, install the service using NSSM via `Install-And-Monitor-OrganizerService.ps1`. Logs default to `C:\\Scripts\\service-logs`. Ensure the selected folders exist and are accessible.
+    </small>
+  </div>
+</div>
+{% elif host_os == 'linux' %}
+<div class="container mt-2" style="max-width: 900px;">
+  <div class="alert alert-secondary">
+    <small>
+      Tip: On Linux, run the dashboard with `python OrganizerDashboard.py` or configure a systemd service for Organizer. Recommended Downloads path: `/home/<user>/Downloads`. Ensure permissions for shared mounts like `/mnt/shared/incoming`.
+    </small>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

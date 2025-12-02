@@ -57,6 +57,18 @@ def update_config():
         smtp = data.get('smtp')
         if isinstance(smtp, dict):
             config['smtp'] = smtp
+        # VirusTotal API key
+        vt_api_key = data.get('vt_api_key')
+        if isinstance(vt_api_key, str):
+            config['vt_api_key'] = vt_api_key.strip()
+        # Feature toggles
+        features = data.get('features')
+        if isinstance(features, dict):
+            feats = config.get('features') or {}
+            feats['virustotal_enabled'] = bool(features.get('virustotal_enabled', feats.get('virustotal_enabled', True)))
+            feats['duplicates_enabled'] = bool(features.get('duplicates_enabled', feats.get('duplicates_enabled', True)))
+            feats['reports_enabled'] = bool(features.get('reports_enabled', feats.get('reports_enabled', True)))
+            config['features'] = feats
     else:
         # Legacy form support
         new_routes = {}

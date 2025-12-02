@@ -1,8 +1,9 @@
 {
     "users": [
         {
-            "username": "adminuser",
-            "role": "admin"
+            "username": "admin",
+            "role": "admin",
+            "password_hash": "$2b$12$6U/e8V8ytahwO5UojW7CK.nytXu4UkF0KW9F0NAsmKTsxMAK/zHHq"
         }
     ],
     "roles": {
@@ -41,6 +42,6 @@
         ],
         "hidden_sections": []
     },
-    "config_version": 8,
-    "setup_completed": false
+    "config_version": 9,
+    "setup_completed": true
 }

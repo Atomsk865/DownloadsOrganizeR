@@ -131,6 +131,36 @@ Navigate to `/config` after login:
 - Assign roles (admin/operator/viewer) with predefined rights
 - Drag to reorder sections; hide with checkboxes; save persists to `dashboard_config.json`
 
+### Watch Folders & VirusTotal
+
+- `watch_folders`: Absolute paths the Organizer monitors. Configure during Setup (Recommended Watch Folders) or later under Configuration → Watched Folders. Used by `Organizer.py` to start filesystem observers and for initial scans.
+- `vt_api_key`: VirusTotal v3 API key for hash lookups. Configure during Setup or under Configuration → Features & Integrations. When present and enabled, Recent Files shows a “Scan with VirusTotal” button and a detailed modal; responses are cached to `./config/json/vt_cache.json`.
+
+Feature toggles: When a feature is disabled in `features` (e.g., `virustotal_enabled`, `duplicates_enabled`, `reports_enabled`), related UI controls are hidden or show a small disabled notice, and API endpoints return empty data or a 400 error where appropriate.
+
+Example `organizer_config.json` snippet:
+
+```json
+{
+  "watch_folders": [
+    "C:/Users/YourName/Downloads",
+    "/home/youruser/Downloads"
+  ],
+  "vt_api_key": "YOUR_VIRUSTOTAL_API_KEY",
+  "features": {
+    "virustotal_enabled": true,
+    "duplicates_enabled": true,
+    "reports_enabled": true
+  },
+  "file_moves_json": "./config/json/file_moves.json",
+  "file_hashes_json": "./config/json/file_hashes.json",
+  "vt_cache_json": "./config/json/vt_cache.json",
+  "logs_dir": "./logs"
+}
+```
+
+See Configuration → Features & Integrations in the dashboard to adjust these at any time.
+
 
 ### Environment Variables (Primary Admin Credentials)
 
@@ -148,9 +178,9 @@ python OrganizerDashboard.py
 
 ### Service won't start?
 
-- Check logs: `C:\Scripts\service-logs\organizer_stdout.log`
+- Check service logs (NSSM): `C:\<InstallDir>\service-logs\organizer_stdout.log`
 - Ensure Python is in PATH: `python --version`
-- Try running manually: `cd C:\Scripts && python Organizer.py`
+- Try running manually from install directory: `cd C:\<InstallDir> && python Organizer.py`
 
 ### Dashboard won't connect?
 
@@ -160,9 +190,10 @@ python OrganizerDashboard.py
 
 ### Files not organizing?
 
-- Check the organizer log: `C:\Users\{username}\Downloads\organizer.log`
-- Verify file extensions are in the config
+- Check the organizer log: `./logs/organizer.log`
+- Verify routes/categories in `organizer_config.json`
 - Ensure destination folders are writable
+- Confirm JSON state paths exist: `./config/json/` (created automatically)
 
 ---
 
@@ -174,7 +205,7 @@ Remove the Windows service:
 nssm remove DownloadsOrganizer confirm
 ```
 
-Then delete the `C:\Scripts\Organizer.py` file if desired.
+Then delete the installed organizer directory (e.g., `C:\<InstallDir>`) if desired.
 
 ---
 
