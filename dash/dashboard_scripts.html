@@ -121,8 +121,6 @@ document.getElementById('login-submit').addEventListener('click', async function
             loadDashboardLayout();
             loadCustomWidget();
             loadHiddenModules();
-            loadModuleWidths();
-            loadModuleSizes();
             if (__rights.view_recent_files) refreshRecentFiles();
             if (__rights.view_metrics) {
                 updateServiceStatus();
@@ -149,7 +147,7 @@ function getAuthHeaders() {
     return headers;
 }
 
-// Drag & Drop for Dashboard Modules
+// Drag & Drop for Dashboard Modules with Visual Indicators
 let draggedElement = null;
 
 function initDragAndDrop() {
@@ -157,6 +155,8 @@ function initDragAndDrop() {
     modules.forEach(module => {
         module.addEventListener('dragstart', handleDragStart);
         module.addEventListener('dragover', handleDragOver);
+        module.addEventListener('dragenter', handleDragEnter);
+        module.addEventListener('dragleave', handleDragLeave);
         module.addEventListener('drop', handleDrop);
         module.addEventListener('dragend', handleDragEnd);
     });
@@ -167,6 +167,13 @@ function handleDragStart(e) {
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', this.innerHTML);
+    
+    // Add visual feedback to other modules
+    setTimeout(() => {
+        document.querySelectorAll('.dashboard-module:not(.dragging)').forEach(m => {
+            m.style.opacity = '0.7';
+        });
+    }, 0);
 }
 
 function handleDragOver(e) {
@@ -175,11 +182,23 @@ function handleDragOver(e) {
     return false;
 }
 
+function handleDragEnter(e) {
+    if (this === draggedElement) return;
+    this.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    if (this === draggedElement) return;
+    this.classList.remove('drag-over');
+}
+
 function handleDrop(e) {
     if (e.stopPropagation) e.stopPropagation();
-    if (draggedElement !== this) {
+    this.classList.remove('drag-over');
+    
+    if (draggedElement && draggedElement !== this) {
         const grid = document.getElementById('dashboard-grid');
-        const allModules = Array.from(grid.children);
+        const allModules = Array.from(grid.children).filter(el => el.classList.contains('dashboard-module'));
         const draggedIndex = allModules.indexOf(draggedElement);
         const targetIndex = allModules.indexOf(this);
         
@@ -196,6 +215,12 @@ function handleDrop(e) {
 
 function handleDragEnd(e) {
     this.classList.remove('dragging');
+    
+    // Remove visual feedback
+    document.querySelectorAll('.dashboard-module').forEach(m => {
+        m.style.opacity = '1';
+        m.classList.remove('drag-over');
+    });
 }
 
 function saveDashboardLayout() {
@@ -227,8 +252,6 @@ function resetDashboardLayout() {
         localStorage.removeItem('dashboardLayout_' + (__authHeader || 'default'));
         localStorage.removeItem('hiddenModules_' + (__authHeader || 'default'));
         localStorage.removeItem('customWidget_' + (__authHeader || 'default'));
-        localStorage.removeItem('moduleWidths_' + (__authHeader || 'default'));
-        localStorage.removeItem('moduleSizes_' + (__authHeader || 'default'));
         location.reload();
     }
 }
@@ -322,111 +345,31 @@ function updateShowHiddenButton() {
     }
 }
 
-// Width Toggle Functions
-function toggleModuleWidth(moduleId) {
-    const module = document.querySelector(`[data-module="${moduleId}"]`);
-    if (!module) return;
-    
-    const icon = module.querySelector('.width-toggle i');
-    if (!icon) return;
-    
-    if (module.classList.contains('double-width')) {
-        module.classList.remove('double-width');
-        icon.className = 'bi bi-arrows-expand';
-    } else {
-        module.classList.add('double-width');
-        icon.className = 'bi bi-arrows-collapse';
-    }
-    
-    saveModuleWidths();
-}
-
-function saveModuleWidths() {
-    const doubleWidthModules = Array.from(document.querySelectorAll('.dashboard-module.double-width'))
-        .map(el => el.dataset.module)
-        .filter(m => m);
-    localStorage.setItem('moduleWidths_' + (__authHeader || 'default'), JSON.stringify(doubleWidthModules));
-}
-
-function loadModuleWidths() {
-    const saved = localStorage.getItem('moduleWidths_' + (__authHeader || 'default'));
-    if (!saved) return;
-    
+// Public IP Extraction from IPChicken
+function extractPublicIP() {
     try {
-        const doubleWidthModules = JSON.parse(saved);
-        doubleWidthModules.forEach(moduleId => {
-            const module = document.querySelector(`[data-module="${moduleId}"]`);
-            if (module && !module.classList.contains('full-width')) {
-                module.classList.add('double-width');
-                const icon = module.querySelector('.width-toggle i');
-                if (icon) icon.className = 'bi bi-arrows-collapse';
-            }
-        });
+        const iframe = document.getElementById('ipchicken-frame');
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const bodyText = iframeDoc.body.innerText || iframeDoc.body.textContent;
+        
+        // IPChicken displays IP in format like "Current IP Address: X.X.X.X"
+        const ipMatch = bodyText.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
+        
+        if (ipMatch) {
+            document.getElementById('public-ip-display').textContent = ipMatch[0];
+        } else {
+            document.getElementById('public-ip-display').textContent = 'Unable to detect';
+        }
     } catch (e) {
-        console.error('Error loading module widths:', e);
-    }
-}
-
-// Module Resize Functions
-function initModuleResize() {
-    const modules = document.querySelectorAll('.dashboard-module');
-    
-    modules.forEach(module => {
-        // Track resize with ResizeObserver
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const moduleId = entry.target.dataset.module;
-                if (moduleId) {
-                    saveModuleSize(moduleId, entry.target.offsetWidth, entry.target.offsetHeight);
-                }
-            }
-        });
-        
-        resizeObserver.observe(module);
-        
-        // Add visual preview on resize start
-        module.addEventListener('mousedown', (e) => {
-            // Check if clicking near edges (resize area)
-            const rect = module.getBoundingClientRect();
-            const edgeSize = 15;
-            const isNearEdge = 
-                (e.clientX >= rect.right - edgeSize) || 
-                (e.clientY >= rect.bottom - edgeSize) ||
-                (e.clientX <= rect.left + edgeSize) ||
-                (e.clientY <= rect.top + edgeSize);
-                
-            if (isNearEdge) {
-                module.classList.add('resize-preview');
-            }
-        });
-        
-        module.addEventListener('mouseup', () => {
-            module.classList.remove('resize-preview');
-        });
-    });
-}
-
-function saveModuleSize(moduleId, width, height) {
-    const sizes = JSON.parse(localStorage.getItem('moduleSizes_' + (__authHeader || 'default')) || '{}');
-    sizes[moduleId] = { width, height };
-    localStorage.setItem('moduleSizes_' + (__authHeader || 'default'), JSON.stringify(sizes));
-}
-
-function loadModuleSizes() {
-    const saved = localStorage.getItem('moduleSizes_' + (__authHeader || 'default'));
-    if (!saved) return;
-    
-    try {
-        const sizes = JSON.parse(saved);
-        Object.keys(sizes).forEach(moduleId => {
-            const module = document.querySelector(`[data-module="${moduleId}"]`);
-            if (module && sizes[moduleId]) {
-                if (sizes[moduleId].width) module.style.width = sizes[moduleId].width + 'px';
-                if (sizes[moduleId].height) module.style.height = sizes[moduleId].height + 'px';
-            }
-        });
-    } catch (e) {
-        console.error('Error loading module sizes:', e);
+        // CORS issue - fallback to API
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('public-ip-display').textContent = data.ip;
+            })
+            .catch(() => {
+                document.getElementById('public-ip-display').textContent = 'Unavailable';
+            });
     }
 }
 
@@ -436,9 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboardLayout();
     loadCustomWidget();
     loadHiddenModules();
-    loadModuleWidths();
-    loadModuleSizes();
-    initModuleResize();
+    extractPublicIP();
 });
 
 function applyRights() {
