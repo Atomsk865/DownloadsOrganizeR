@@ -275,6 +275,9 @@ def create_app():
     app.register_blueprint(routes_admin_tools)
     app.register_blueprint(routes_csrf)
 
+    # Exempt setup blueprint from CSRF (setup runs before session/auth exists)
+    csrf.exempt(routes_setup)
+
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
