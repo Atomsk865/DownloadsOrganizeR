@@ -38,7 +38,7 @@
         </div>
         <hr/>
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label mb-1"><small><b>Authentication Method</b></small></label>
             <select class="form-select form-select-sm" id="auth-method" onchange="toggleAuthSections()">
               {% for m in available_methods %}
@@ -46,18 +46,12 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label mb-1"><small><b>Enable Fallback (Basic)</b></small></label>
             <select class="form-select form-select-sm" id="fallback-enabled">
               <option value="true" selected>Yes</option>
               <option value="false">No</option>
             </select>
-          </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <div class="d-flex w-100 align-items-center">
-              <button class="btn btn-primary btn-sm flex-grow-1" onclick="submitSetup()">Complete Setup</button>
-              <a href="/docs/readme" target="_blank" class="btn btn-outline-dark btn-sm ms-2"><i class="bi bi-book"></i> Docs</a>
-            </div>
           </div>
         </div>
         <hr/>
@@ -183,6 +177,16 @@
               <div class="col-md-6">
                 <input class="form-control form-control-sm" id="win-allowed-groups" placeholder="Group names (comma separated)">
               </div>
+            </div>
+          </div>
+        </div>
+        <hr/>
+        <!-- Complete Setup Button at Bottom -->
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="d-flex w-100 align-items-center gap-2">
+              <button class="btn btn-primary flex-grow-1" onclick="submitSetup()">Complete Setup</button>
+              <a href="/docs/readme" target="_blank" class="btn btn-outline-dark"><i class="bi bi-book"></i> Docs</a>
             </div>
           </div>
         </div>
@@ -349,15 +353,21 @@ document.addEventListener('DOMContentLoaded', function(){
   const customEnable = document.getElementById('wf-custom-enable');
   const customInput = document.getElementById('wf-custom-path');
   const customAdd = document.getElementById('wf-custom-add');
+  const prefillBtn = document.getElementById('wf-custom-prefill');
+  const addDefaultBtn = document.getElementById('wf-custom-add-default');
   customEnable.addEventListener('change', function(){
     const en = customEnable.checked;
     customInput.disabled = !en;
     customAdd.disabled = !en;
-    const prefillBtn = document.getElementById('wf-custom-prefill');
     if(prefillBtn) prefillBtn.disabled = !en;
-    const addDefaultBtn = document.getElementById('wf-custom-add-default');
     if(addDefaultBtn) addDefaultBtn.disabled = !en;
   });
+  // Initialize button states on page load
+  const initiallyEnabled = customEnable.checked;
+  customInput.disabled = !initiallyEnabled;
+  customAdd.disabled = !initiallyEnabled;
+  if(prefillBtn) prefillBtn.disabled = !initiallyEnabled;
+  if(addDefaultBtn) addDefaultBtn.disabled = !initiallyEnabled;
   ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener('change', renderSelectedWatchFolders);
