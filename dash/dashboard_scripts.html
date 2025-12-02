@@ -379,9 +379,30 @@ async function saveConfiguration() {
             headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
         });
         if (response.ok) {
-            showNotification('Configuration saved successfully', 'success');
+            const result = await response.json();
+            showNotification(result.message || 'Configuration saved successfully', 'success');
             // Reload the configuration to show the saved data
             await initializeCustomRoutes();
+            
+            // Ask if user wants to restart the service to apply changes
+            if (confirm('Configuration saved! Would you like to restart the Organizer service now to apply the changes?')) {
+                try {
+                    const restartResponse = await fetch('/restart', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: getAuthHeaders()
+                    });
+                    if (restartResponse.ok) {
+                        showNotification('Service restarted successfully. File organization will resume momentarily.', 'success');
+                    } else {
+                        showNotification('Failed to restart service. Please restart manually.', 'warning');
+                    }
+                } catch (err) {
+                    showNotification('Error restarting service: ' + err.message, 'warning');
+                }
+            } else {
+                showNotification('Remember to restart the service manually for changes to take effect.', 'info');
+            }
         } else {
             const t = await response.text();
             showNotification('Failed to save configuration: ' + t.substring(0,200), 'danger');
