@@ -1031,7 +1031,7 @@ function showNotification(message, type) {
 // Recent Files Functions
 async function loadOrganizerConfig(){
     try {
-        const resp = await fetch('/organizer_config.json', { cache: 'no-store' });
+        const resp = await fetch('/api/organizer/config', { credentials: 'include', cache: 'no-store', headers: getAuthHeaders() });
         if (resp.ok) {
             const cfg = await resp.json();
             __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';

@@ -283,7 +283,7 @@ def create_app():
     from OrganizerDashboard.routes.dev_reset import routes_dev_reset
 
     app.register_blueprint(routes_dashboard)
-    app.register_blueprint(routes_update_config)
+    app.register_blueprint(routes_update_config, url_prefix='/api')
     app.register_blueprint(routes_metrics)
     app.register_blueprint(routes_service_name)
     app.register_blueprint(routes_auth_check)
