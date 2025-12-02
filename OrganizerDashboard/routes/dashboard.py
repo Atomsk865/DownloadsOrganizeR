@@ -122,6 +122,7 @@ def get_organizer_config():
     return jsonify({
         "routes": config.get("routes", {}),
         "custom_routes": config.get("custom_routes", {}),
+        "tag_routes": config.get("tag_routes", {}),
         "memory_threshold_mb": config.get("memory_threshold_mb", 200),
         "cpu_threshold_percent": config.get("cpu_threshold_percent", 60),
         "logs_dir": config.get("logs_dir", ""),
