@@ -401,7 +401,7 @@ function getSelectedWatchFolders(){
   const ids = ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'];
   const selected = ids.map(id=>{
     const el = document.getElementById(id);
-    return el.checked ? el.value : null;
+    return (el && el.checked) ? el.value : null;
   }).filter(Boolean);
   // Collect custom entries listed in wf-selected list items with data-path
   document.querySelectorAll('#wf-selected li[data-path]').forEach(li=>{
