@@ -25,6 +25,7 @@ if os.path.isdir(_pkg_dir):
 
 from flask import Flask
 from flask_login import LoginManager, UserMixin
+from flask_wtf.csrf import CSRFProtect
 import json
 
 """OrganizerDashboard
@@ -181,6 +182,17 @@ def create_app():
     app = Flask(__name__, template_folder='dash')
     # Basic secret key for session cookies; can be overridden via env
     app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', 'downloads_organizer_secret')
+    
+    # CSRF Protection
+    csrf = CSRFProtect()
+    csrf.init_app(app)
+    
+    # Secure session cookie settings
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+    app.config['WTF_CSRF_TIME_LIMIT'] = None  # No token expiry for long sessions
 
     # Flask-Login setup
     login_manager = LoginManager()
@@ -233,6 +245,7 @@ def create_app():
     from OrganizerDashboard.routes.setup import routes_setup
     from OrganizerDashboard.routes.admin_tools import routes_admin_tools
     from OrganizerDashboard.routes.login import routes_login
+    from OrganizerDashboard.routes.csrf_token import routes_csrf
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config)
@@ -260,6 +273,7 @@ def create_app():
     app.register_blueprint(routes_setup)
     app.register_blueprint(routes_login)
     app.register_blueprint(routes_admin_tools)
+    app.register_blueprint(routes_csrf)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager

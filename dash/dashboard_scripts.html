@@ -44,6 +44,20 @@ let __authHeader = null;
 let __rights = {};
 let __configVersion = 0;
 let __rightsPollIntervalMs = 60000; // 60s polling
+let __csrfToken = null;
+
+// Fetch CSRF token on page load
+async function fetchCSRFToken() {
+    try {
+        const resp = await fetch('/api/csrf-token', { credentials: 'include' });
+        if (resp.ok) {
+            const data = await resp.json();
+            __csrfToken = data.csrf_token;
+        }
+    } catch (e) {
+        console.warn('Failed to fetch CSRF token:', e);
+    }
+}
 
 // Login functionality
 function promptLogin() {
@@ -119,7 +133,11 @@ document.getElementById('login-submit').addEventListener('click', async function
 });
 
 function getAuthHeaders() {
-    return __authHeader ? { 'Authorization': __authHeader } : {};
+    const headers = __authHeader ? { 'Authorization': __authHeader } : {};
+    if (__csrfToken) {
+        headers['X-CSRFToken'] = __csrfToken;
+    }
+    return headers;
 }
 
 function applyRights() {
@@ -569,6 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     fetchServiceName();
+    // Fetch CSRF token
+    fetchCSRFToken();
     // Start polling rights periodically
     setInterval(pollRights, __rightsPollIntervalMs);
 });
