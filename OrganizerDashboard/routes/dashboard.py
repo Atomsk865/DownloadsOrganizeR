@@ -5,7 +5,7 @@ import psutil
 from OrganizerDashboard.helpers.helpers import (
     get_windows_version, get_cpu_name, get_private_ip, get_public_ip, service_running, find_organizer_proc, format_bytes, last_n_lines_normalized, load_dashboard_json
 )
-from OrganizerDashboard.auth.auth import requires_auth
+from OrganizerDashboard.auth.auth import check_auth, authenticate
 import os
 import platform
 import json
@@ -14,15 +14,21 @@ routes_dashboard = Blueprint('routes_dashboard', __name__)
 
 @routes_dashboard.route("/")
 def dashboard():
-    # Redirect to setup wizard if initial setup not completed
+    """Dashboard root. If setup incomplete redirect to wizard; otherwise require auth."""
+    # Use runtime config to check setup state
     try:
-        import sys
-        main = sys.modules['__main__']
-        dash_cfg = getattr(main, 'dashboard_config', {})
+        from OrganizerDashboard.config_runtime import get_dashboard_config
+        dash_cfg = get_dashboard_config()
         if not dash_cfg.get('setup_completed', False):
             return redirect('/setup')
     except Exception:
         pass
+
+    # Require Basic Auth after setup
+    auth = request.authorization
+    if not auth or not check_auth(str(auth.username), str(auth.password)):
+        return authenticate()
+
     dashboard_data = load_dashboard_json()
     return render_template(
         "dashboard.html",
