@@ -9,44 +9,47 @@ The dashboard now supports drag-and-drop functionality for all modules, allowing
 ### 1. Draggable Modules
 
 All dashboard cards are now draggable modules with the following attributes:
+
 - `data-module` - Unique identifier for each module
 - `draggable="true"` - Enables HTML5 drag-and-drop
+
 ### 2. Module List
 
 The following modules can be rearranged:
+
 - **Settings** - `data-module="settings"`
-
- - **File Categories** - `data-module="file-categories"`
- - **Tag Routes** - `data-module="tag-routes"`
-
- - **Custom Widget** - `data-module="custom-widget"`
+- **File Categories** - `data-module="file-categories"`
+- **Tag Routes** - `data-module="tag-routes"`
+- **Custom Widget** - `data-module="custom-widget"`
 
 ### 3. Non-Draggable Modules
 
 A special module that allows users to add their own content:
+
 - Click "Edit" button to open prompt dialog
 - Enter custom HTML, embed codes, iframes, or text
 - Content is saved per-user in localStorage
 - Perfect for adding:
 
-  - Embedded widgets (weather, calendar, etc.)
-  - Quick links
-  - Custom HTML/CSS
-  - Iframe embeds (YouTube, Google Calendar, etc.)
+    - Embedded widgets (weather, calendar, etc.)
+    - Quick links
+    - Custom HTML/CSS
+    - Iframe embeds (YouTube, Google Calendar, etc.)
 
 
 
 Each module has a grip icon (☰) in the top-right corner:
- - Hover over the handle to see cursor change
- - Click and drag to reorder modules
+
+- Hover over the handle to see cursor change
+- Click and drag to reorder modules
 
 
 Located in the dashboard header (visible after login):
 
 - Resets dashboard to default layout
 - Clears custom widget content
-## Technical Implementation
 
+## Technical Implementation
 
 ### HTML Structure
 
@@ -119,6 +122,7 @@ Located in the dashboard header (visible after login):
 ### localStorage Keys
 
 Layout and content are stored per-user:
+
 - `dashboardLayout_{authHeader}` - Array of module IDs in order
 - `customWidget_{authHeader}` - HTML content of custom widget
 

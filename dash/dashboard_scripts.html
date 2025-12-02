@@ -447,6 +447,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadHiddenModules();
     await loadOrganizerConfig();
     extractPublicIP();
+
+    // Populate client info fields if present
+    try {
+        const platEl = document.getElementById('client-platform');
+        const langEl = document.getElementById('client-lang');
+        if (platEl) {
+            const platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'unknown';
+            platEl.textContent = platform;
+        }
+        if (langEl) {
+            const lang = navigator.language || (navigator.languages && navigator.languages[0]) || 'unknown';
+            langEl.textContent = lang;
+        }
+    } catch (e) {
+        // no-op
+    }
 });
 
 // Load organizer config and apply feature gating

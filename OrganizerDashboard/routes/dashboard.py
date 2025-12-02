@@ -90,6 +90,14 @@ def dashboard():
     gpus = get_gpus()
     gpu_display = gpus[0] if gpus else "N/A"
     
+    # Derive basic client context from the request
+    try:
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        client_ua = request.headers.get('User-Agent', '')
+    except Exception:
+        client_ip = ''
+        client_ua = ''
+
     return render_template(
         "dashboard.html",
         hostname=socket.gethostname(),
@@ -118,7 +126,9 @@ def dashboard():
         stderr_log="",
         is_windows=(sys.platform == "win32"),
         routes=json.dumps({}),
-        custom_routes=json.dumps({})
+        custom_routes=json.dumps({}),
+        client_ip=client_ip,
+        client_ua=client_ua
     )
 
 @routes_dashboard.route("/api/organizer/config", methods=["GET"])
