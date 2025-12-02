@@ -5,14 +5,15 @@
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
-            width: 95%;
-            max-width: 1600px;
+            width: 80%;
+            max-width: 100%;
             margin: 0 auto;
             padding: 1rem;
         }
         .dashboard-module {
             flex: 1 1 100%;
-            min-width: 100%;
+            min-width: 0;
+            max-width: 100%;
             transition: all 0.3s ease;
             position: relative;
             background: var(--bg-secondary);
@@ -54,19 +55,25 @@
             margin-bottom: 0;
         }
         .dashboard-module .card-body {
-            overflow: auto;
+            overflow: hidden;
+            overflow-x: auto;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            max-width: 100%;
         }
         .dashboard-module table {
             table-layout: auto;
             width: 100%;
+            max-width: 100%;
         }
         .dashboard-module td,
         .dashboard-module th {
             white-space: normal;
             word-wrap: break-word;
-            min-font-size: 6px;
+            overflow-wrap: break-word;
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .drag-handle {
             cursor: move;
@@ -102,19 +109,24 @@
             color: #0d6efd;
         }
         @media (max-width: 1024px) {
+            #dashboard-grid {
+                width: 90%;
+            }
             .dashboard-module {
                 flex: 1 1 100%;
-                min-width: 100%;
+                min-width: 0;
+                max-width: 100%;
             }
         }
         @media (max-width: 768px) {
             #dashboard-grid {
-                width: 100%;
+                width: 95%;
                 padding: 0.5rem;
                 gap: 0.75rem;
             }
             .dashboard-module {
                 min-width: 0;
+                max-width: 100%;
             }
             .dashboard-module .card-header {
                 padding: 0.85rem 1rem;
@@ -137,6 +149,16 @@
             .table-responsive {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+            .dashboard-module table {
+                font-size: 0.85rem;
+                min-width: 100%;
+            }
+            /* Ensure content doesn't overflow */
+            .dashboard-module .card-body {
+                padding: 0.75rem;
+                overflow-x: auto;
             }
             /* Larger buttons on mobile */
             .btn {
@@ -192,8 +214,8 @@
     </style>
     
     <!-- Main Dashboard Container -->
-    <div class="container-fluid px-3">
-        <div id="dashboard-grid" style="margin: 0 auto; max-width: 1600px;">
+    <div class="container-fluid px-3" style="max-width: 100%; overflow-x: hidden;">
+        <div id="dashboard-grid" style="margin: 0 auto;">
             <!-- Button Bar -->
             <div class="dashboard-module full-width" data-module="button-bar" draggable="false">
                 <div class="d-flex justify-content-end gap-2 mb-3 flex-wrap">
