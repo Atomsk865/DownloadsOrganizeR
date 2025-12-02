@@ -9,13 +9,13 @@ routes_setup = Blueprint('routes_setup', __name__)
 
 @routes_setup.route('/setup', methods=['GET'])
 def setup_page():
-    """Render setup page if not completed; otherwise redirect to dashboard."""
+    """Render setup page if not completed; otherwise redirect to login."""
     # Use runtime config accessors
     from OrganizerDashboard.config_runtime import get_dashboard_config
     dash_cfg = get_dashboard_config()
     if dash_cfg.get('setup_completed', False):
         from flask import redirect
-        return redirect('/')
+        return redirect('/login')
     # Provide initial data (available auth methods based on platform / libraries)
     available_methods = ['basic']
     try:
@@ -168,7 +168,7 @@ def setup_initialize():
     except Exception as e:
         return jsonify({'error': f'Auth manager init failed: {e}'}), 500
 
-    return jsonify({'success': True, 'message': 'Setup completed. Redirecting to dashboard...'})
+    return jsonify({'success': True, 'message': 'Setup completed. Redirecting to login...'})
 
 @routes_setup.route('/api/setup/reset', methods=['POST'])
 def setup_reset():

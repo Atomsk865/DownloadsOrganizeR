@@ -163,8 +163,8 @@ function submitSetup(){
     .then(r=>r.json().then(j=>({ok:r.ok,j})))
     .then(({ok,j})=>{
       if(ok && j.success){
-        showNotification('Setup complete! Redirecting...', 'success');
-        setTimeout(()=>{ window.location.href='/'; },1500);
+        showNotification('Setup complete! Redirecting to login...', 'success');
+        setTimeout(()=>{ window.location.href='/login'; },1500);
       } else {
         showNotification(j.error||'Setup failed','danger');
       }
