@@ -2,6 +2,10 @@
 C:/Scripts/
 C:\Scripts\
 
+# Generated config files (created during setup wizard)
+organizer_config.json
+dashboard_config.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
