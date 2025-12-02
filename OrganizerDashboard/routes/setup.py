@@ -26,10 +26,20 @@ def setup_page():
             available_methods.append('windows')
     except Exception:
         pass
-    # Detect host OS (server side)
+    # Detect host OS: prefer client User-Agent when available to avoid container/codespace mismatch
     import platform
     sys_platform = platform.system().lower()  # 'windows', 'linux', 'darwin'
     host_os = 'windows' if 'windows' in sys_platform else ('linux' if 'linux' in sys_platform else 'other')
+    try:
+        ua = (request.headers.get('User-Agent') or '').lower()
+        if 'windows nt' in ua or 'windows' in ua:
+            host_os = 'windows'
+        elif 'linux' in ua:
+            host_os = 'linux'
+        elif 'mac os' in ua or 'macintosh' in ua or 'darwin' in ua:
+            host_os = 'other'
+    except Exception:
+        pass
     # Recommend default folders based on host OS
     recommended = []
     import os
