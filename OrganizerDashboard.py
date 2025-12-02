@@ -273,6 +273,7 @@ def create_app():
     from OrganizerDashboard.routes.watch_folders import routes_watch_folders
     from OrganizerDashboard.routes.duplicates import routes_duplicates
     from OrganizerDashboard.routes.docs import routes_docs
+    from OrganizerDashboard.routes.dev_reset import routes_dev_reset
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config)
@@ -311,10 +312,12 @@ def create_app():
     app.register_blueprint(routes_watch_folders)
     app.register_blueprint(routes_docs)
     app.register_blueprint(routes_duplicates)
+    app.register_blueprint(routes_dev_reset)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)
     csrf.exempt(routes_login)
+    csrf.exempt(routes_dev_reset)  # Dev-only, no auth required
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
