@@ -1,45 +1,41 @@
 {% extends "dashboard_base.html" %}
 {% block dashboard_content %}
-    <div class="text-end mb-2">
+    <div class="text-end mb-3">
         <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
         <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
         <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
         <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
     </div>
-        <!-- Card Grid Layout -->
-                <style>
-                    .grid-container { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
-                    .grid-item { cursor: move; }
-                    .grid-item.dragging { opacity: 0.6; }
-                </style>
-                <div class="container-fluid">
-                        <div class="grid-container" id="dashboard-grid">
-            <!-- System Info -->
-            <div class="grid-item" draggable="true" data-section="System Information">
-                <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSystemInfo" aria-expanded="true" aria-controls="collapseSystemInfo">
-                    <b>System Information</b>
-                </button>
-                <div class="collapse show" id="collapseSystemInfo">
-                    <div class="ps-2 pe-2 pt-2 pb-1">
-                        <p class="mb-1"><small><b>Hostname:</b> {{ hostname }}</small></p>
-                        <p class="mb-1"><small><b>OS:</b> {{ os }}</small></p>
-                        <p class="mb-1"><small><b>CPU:</b> {{ cpu }}</small></p>
-                        <p class="mb-1"><small><b>RAM:</b> {{ ram_gb }} GB</small></p>
-                        <p class="mb-1"><small><b>GPU:</b> {{ gpu }}</small></p>
-                        <p class="mb-1"><small><b>Private IP:</b> {{ private_ip }}</small></p>
-                        <p class="mb-1"><small><b>Public IP:</b> {{ public_ip }}</small></p>
-                        <p class="mb-1"><small><b>Upload:</b> {{ upload_rate_kb }} KB/s</small></p>
-                        <p class="mb-1"><small><b>Download:</b> {{ download_rate_kb }} KB/s</small></p>
-                        <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm mt-1">Speed Test</a>
-                    </div>
-                </div>
-            </div>
+    
+    <!-- Main Dashboard Container -->
+    <div class="container-fluid px-3">
+        <div class="row">
+            <!-- System Info Card -->
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-header"><b>System Information</b></div>
+                    <div class="card-body p-2">
+                        <div class="row">
+                            <div class="col-md-3"><small><b>Hostname:</b> {{ hostname }}</small></div>
+                            <div class="col-md-3"><small><b>OS:</b> {{ os }}</small></div>
+                            <div class="col-md-3"><small><b>CPU:</b> {{ cpu }}</small></div>
+                            <div class="col-md-3"><small><b>RAM:</b> {{ ram_gb }} GB</small></div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-md-3"><small><b>GPU:</b> {{ gpu }}</small></div>
+                            <div class="col-md-3"><small><b>Private IP:</b> {{ private_ip }}</small></div>
+                            <div class="col-md-3"><small><b>Public IP:</b> {{ public_ip }}</small></div>
+                            <div class="col-md-3">
+                                <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Left Column -->
-                <div class="col-12 col-xl-6">
+            </div>
+            
+            <!-- Left Column -->
+            <div class="col-12 col-xl-6">
                     <!-- Service Status & Resource Usage Card -->
                     <div class="card mb-3">
                         <div class="card-header"><b>Service Status & Resource Usage</b></div>
@@ -416,6 +412,7 @@
                 </div>
             </div>
         </div>
+    </div>
     <!-- Login / Change-password Modal and scripts -->
     {% include "dashboard_scripts.html" %}
 {% endblock %}
