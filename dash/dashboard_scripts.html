@@ -140,6 +140,59 @@ function getAuthHeaders() {
     return headers;
 }
 
+// Drag & Drop grid order persistence
+document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('dashboard-grid');
+    if (!grid) return;
+    let dragEl = null;
+    grid.addEventListener('dragstart', e => {
+        const item = e.target.closest('.grid-item');
+        if (!item) return;
+        dragEl = item;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    grid.addEventListener('dragend', e => {
+        const item = e.target.closest('.grid-item');
+        if (item) item.classList.remove('dragging');
+        dragEl = null;
+        persistOrder();
+    });
+    grid.addEventListener('dragover', e => {
+        e.preventDefault();
+        const after = getDragAfterElement(grid, e.clientY, e.clientX);
+        if (!dragEl) return;
+        if (after == null) {
+            grid.appendChild(dragEl);
+        } else {
+            grid.insertBefore(dragEl, after);
+        }
+    });
+    function getDragAfterElement(container, y, x) {
+        const items = [...container.querySelectorAll('.grid-item:not(.dragging)')];
+        return items.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = (y - box.top - box.height/2) + (x - box.left - box.width/2);
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+    async function persistOrder(){
+        const sections_order = [...grid.querySelectorAll('.grid-item')].map(el => el.dataset.section);
+        try {
+            await fetch('/api/dashboard/layout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sections_order, hidden_sections: [] })
+            });
+        } catch(e) { /* ignore */ }
+    }
+});
+
 function applyRights() {
     document.querySelectorAll('[data-right]').forEach(el => {
         const need = el.getAttribute('data-right');

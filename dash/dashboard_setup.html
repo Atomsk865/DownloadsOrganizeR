@@ -12,8 +12,21 @@
             <input class="form-control form-control-sm" id="admin-username" placeholder="admin" value="admin" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label mb-1"><small><b>Admin Password</b></small></label>
-            <input type="password" class="form-control form-control-sm" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
+            <label class="form-label mb-1 d-flex align-items-center justify-content-between">
+              <small><b>Admin Password</b></small>
+              <span class="ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#6c757d;color:#fff;text-align:center;line-height:18px;font-size:12px;">
+                i
+              </span>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="password" class="form-control" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
+              <button class="btn btn-outline-secondary" type="button" id="toggle-password" onclick="togglePasswordVisibility()" title="Show/Hide" data-bs-toggle="tooltip" data-bs-placement="top">
+                <span id="toggle-password-icon" aria-hidden="true">👁️</span>
+              </button>
+              <button class="btn btn-outline-success" type="button" id="generate-password" onclick="generateStrongPassword()" title="Generate a strong password" data-bs-toggle="tooltip" data-bs-placement="top">
+                Generate
+              </button>
+            </div>
             <div class="progress mt-1" style="height:6px;">
               <div id="pw-strength-bar" class="progress-bar bg-danger" style="width:5%"></div>
             </div>
@@ -112,6 +125,30 @@ function evaluatePassword(){
   const fb = document.getElementById('pw-feedback');
   fb.textContent = score<40?'Weak password':score<70?'Moderate password':'Strong password';
 }
+function togglePasswordVisibility(){
+  const input = document.getElementById('admin-password');
+  const icon = document.getElementById('toggle-password-icon');
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  icon.textContent = isPassword ? '🙈' : '👁️';
+}
+function generateStrongPassword(){
+  // Generates a 20-char password with upper, lower, digits, specials
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const specials = '!@#$%^&*()-_=+[]{};:,.<>/?';
+  const all = upper + lower + digits + specials;
+  function pick(str){ return str[Math.floor(Math.random()*str.length)]; }
+  let pw = [pick(upper), pick(lower), pick(digits), pick(specials)];
+  for(let i=0; i<16; i++){ pw.push(pick(all)); }
+  // Shuffle
+  for(let i=pw.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [pw[i],pw[j]]=[pw[j],pw[i]]; }
+  const val = pw.join('');
+  const input = document.getElementById('admin-password');
+  input.value = val;
+  evaluatePassword();
+}
 function submitSetup(){
   const adminUsername = document.getElementById('admin-username').value.trim();
   const adminPassword = document.getElementById('admin-password').value;
@@ -188,5 +225,14 @@ function showNotification(msg, type){
   alert.innerHTML = '<small>' + msg + '</small><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
   document.querySelector('.card-body').prepend(alert);
 }
+// Initialize Bootstrap tooltips if available
+document.addEventListener('DOMContentLoaded', function(){
+  if(window.bootstrap && typeof bootstrap.Tooltip === 'function'){
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+});
 </script>
 {% endblock %}
