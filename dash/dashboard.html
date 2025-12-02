@@ -1,20 +1,55 @@
 {% extends "dashboard_base.html" %}
 {% block dashboard_content %}
+    <style>
+        .dashboard-module {
+            cursor: move;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .dashboard-module:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .dashboard-module.dragging {
+            opacity: 0.5;
+        }
+        .drag-handle {
+            cursor: move;
+            padding: 2px 8px;
+            margin-left: auto;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .drag-handle:hover {
+            color: #495057;
+        }
+        .custom-widget-content {
+            min-height: 150px;
+        }
+        .edit-widget-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+    </style>
+    
     <div class="text-end mb-3">
         <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
         <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
+        <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" onclick="resetDashboardLayout()" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
         <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
         <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
     </div>
     
     <!-- Main Dashboard Container -->
     <div class="container-fluid px-3">
-        <div class="row">
+        <div class="row" id="dashboard-grid">
             <!-- System Info Card -->
-            <div class="col-12 mb-3">
+            <div class="col-12 mb-3 dashboard-module" data-module="system-info" draggable="false">
                 <div class="card">
-                    <div class="card-header"><b>System Information</b></div>
+                    <div class="card-header d-flex align-items-center">
+                        <b>System Information</b>
+                    </div>
                     <div class="card-body p-2">
                         <div class="row">
                             <div class="col-md-3"><small><b>Hostname:</b> {{ hostname }}</small></div>
@@ -35,10 +70,13 @@
             </div>
             
             <!-- Left Column -->
-            <div class="col-12 col-xl-6">
+            <div class="col-12 col-xl-6 dashboard-module" data-module="service-status" draggable="true">
                     <!-- Service Status & Resource Usage Card -->
                     <div class="card mb-3">
-                        <div class="card-header"><b>Service Status & Resource Usage</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Service Status & Resource Usage</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <div class="mb-2">
                                 <small><b>Status:</b></small>
@@ -66,9 +104,15 @@
                         </div>
                     </div>
                     
+            </div>
+            
+            <div class="col-12 col-xl-6 dashboard-module" data-module="task-manager" draggable="true">
                     <!-- Task Manager Card -->
                     <div class="card mb-3">
-                        <div class="card-header"><b>Task Manager (Top 5 by CPU)</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Task Manager (Top 5 by CPU)</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
                                 <thead>
@@ -92,10 +136,15 @@
                             </table>
                         </div>
                     </div>
+            </div>
                     
+            <div class="col-12 col-xl-6 dashboard-module" data-module="recent-files" draggable="true">
                     <!-- Recent Files Card -->
                     <div class="card mb-3">
-                        <div class="card-header"><b>Recent File Movements</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Recent File Movements</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <div class="d-flex justify-content-end mb-1">
                             <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
@@ -124,11 +173,16 @@
                     </div>
                 </div>
                 
-                <!-- Right Column -->
-                <div class="col-12 col-xl-6">
+            </div>
+            
+            <!-- Drive Space -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="drive-space" draggable="true">
                     <!-- Drive Space Card -->
                     <div class="card mb-3">
-                        <div class="card-header"><b>Drive Space</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Drive Space</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
                             <thead>
@@ -156,10 +210,15 @@
                         </table>
                         </div>
                     </div>
+            </div>
                     
-                    <!-- Settings Card -->
+            <!-- Settings -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="settings" draggable="true">
                     <div class="card mb-3">
-                        <div class="card-header"><b>Settings</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Settings</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                         <form id="config-form-settings">
                             <div class="row mb-2">
@@ -190,12 +249,15 @@
                         </form>
                         </div>
                     </div>
-                </div>
+            </div>
                 
-                <!-- File Categories Card (Left) -->
-                <div class="col-12 col-xl-6">
+            <!-- File Categories -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="file-categories" draggable="true">
                     <div class="card mb-3">
-                        <div class="card-header"><b>File Categories</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>File Categories</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
                                 <i class="bi bi-info-circle"></i> <strong>Note:</strong> Changes to file categories and custom routes require restarting the Organizer service to take effect.
@@ -331,11 +393,15 @@
                         </form>
                         </div>
                     </div>
-                </div>
-                <!-- Custom Routes Card (Right) -->
-                <div class="col-12 col-xl-6">
+            </div>
+            
+            <!-- Custom Routes -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="custom-routes" draggable="true">
                     <div class="card mb-3">
-                        <div class="card-header"><b>Custom Routes (Per-Extension)</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Custom Routes (Per-Extension)</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <form id="custom-routes-form">
                             <table class="table table-sm mb-3">
@@ -358,12 +424,15 @@
                         <small class="text-muted">Custom routes take precedence over category routing.</small>
                         </div>
                     </div>
-                </div>
+            </div>
                 
-                <!-- Tag Routes Card (Left) -->
-                <div class="col-12 col-xl-6">
+            <!-- Tag Routes -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="tag-routes" draggable="true">
                     <div class="card mb-3">
-                        <div class="card-header"><b>Tag Routes (Filename-Based Routing)</b></div>
+                        <div class="card-header d-flex align-items-center">
+                            <b>Tag Routes (Filename-Based Routing)</b>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
                         <div class="card-body p-2">
                             <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
                                 <i class="bi bi-info-circle"></i> <strong>Tip:</strong> Files containing the tag anywhere in the filename will be moved to the specified folder, regardless of extension. Tag routes have the highest priority.
@@ -389,7 +458,23 @@
                         <small class="text-muted">Examples: "invoice" → Invoices folder, "screenshot" → Screenshots</small>
                         </div>
                     </div>
-                </div>
+            </div>
+            
+            <!-- Custom Widget -->
+            <div class="col-12 col-xl-6 dashboard-module" data-module="custom-widget" draggable="true">
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center">
+                            <b>Custom Widget</b>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget()">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
+                        <div class="card-body p-3 custom-widget-content" id="custom-widget-content">
+                            <p class="text-muted text-center mb-0">Click Edit to add custom content, embeds, or widgets</p>
+                        </div>
+                    </div>
+            </div>
                 
                 <!-- Logs Card (Right) - Full Width Below -->
                 <div class="col-12">
