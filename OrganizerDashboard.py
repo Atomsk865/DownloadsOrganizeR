@@ -231,6 +231,7 @@ def create_app():
     from OrganizerDashboard.routes.service_install import routes_service_install
     from OrganizerDashboard.routes.factory_reset import routes_factory_reset
     from OrganizerDashboard.routes.setup import routes_setup
+    from OrganizerDashboard.routes.admin_tools import routes_admin_tools
     from OrganizerDashboard.routes.login import routes_login
 
     app.register_blueprint(routes_dashboard)
@@ -258,6 +259,7 @@ def create_app():
     app.register_blueprint(routes_factory_reset)
     app.register_blueprint(routes_setup)
     app.register_blueprint(routes_login)
+    app.register_blueprint(routes_admin_tools)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager

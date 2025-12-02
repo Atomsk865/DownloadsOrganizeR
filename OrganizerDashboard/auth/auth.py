@@ -3,6 +3,10 @@ import json
 import sys
 import platform
 from flask import Response, request, g
+try:
+    from flask_login import current_user
+except Exception:
+    current_user = None
 from functools import wraps
 from typing import Optional, Dict, Any
 
@@ -380,11 +384,19 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        # Store current user for downstream rights checks
-        g.current_user = auth.username
-        return f(*args, **kwargs)
+        # First, accept Basic auth if provided
+        if auth and check_auth(auth.username or '', auth.password or ''):
+            g.current_user = auth.username
+            return f(*args, **kwargs)
+        # Fallback to session-based authentication
+        if current_user is not None:
+            try:
+                if current_user.is_authenticated:
+                    g.current_user = current_user.get_id()
+                    return f(*args, **kwargs)
+            except Exception:
+                pass
+        return authenticate()
     return decorated
 
 def requires_right(right_name: str):
@@ -393,21 +405,30 @@ def requires_right(right_name: str):
         @wraps(f)
         def inner(*args, **kwargs):
             auth = request.authorization
-            if not auth or not check_auth(auth.username, auth.password):
+            username = None
+            # Try Basic auth first
+            if auth and check_auth(auth.username or '', auth.password or ''):
+                username = auth.username
+            elif current_user is not None:
+                try:
+                    if current_user.is_authenticated:
+                        username = current_user.get_id()
+                except Exception:
+                    username = None
+            if not username:
                 return authenticate()
-            g.current_user = auth.username
+            g.current_user = username
             # Resolve role & rights
             try:
-                from OrganizerDashboard.config_runtime import get_dashboard_config
+                from OrganizerDashboard.config_runtime import get_dashboard_config, get_config
                 dashboard_config = get_dashboard_config()
                 roles = dashboard_config.get('roles', {})
                 # Determine role
-                if auth.username == getattr(sys.modules.get('__main__'), 'ADMIN_USER', 'admin'):
-                    role_name = 'admin'
-                else:
-                    role_name = None
+                admin_user = get_config().get('dashboard_user', 'admin')
+                role_name = 'admin' if username == admin_user else None
+                if role_name is None:
                     for u in dashboard_config.get('users', []):
-                        if u.get('username') == auth.username:
+                        if u.get('username') == username:
                             role_name = u.get('role') or 'viewer'
                             break
                 rights = roles.get(role_name or 'viewer', {})
