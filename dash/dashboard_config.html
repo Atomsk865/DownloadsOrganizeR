@@ -9,6 +9,12 @@
       <button class="btn btn-sm btn-outline-primary me-2" onclick="resetSetup()" data-right="manage_config" title="Re-run initial setup wizard">
         <i class="bi bi-arrow-counterclockwise"></i> Re-run Setup
       </button>
+      <button class="btn btn-sm btn-success me-2" onclick="repairAuth()" data-right="manage_config" title="Align admin credentials across configs">
+        <i class="bi bi-shield-lock"></i> Repair Auth
+      </button>
+      <button class="btn btn-sm btn-outline-info me-2" onclick="viewAuthState()" data-right="manage_config" title="View current auth state">
+        <i class="bi bi-info-circle"></i> Auth State
+      </button>
     <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
   </div>
 </div>
@@ -314,6 +320,42 @@ function applyConfigRights() {
       .then(r => r.json().then(j => ({ok: r.ok, j})))
       .then(({ok, j}) => { if (ok && j.success) { showNotification('Factory reset complete! Redirecting...', 'success'); setTimeout(() => { window.location.href = '/'; }, 2000); } else { showNotification(j.error || 'Factory reset failed', 'danger'); } })
       .catch(err => showNotification('Factory reset error: ' + err.message, 'danger'));
+  }
+
+  async function repairAuth() {
+    const username = (document.getElementById('new-username')?.value || '').trim();
+    const password = (document.getElementById('new-password')?.value || '').trim();
+    const body = { username: username || undefined, password: password || undefined, force_basic: true };
+    showNotification('Repairing auth...', 'info');
+    try {
+      const resp = await fetch('/api/admin/repair_auth', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(body)
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        showNotification('Auth repaired for ' + data.username, 'success');
+        fetchConfig();
+      } else {
+        showNotification(data.error || 'Auth repair failed', 'danger');
+      }
+    } catch (e) {
+      showNotification('Auth repair error: ' + e.message, 'danger');
+    }
+  }
+
+  async function viewAuthState() {
+    try {
+      const resp = await fetch('/api/admin/auth_state', { credentials: 'include', headers: getAuthHeaders() });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to fetch auth state');
+      const msg = `User: ${data.dashboard_user}\nMethod: ${data.auth_method}\nFallback: ${data.auth_fallback_enabled}\nSetup: ${data.setup_completed}\nUsers: ${data.users.map(u=>u.username+':' + u.role + ' (hash=' + (u.has_hash?'yes':'no') + ')').join(', ')}`;
+      showNotification(msg.replaceAll('\n','<br/>'), 'info');
+    } catch (e) {
+      showNotification('Auth state error: ' + e.message, 'danger');
+    }
   }
 }
 </script>
