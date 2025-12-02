@@ -167,10 +167,10 @@ try {
   Reset-Setup -BaseUrl $BaseUrl -AdminUser $AdminUser -AdminPass $AdminPass
   Verify-RedirectToSetup -BaseUrl $BaseUrl
 
-  Write-Host "\n✓ Smoke test completed successfully" -ForegroundColor Green
+  Write-Host "`n✓ Smoke test completed successfully" -ForegroundColor Green
 }
 catch {
-  Write-Host "\n✗ Smoke test failed: $($_.Exception.Message)" -ForegroundColor Red
+  Write-Host "`n✗ Smoke test failed: $($_.Exception.Message)" -ForegroundColor Red
   throw
 }
 finally {

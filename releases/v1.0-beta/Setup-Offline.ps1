@@ -143,4 +143,4 @@ Init-Configs -Root $TargetRoot
 if ($InstallService) { Install-Service -Root $TargetRoot -ServiceName $ServiceName }
 if (-not $NoStartDashboard) { Start-Dashboard -Root $TargetRoot }
 
-Write-Host "\n✓ Offline setup completed (v1.0-beta). Open http://localhost:5000 to run first-time setup." -ForegroundColor Green
+Write-Host "`n✓ Offline setup completed (v1.0-beta). Open http://localhost:5000 to run first-time setup." -ForegroundColor Green
