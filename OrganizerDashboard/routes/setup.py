@@ -234,6 +234,33 @@ def setup_initialize():
 
     return jsonify({'success': True, 'message': 'Setup completed. Redirecting to login...'})
 
+@routes_setup.route('/api/setup/save', methods=['POST'])
+def setup_save():
+    """Save additional setup preferences like watch_folders, vt_api_key, features."""
+    from OrganizerDashboard.config_runtime import get_config, save_config
+    data = request.get_json() or {}
+    
+    # Extract preferences
+    watch_folders = data.get('watch_folders', [])
+    vt_api_key = data.get('vt_api_key', '').strip()
+    features = data.get('features', {})
+    
+    # Update organizer_config.json
+    config = get_config()
+    if watch_folders:
+        config['watch_folders'] = watch_folders
+    if vt_api_key:
+        config['vt_api_key'] = vt_api_key
+    if features:
+        config['features'] = features
+    
+    # Persist
+    try:
+        save_config()
+        return jsonify({'success': True, 'message': 'Setup preferences saved'})
+    except Exception as e:
+        return jsonify({'error': f'Failed to save preferences: {e}'}), 500
+
 @routes_setup.route('/api/setup/reset', methods=['POST'])
 def setup_reset():
     """Allow an authenticated admin to re-run initial setup by flipping flag."""
