@@ -1,6 +1,6 @@
 <#
 Installs DownloadsOrganizeR.ServiceHost as a Windows service.
-Requires: PowerShell Admin, .NET SDK or published binary.
+Requires: PowerShell Admin. Uses .NET SDK to publish unless a prebuilt publish dir is provided.
 #>
 
 param(
@@ -8,7 +8,8 @@ param(
   [string]$ServiceName = 'DownloadsOrganizer',
   [string]$PythonExe = 'C:\Scripts\venv\Scripts\python.exe',
   [string]$ScriptPath = 'C:\Scripts\Organizer.py',
-  [string]$WorkingDirectory = 'C:\Scripts'
+  [string]$WorkingDirectory = 'C:\Scripts',
+  [string]$Project = (Join-Path $PSScriptRoot 'DownloadsOrganizeR.ServiceHost.csproj')
 )
 
 Set-StrictMode -Version Latest
@@ -23,10 +24,22 @@ function Ensure-Admin {
   }
 }
 
+function Ensure-Directory {
+  param([string]$Path)
+  if (-not (Test-Path $Path)) { [void](New-Item -ItemType Directory -Path $Path -Force) }
+}
+
+function Test-Dotnet {
+  return [bool](Get-Command dotnet -ErrorAction SilentlyContinue)
+}
+
 function Publish-App {
-  param([string]$OutDir)
-  Write-Host 'Publishing self-contained win-x64...' -ForegroundColor Cyan
-  dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $OutDir
+  param([string]$Proj, [string]$OutDir)
+  if (-not (Test-Dotnet)) {
+    throw ".NET SDK ('dotnet') not found. Install SDK or provide -PublishDir with prebuilt binaries."
+  }
+  Write-Host "Publishing self-contained win-x64 from $Proj ..." -ForegroundColor Cyan
+  dotnet publish "$Proj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o "$OutDir"
 }
 
 function Write-AppSettings {
@@ -41,12 +54,20 @@ function Install-Service {
   if (-not (Test-Path $exe)) { throw "Executable not found: $exe" }
   Write-Host "Creating service $Name ..." -ForegroundColor Cyan
   sc.exe create $Name binPath= "`"$exe`"" start= auto | Out-Null
-  sc.exe description $Name "DownloadsOrganizeR Python Host"
+  sc.exe description $Name "DownloadsOrganizeR Python Host" | Out-Null
   sc.exe start $Name | Out-Null
   Write-Host "Service $Name installed and started." -ForegroundColor Green
 }
 
 Ensure-Admin
-Publish-App -OutDir $PublishDir
+Ensure-Directory -Path $PublishDir
+
+$exePath = Join-Path $PublishDir 'DownloadsOrganizeR.ServiceHost.exe'
+if (Test-Path $exePath) {
+  Write-Host "Using existing publish folder: $PublishDir" -ForegroundColor Yellow
+} else {
+  Publish-App -Proj $Project -OutDir $PublishDir
+}
+
 Write-AppSettings -OutDir $PublishDir
 Install-Service -OutDir $PublishDir -Name $ServiceName
