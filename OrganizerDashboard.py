@@ -24,6 +24,7 @@ if os.path.isdir(_pkg_dir):
         sys.modules[_pkg_name] = pkg
 
 from flask import Flask
+from flask_login import LoginManager, UserMixin
 import json
 
 """OrganizerDashboard
@@ -178,6 +179,32 @@ def create_app():
     _sys.modules['__main__'] = sys.modules[__name__]
 
     app = Flask(__name__, template_folder='dash')
+    # Basic secret key for session cookies; can be overridden via env
+    app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', 'downloads_organizer_secret')
+
+    # Flask-Login setup
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'routes_login.login_page'
+
+    class User(UserMixin):
+        def __init__(self, username, role='viewer'):
+            self.id = username
+            self.role = role
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        try:
+            from OrganizerDashboard.config_runtime import get_dashboard_config
+            dash_cfg = get_dashboard_config()
+            role = 'viewer'
+            for u in dash_cfg.get('users', []):
+                if u.get('username') == user_id:
+                    role = u.get('role') or 'viewer'
+                    break
+            return User(user_id, role)
+        except Exception:
+            return User(user_id)
 
     # Import and register all blueprints from routes
     from OrganizerDashboard.routes.dashboard import routes_dashboard
@@ -204,6 +231,7 @@ def create_app():
     from OrganizerDashboard.routes.service_install import routes_service_install
     from OrganizerDashboard.routes.factory_reset import routes_factory_reset
     from OrganizerDashboard.routes.setup import routes_setup
+    from OrganizerDashboard.routes.login import routes_login
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config)
@@ -229,6 +257,7 @@ def create_app():
     app.register_blueprint(routes_service_install)
     app.register_blueprint(routes_factory_reset)
     app.register_blueprint(routes_setup)
+    app.register_blueprint(routes_login)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
