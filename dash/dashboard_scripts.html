@@ -439,6 +439,56 @@ function devResetToSetup() {
         });
 }
 
+// --- Column width preferences for Custom Routes and Tag Routes ---
+function setColWidth(prefix, col, pct) {
+    const el = document.getElementById(`${prefix}-${col}-col`);
+    if (el) el.style.width = `${pct}%`;
+}
+
+function applyColumnPrefs(prefix, cols) {
+    cols.forEach(col => {
+        const key = `dor_${prefix}_${col}_width_pct`;
+        const val = localStorage.getItem(key);
+        if (val) {
+            const pct = parseInt(val, 10);
+            setColWidth(prefix, col, pct);
+            // Also update slider if present
+            const slider = document.getElementById(`${prefix}-${col}-width`);
+            if (slider) slider.value = pct;
+        }
+    });
+}
+
+function hookColumnSliders(prefix, cols) {
+    cols.forEach(col => {
+        const slider = document.getElementById(`${prefix}-${col}-width`);
+        if (!slider) return;
+        slider.addEventListener('input', (e) => {
+            const pct = parseInt(e.target.value, 10);
+            setColWidth(prefix, col, pct);
+        });
+    });
+}
+
+function saveCustomRoutesColumnPrefs() {
+    saveColumnPrefs('cr', ['ext','folder','action']);
+}
+
+function saveTagRoutesColumnPrefs() {
+    saveColumnPrefs('tr', ['tag','folder','action']);
+}
+
+function saveColumnPrefs(prefix, cols) {
+    cols.forEach(col => {
+        const slider = document.getElementById(`${prefix}-${col}-width`);
+        if (slider) {
+            const key = `dor_${prefix}_${col}_width_pct`;
+            localStorage.setItem(key, slider.value);
+        }
+    });
+    showNotification('Column widths saved to browser preferences', 'success');
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     initDragAndDrop();
@@ -475,6 +525,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (e) {
         // no-op
+    }
+
+    // Column width prefs: apply saved widths and hook sliders
+    try {
+        applyColumnPrefs('cr', ['ext','folder','action']);
+        applyColumnPrefs('tr', ['tag','folder','action']);
+        hookColumnSliders('cr', ['ext','folder','action']);
+        hookColumnSliders('tr', ['tag','folder','action']);
+    } catch (e) {
+        console.warn('Column prefs init failed:', e);
     }
 });
 
