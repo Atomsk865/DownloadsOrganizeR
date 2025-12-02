@@ -5,7 +5,7 @@ import psutil
 from OrganizerDashboard.helpers.helpers import (
     get_windows_version, get_cpu_name, get_private_ip, get_public_ip, service_running, find_organizer_proc, format_bytes, last_n_lines_normalized, load_dashboard_json
 )
-from OrganizerDashboard.auth.auth import check_auth, authenticate
+from OrganizerDashboard.auth.auth import check_auth, authenticate, requires_auth
 from flask_login import current_user
 import os
 import platform
@@ -102,5 +102,22 @@ def dashboard():
         logs_dir="",
         stdout_log="",
         stderr_log="",
-        is_windows=(sys.platform == "win32")
+        is_windows=(sys.platform == "win32"),
+        routes=json.dumps({}),
+        custom_routes=json.dumps({})
     )
+
+@routes_dashboard.route("/api/organizer/config", methods=["GET"])
+@requires_auth
+def get_organizer_config():
+    """Return organizer configuration including routes and custom_routes."""
+    import OrganizerDashboard
+    config = OrganizerDashboard.config
+    
+    return jsonify({
+        "routes": config.get("routes", {}),
+        "custom_routes": config.get("custom_routes", {}),
+        "memory_threshold_mb": config.get("memory_threshold_mb", 200),
+        "cpu_threshold_percent": config.get("cpu_threshold_percent", 60),
+        "logs_dir": config.get("logs_dir", "")
+    })

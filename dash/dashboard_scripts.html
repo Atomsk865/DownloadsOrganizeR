@@ -380,6 +380,8 @@ async function saveConfiguration() {
         });
         if (response.ok) {
             showNotification('Configuration saved successfully', 'success');
+            // Reload the configuration to show the saved data
+            await initializeCustomRoutes();
         } else {
             const t = await response.text();
             showNotification('Failed to save configuration: ' + t.substring(0,200), 'danger');
@@ -467,24 +469,49 @@ function loadCustomRoutes(customRoutes) {
 }
 
 // Initialize custom routes table on page load
-async function initializeCustomRoutes() {
-    const tbody = document.getElementById('custom-routes-tbody');
-    if (!tbody) return; // Not on dashboard page
+async function loadFileCategories(routes) {
+    const tbody = document.querySelector('#config-form tbody');
+    if (!tbody) return;
     
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Populate rows from config
+    let rowNum = 1;
+    for (const [folder, extensions] of Object.entries(routes)) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input class="form-control form-control-sm" type="text" name="folder_${rowNum}" value="${folder}"></td>
+            <td><input class="form-control form-control-sm" type="text" name="exts_${rowNum}" value="${extensions.join(', ')}"></td>
+            <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+        rowNum++;
+    }
+}
+
+async function initializeCustomRoutes() {
     try {
-        const response = await fetch('/config', {
+        const response = await fetch('/api/organizer/config', {
             credentials: 'include',
             headers: getAuthHeaders()
         });
         
         if (response.ok) {
-            const html = await response.text();
-            // Parse the response to extract custom_routes if available
-            // For now, we'll just make sure the table is ready for user input
-            // The actual loading will happen when the user logs in
+            const config = await response.json();
+            
+            // Load file categories
+            if (config.routes && Object.keys(config.routes).length > 0) {
+                loadFileCategories(config.routes);
+            }
+            
+            // Load custom routes
+            if (config.custom_routes && Object.keys(config.custom_routes).length > 0) {
+                loadCustomRoutes(config.custom_routes);
+            }
         }
     } catch (error) {
-        console.log('Could not load custom routes:', error);
+        console.log('Could not load configuration:', error);
     }
 }
 
