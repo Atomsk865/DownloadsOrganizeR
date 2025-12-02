@@ -18,9 +18,13 @@ def dashboard():
     """Dashboard root. If setup incomplete redirect to wizard; otherwise require auth."""
     # Use runtime config to check setup state
     try:
-        from OrganizerDashboard.config_runtime import get_dashboard_config
+        from OrganizerDashboard.config_runtime import get_dashboard_config, get_config
         dash_cfg = get_dashboard_config()
-        if not dash_cfg.get('setup_completed', False):
+        # Stronger first-run detection: setup flag, missing users, or no stored admin hash
+        cfg = get_config()
+        users = dash_cfg.get('users') or []
+        has_admin_hash = bool(cfg.get('dashboard_pass_hash'))
+        if (not dash_cfg.get('setup_completed', False)) or (len(users) == 0) or (not has_admin_hash):
             return redirect('/setup')
     except Exception:
         pass
