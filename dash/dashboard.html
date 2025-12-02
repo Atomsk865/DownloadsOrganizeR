@@ -92,6 +92,15 @@
         .custom-widget-content {
             min-height: 150px;
         }
+        .copy-value {
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 2px;
+        }
+        .copy-value:hover {
+            color: #0d6efd;
+        }
         @media (max-width: 1024px) {
             .dashboard-module {
                 flex: 1 1 100%;
@@ -195,24 +204,25 @@
     <!-- Main Dashboard Container -->
     <div class="container-fluid px-3">
         <div id="dashboard-grid" style="margin: 0 auto; max-width: 1600px;">
-            <!-- System Info Card -->
+            <!-- System Info Card (Top, non-draggable) -->
             <div class="dashboard-module full-width" data-module="system-info" draggable="false">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b>System Information</b>
+                        <small class="text-muted ms-2">(Click any value to copy)</small>
                     </div>
                     <div class="card-body p-2">
                         <div class="row">
-                            <div class="col-md-3"><small><b>Hostname:</b> {{ hostname }}</small></div>
-                            <div class="col-md-3"><small><b>OS:</b> {{ os }}</small></div>
-                            <div class="col-md-3"><small><b>CPU:</b> {{ cpu }}</small></div>
-                            <div class="col-md-3"><small><b>RAM:</b> {{ ram_gb }} GB</small></div>
+                            <div class="col-md-3"><small><b>Hostname:</b> <span class="copy-value" onclick="copyToClipboard('{{ hostname }}', this)" title="Click to copy">{{ hostname }}</span></small></div>
+                            <div class="col-md-3"><small><b>OS:</b> <span class="copy-value" onclick="copyToClipboard('{{ os }}', this)" title="Click to copy">{{ os }}</span></small></div>
+                            <div class="col-md-3"><small><b>CPU:</b> <span class="copy-value" onclick="copyToClipboard('{{ cpu }}', this)" title="Click to copy">{{ cpu }}</span></small></div>
+                            <div class="col-md-3"><small><b>RAM:</b> <span class="copy-value" onclick="copyToClipboard('{{ ram_gb }} GB', this)" title="Click to copy">{{ ram_gb }} GB</span></small></div>
                         </div>
                         <div class="row mt-1">
-                            <div class="col-md-3"><small><b>GPU:</b> {{ gpu }}</small></div>
-                            <div class="col-md-3"><small><b>Private IP:</b> {{ private_ip }}</small></div>
+                            <div class="col-md-3"><small><b>GPU:</b> <span class="copy-value" onclick="copyToClipboard('{{ gpu }}', this)" title="Click to copy">{{ gpu }}</span></small></div>
+                            <div class="col-md-3"><small><b>Private IP:</b> <span class="copy-value" onclick="copyToClipboard('{{ private_ip }}', this)" title="Click to copy">{{ private_ip }}</span></small></div>
                             <div class="col-md-3">
-                                <small><b>Public IP:</b> <span id="public-ip-display">Loading...</span></small>
+                                <small><b>Public IP:</b> <span id="public-ip-display" class="copy-value" onclick="copyPublicIP(this)" onmouseover="revealPublicIP()" onmouseout="hidePublicIP()" title="Hover to reveal, click to copy" style="cursor:pointer;">•••.•••.•••.•••</span></small>
                                 <iframe src="https://ipchicken.com" style="display:none;" id="ipchicken-frame" onload="extractPublicIP()"></iframe>
                             </div>
                             <div class="col-md-3">
@@ -406,14 +416,11 @@
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
                                 <thead>
-                                    <td class="d-flex gap-1">
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="scanVirusTotal('${file.path}', '${file.name}')" title="Scan with VirusTotal">
-                                            <i class="bi bi-shield-check"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile('${file.path}')" title="Delete this file">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
+                                    <tr>
+                                        <th><small>PID</small></th>
+                                        <th><small>Name</small></th>
+                                        <th><small>CPU %</small></th>
+                                        <th><small>RAM MB</small></th>
                                     </tr>
                                 </thead>
                                 <tbody>
