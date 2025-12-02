@@ -268,8 +268,57 @@ function copyServiceName() {
 
 // Configuration Save
 async function saveConfiguration() {
-    const form = document.getElementById('config-form');
-    const formData = new FormData(form);
+    const catForm = document.getElementById('config-form');
+    const customForm = document.getElementById('custom-routes-form');
+    const catData = new FormData(catForm);
+    const customData = new FormData(customForm);
+    
+    // Build routes dict from category form
+    const routes = {};
+    let i = 1;
+    while (true) {
+        const folder = catData.get(`folder_${i}`);
+        const exts = catData.get(`exts_${i}`);
+        if (folder && exts !== null) {
+            const list = (exts || '').split(',').map(s => s.trim()).filter(Boolean);
+            if (folder.trim()) routes[folder.trim()] = list;
+            i++;
+        } else {
+            break;
+        }
+    }
+    const newFolder = catData.get('folder_new');
+    const newExts = catData.get('exts_new');
+    if (newFolder && newFolder.trim()) {
+        routes[newFolder.trim()] = (newExts || '').split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    // Build custom_routes dict from custom form
+    const custom_routes = {};
+    let j = 1;
+    while (true) {
+        const ext = customData.get(`ext_${j}`);
+        const path = customData.get(`path_${j}`);
+        if (ext || path) {
+            if (ext && path && ext.trim() && path.trim()) {
+                custom_routes[ext.trim()] = path.trim();
+            }
+            j++;
+        } else {
+            break;
+        }
+    }
+    const newExt = customData.get('ext_new');
+    const newPath = customData.get('path_new');
+    if (newExt && newPath && newExt.trim() && newPath.trim()) {
+        custom_routes[newExt.trim()] = newPath.trim();
+    }
+
+    // Prepare JSON payload
+    const payload = {
+        routes,
+        custom_routes
+    };
     
     try {
         if (!__authHeader) {
@@ -278,14 +327,15 @@ async function saveConfiguration() {
         }
         const response = await fetch('/update', {
             method: 'POST',
-            body: formData,
+            body: JSON.stringify(payload),
             credentials: 'include',
-            headers: getAuthHeaders()
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }
         });
         if (response.ok) {
             showNotification('Configuration saved successfully', 'success');
         } else {
-            showNotification('Failed to save configuration', 'danger');
+            const t = await response.text();
+            showNotification('Failed to save configuration: ' + t.substring(0,200), 'danger');
         }
     } catch (error) {
         showNotification(`Error: ${error.message}`, 'danger');

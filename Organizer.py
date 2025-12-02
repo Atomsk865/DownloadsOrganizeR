@@ -75,6 +75,15 @@ else:
         "Other": []
     }
 
+# Optional per-extension custom destination mapping: {"ext": "C:/Target/Folder"}
+CUSTOM_ROUTES = {}
+try:
+    for ext, target in (CONFIG.get("custom_routes") or {}).items():
+        if isinstance(ext, str) and isinstance(target, str) and target.strip():
+            CUSTOM_ROUTES["." + ext.lower().lstrip('.')] = target.strip()
+except Exception:
+    CUSTOM_ROUTES = {}
+
 IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG}
 IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
 
@@ -164,20 +173,27 @@ def organize_file(file_path: str) -> None:
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
         return
 
-    target_dir = "Other"
-    for category, extensions in EXTENSION_MAP.items():
-        if ext in extensions:
-            target_dir = category
-            break
-
-    dest_dir = DOWNLOADS_PATH / target_dir
+    # First, check for a custom route for this extension
+    custom_target_path = CUSTOM_ROUTES.get(ext)
+    if custom_target_path:
+        dest_dir = Path(custom_target_path)
+        category_label = "Custom"
+    else:
+        # Fallback to category-based routing inside Downloads
+        target_dir = "Other"
+        for category, extensions in EXTENSION_MAP.items():
+            if ext in extensions:
+                target_dir = category
+                break
+        dest_dir = DOWNLOADS_PATH / target_dir
+        category_label = target_dir
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = get_unique_path(dest_dir, filename)
     try:
         shutil.move(str(p), dest_path)
         logger.info(f"Moved {file_path} → {dest_path}")
         # Log the file move for dashboard reference
-        log_file_move(file_path, dest_path, target_dir)
+        log_file_move(file_path, dest_path, category_label)
     except Exception as e:
         logger.error(f"Error moving {file_path}: {e}")
 

@@ -72,7 +72,9 @@ DEFAULT_CONFIG = {
     "windows_auth_config": {
         "domain": "",
         "allowed_groups": []
-    }
+    },
+    # Per-extension custom destinations (absolute folder paths)
+    "custom_routes": {}
 }
 
 from OrganizerDashboard.config_runtime import initialize as rt_init, get_config, get_dashboard_config
