@@ -65,7 +65,8 @@ function Copy-RepoFiles {
     'organizer_config.json',
     'dashboard_config.json',
     'Install-And-Monitor-OrganizerService.ps1',
-    'Windows-Dashboard-SmokeTest.ps1'
+    'Windows-Dashboard-SmokeTest.ps1',
+    'dotnet'
   )
   foreach ($item in $items) {
     $src = Join-Path $Source $item
