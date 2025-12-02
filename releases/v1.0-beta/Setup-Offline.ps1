@@ -77,8 +77,13 @@ function Pip-Install {
   $venvPython = Join-Path $Root 'venv\Scripts\python.exe'
   $req = Join-Path $Root 'requirements.txt'
   Write-Host 'Installing requirements...'
-  & $venvPython -m pip install --upgrade pip | Out-Null
-  & $venvPython -m pip install -r $req
+  & $venvPython -m pip install --upgrade pip setuptools wheel
+  try {
+    & $venvPython -m pip install --default-timeout 120 -r $req
+  } catch {
+    Write-Warning 'Initial requirements install failed. Retrying with increased verbosity...'
+    & $venvPython -m pip install --default-timeout 180 -v -r $req
+  }
 }
 
 function Init-Configs {
