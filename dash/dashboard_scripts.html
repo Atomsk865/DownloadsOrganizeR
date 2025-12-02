@@ -419,6 +419,26 @@ function copyToClipboard(text, el) {
     });
 }
 
+// Dev Reset to Setup
+function devResetToSetup() {
+    if (!confirm('⚠️ WARNING: This will DELETE all config, users, passwords, and state files.\n\nThis will force the setup wizard on next page load.\n\nAre you sure?')) {
+        return;
+    }
+    fetch('/dev/reset-to-setup', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Reset complete! Reloading...', 'success');
+                setTimeout(() => { window.location.href = '/'; }, 1500);
+            } else {
+                showNotification('Reset failed: ' + (data.error || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(err => {
+            showNotification('Error: ' + err.message, 'danger');
+        });
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     initDragAndDrop();
