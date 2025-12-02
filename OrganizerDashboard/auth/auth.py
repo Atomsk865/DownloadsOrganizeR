@@ -25,8 +25,28 @@ try:
         import win32con
         WINDOWS_AUTH_AVAILABLE = True
     else:
+        # Provide lightweight stubs so static analysis doesn't error on Linux/macOS
+        class _Win32Stub1:
+            def __getattr__(self, name):
+                raise RuntimeError('Windows API not available on this platform')
+        win32security = _Win32Stub1()  # type: ignore[assignment]
+        win32api = _Win32Stub1()  # type: ignore[assignment]
+        class _Win32ConStub1:
+            LOGON32_LOGON_NETWORK = 3
+            LOGON32_PROVIDER_DEFAULT = 0
+        win32con = _Win32ConStub1()  # type: ignore[assignment]
         WINDOWS_AUTH_AVAILABLE = False
 except ImportError:
+    # Fallback stubs if import fails
+    class _Win32Stub2:
+        def __getattr__(self, name):
+            raise RuntimeError('Windows API not available on this platform')
+    win32security = _Win32Stub2()  # type: ignore[assignment]
+    win32api = _Win32Stub2()  # type: ignore[assignment]
+    class _Win32ConStub2:
+        LOGON32_LOGON_NETWORK = 3
+        LOGON32_PROVIDER_DEFAULT = 0
+    win32con = _Win32ConStub2()  # type: ignore[assignment]
     WINDOWS_AUTH_AVAILABLE = False
 
 
@@ -69,8 +89,14 @@ class BasicAuthProvider(AuthProvider):
         stored_hash = get_config().get("dashboard_pass_hash")
         if stored_hash:
             self.admin_pass_hash = stored_hash.encode('utf-8')
-            if main is not None and hasattr(main, 'ADMIN_PASS_HASH'):
-                main.ADMIN_PASS_HASH = self.admin_pass_hash
+            if main is not None:
+                try:
+                    # Assign via Any to avoid ModuleType attribute warnings
+                    from typing import Any as _Any
+                    _m_any: _Any = main
+                    _m_any.ADMIN_PASS_HASH = self.admin_pass_hash
+                except Exception:
+                    pass
             # Mirror into dashboard_config users if missing
             if get_dashboard_config and save_dashboard_config:
                 try:
@@ -100,6 +126,13 @@ class BasicAuthProvider(AuthProvider):
                 if 'dashboard_pass' in cfg:
                     del cfg['dashboard_pass']
                 save_config()
+                if main is not None:
+                    try:
+                        from typing import Any as _Any
+                        _m_any: _Any = main
+                        _m_any.ADMIN_PASS_HASH = self.admin_pass_hash
+                    except Exception:
+                        pass
                 if get_dashboard_config and save_dashboard_config:
                     dash = get_dashboard_config()
                     # Update or insert user entry
@@ -124,6 +157,13 @@ class BasicAuthProvider(AuthProvider):
             cfg['dashboard_user'] = self.admin_user
             cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
             save_config()
+            if main is not None:
+                try:
+                    from typing import Any as _Any
+                    _m_any: _Any = main
+                    _m_any.ADMIN_PASS_HASH = self.admin_pass_hash
+                except Exception:
+                    pass
             if get_dashboard_config and save_dashboard_config:
                 dash = get_dashboard_config()
                 found = False
@@ -272,11 +312,11 @@ class WindowsAuthProvider(AuthProvider):
             if self.allowed_groups:
                 # Get user's groups
                 user_sid = win32security.GetTokenInformation(
-                    handle, win32security.TokenUser
+                    int(handle), win32security.TokenUser  # type: ignore[arg-type]
                 )[0]
                 
                 groups = win32security.GetTokenInformation(
-                    handle, win32security.TokenGroups
+                    int(handle), win32security.TokenGroups  # type: ignore[arg-type]
                 )
                 
                 user_groups = []
@@ -288,10 +328,10 @@ class WindowsAuthProvider(AuthProvider):
                         pass
                 
                 if not any(group in user_groups for group in self.allowed_groups):
-                    win32api.CloseHandle(handle)
+                    win32api.CloseHandle(int(handle))  # type: ignore[arg-type]
                     return False
             
-            win32api.CloseHandle(handle)
+            win32api.CloseHandle(int(handle))  # type: ignore[arg-type]
             return True
             
         except Exception:

@@ -59,11 +59,12 @@ def import_config():
                 return jsonify({'error': 'No file uploaded'}), 400
             
             file = request.files['file']
-            
-            if file.filename == '':
+
+            filename = getattr(file, 'filename', None)
+            if not filename or not isinstance(filename, str) or filename.strip() == '':
                 return jsonify({'error': 'No file selected'}), 400
-            
-            if not file.filename.endswith('.json'):
+
+            if not filename.endswith('.json'):
                 return jsonify({'error': 'File must be a JSON file'}), 400
             
             # Read and parse JSON
@@ -159,11 +160,12 @@ def validate_config_file():
                 return jsonify({'valid': False, 'error': 'No file uploaded'}), 400
             
             file = request.files['file']
-            
-            if file.filename == '':
+
+            filename = getattr(file, 'filename', None)
+            if not filename or not isinstance(filename, str) or filename.strip() == '':
                 return jsonify({'valid': False, 'error': 'No file selected'}), 400
-            
-            if not file.filename.endswith('.json'):
+
+            if not filename.endswith('.json'):
                 return jsonify({'valid': False, 'error': 'File must be a JSON file'}), 400
             
             # Parse JSON
