@@ -395,6 +395,96 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Global functions that need to be accessible from onclick handlers
+function resetSetup(){
+  if(!confirm('Re-run setup wizard? Users will be redirected to setup page and must complete it again to access dashboard.')) return;
+  fetch('/api/setup/reset', {method:'POST', headers: getAuthHeaders()})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{ if(ok && j.success){ showNotification('Setup reset. Redirecting to wizard...', 'success'); setTimeout(()=>{ window.location.href='/setup'; },1500); } else { showNotification(j.error||'Reset failed','danger'); } });
+}
+
+function installService() {
+  if (!confirm('Install the Organizer service? Requires administrator privileges.')) return;
+  const serviceName = document.getElementById('service-name-input').value.trim();
+  const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
+  const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
+  const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
+  showNotification('Installing service... This may take a minute.', 'info');
+  fetch('/api/service/install', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service installed successfully!', 'success'); if (j.output) console.log('Install:', j.output); } else { showNotification(j.error || 'Installation failed', 'danger'); if (j.error_output) console.error('Install error:', j.error_output); } })
+    .catch(err => showNotification('Installation error: ' + err.message, 'danger'));
+}
+
+function uninstallService() {
+  if (!confirm('Uninstall the Organizer service? This will stop and remove it.')) return;
+  const serviceName = document.getElementById('service-name-input').value.trim();
+  showNotification('Uninstalling service...', 'info');
+  fetch('/api/service/uninstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName})})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service uninstalled successfully!', 'success'); } else { showNotification(j.error || 'Uninstallation failed', 'danger'); } })
+    .catch(err => showNotification('Uninstallation error: ' + err.message, 'danger'));
+}
+
+function reinstallService() {
+  if (!confirm('Reinstall the Organizer service? Will uninstall and reinstall with current settings.')) return;
+  const serviceName = document.getElementById('service-name-input').value.trim();
+  const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
+  const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
+  const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
+  showNotification('Reinstalling service... This may take a minute.', 'info');
+  fetch('/api/service/reinstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service reinstalled successfully!', 'success'); if (j.output) console.log('Reinstall:', j.output); } else { showNotification(j.error || 'Reinstallation failed', 'danger'); if (j.error_output) console.error('Reinstall error:', j.error_output); } })
+    .catch(err => showNotification('Reinstallation error: ' + err.message, 'danger'));
+}
+
+function factoryReset() {
+  if (!confirm('⚠️ WARNING: Reset ALL configurations to defaults?\\n\\nIncludes:\\n- File organization rules\\n- User accounts (except admin)\\n- Dashboard layout\\n- All settings\\n\\nCannot be undone!')) return;
+  if (!confirm('Are you absolutely sure? This will erase all custom configurations!')) return;
+  showNotification('Performing factory reset...', 'info');
+  fetch('/api/factory-reset', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => { if (ok && j.success) { showNotification('Factory reset complete! Redirecting...', 'success'); setTimeout(() => { window.location.href = '/'; }, 2000); } else { showNotification(j.error || 'Factory reset failed', 'danger'); } })
+    .catch(err => showNotification('Factory reset error: ' + err.message, 'danger'));
+}
+
+async function repairAuth() {
+  const username = (document.getElementById('new-username')?.value || '').trim();
+  const password = (document.getElementById('new-password')?.value || '').trim();
+  const body = { username: username || undefined, password: password || undefined, force_basic: true };
+  showNotification('Repairing auth...', 'info');
+  try {
+    const resp = await fetch('/api/admin/repair_auth', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (resp.ok && data.success) {
+      showNotification('Auth repaired for ' + data.username, 'success');
+      fetchConfig();
+    } else {
+      showNotification(data.error || 'Auth repair failed', 'danger');
+    }
+  } catch (e) {
+    showNotification('Auth repair error: ' + e.message, 'danger');
+  }
+}
+
+async function viewAuthState() {
+  try {
+    const resp = await fetch('/api/admin/auth_state', { credentials: 'include', headers: getAuthHeaders() });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Failed to fetch auth state');
+    const msg = `User: ${data.dashboard_user}\nMethod: ${data.auth_method}\nFallback: ${data.auth_fallback_enabled}\nSetup: ${data.setup_completed}\nUsers: ${data.users.map(u=>u.username+':' + u.role + ' (hash=' + (u.has_hash?'yes':'no') + ')').join(', ')}`;
+    showNotification(msg.replaceAll('\n','<br/>'), 'info');
+  } catch (e) {
+    showNotification('Auth state error: ' + e.message, 'danger');
+  }
+}
+
 function applyConfigRights() {
   if (!__rights.manage_config) {
     // Disable all user management controls (table buttons, input fields, and save button)
@@ -407,108 +497,23 @@ function applyConfigRights() {
       }
     });
   }
-  // Add reset setup function in scope
-  function resetSetup(){
-    if(!confirm('Re-run setup wizard? Users will be redirected to setup page and must complete it again to access dashboard.')) return;
-    fetch('/api/setup/reset', {method:'POST', headers: getAuthHeaders()})
-      .then(r=>r.json().then(j=>({ok:r.ok,j})))
-      .then(({ok,j})=>{ if(ok && j.success){ showNotification('Setup reset. Redirecting to wizard...', 'success'); setTimeout(()=>{ window.location.href='/setup'; },1500); } else { showNotification(j.error||'Reset failed','danger'); } });
-  }
   if (!__rights.modify_layout) {
     const saveBtn = document.querySelector('#layout-editor button.btn-success');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.title = 'Insufficient rights (modify_layout)'; }
     // Disable drag by removing draggable attributes
     document.querySelectorAll('#sections-list li').forEach(li => li.removeAttribute('draggable'));
-    if (!__rights.manage_service) {
-      document.querySelectorAll('#service-name-input, #scripts-root-input, #memory-threshold-input, #cpu-threshold-input').forEach(el => {
-        if (el) el.disabled = true;
-      });
-      document.querySelectorAll('button[onclick^="installService"], button[onclick^="reinstallService"], button[onclick^="uninstallService"]').forEach(el => {
-        if (el) { el.disabled = true; el.title = 'Insufficient rights (manage_service)'; }
-      });
-    }
-    if (!__rights.manage_config) {
-      const resetBtn = document.querySelector('button[onclick="factoryReset()"]');
-      if (resetBtn) resetBtn.style.display = 'none';
-    }
   }
-  function installService() {
-    if (!confirm('Install the Organizer service? Requires administrator privileges.')) return;
-    const serviceName = document.getElementById('service-name-input').value.trim();
-    const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
-    const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
-    const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
-    showNotification('Installing service... This may take a minute.', 'info');
-    fetch('/api/service/install', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
-      .then(r => r.json().then(j => ({ok: r.ok, j})))
-      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service installed successfully!', 'success'); if (j.output) console.log('Install:', j.output); } else { showNotification(j.error || 'Installation failed', 'danger'); if (j.error_output) console.error('Install error:', j.error_output); } })
-      .catch(err => showNotification('Installation error: ' + err.message, 'danger'));
+  if (!__rights.manage_service) {
+    document.querySelectorAll('#service-name-input, #scripts-root-input, #memory-threshold-input, #cpu-threshold-input').forEach(el => {
+      if (el) el.disabled = true;
+    });
+    document.querySelectorAll('button[onclick^="installService"], button[onclick^="reinstallService"], button[onclick^="uninstallService"]').forEach(el => {
+      if (el) { el.disabled = true; el.title = 'Insufficient rights (manage_service)'; }
+    });
   }
-  function uninstallService() {
-    if (!confirm('Uninstall the Organizer service? This will stop and remove it.')) return;
-    const serviceName = document.getElementById('service-name-input').value.trim();
-    showNotification('Uninstalling service...', 'info');
-    fetch('/api/service/uninstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName})})
-      .then(r => r.json().then(j => ({ok: r.ok, j})))
-      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service uninstalled successfully!', 'success'); } else { showNotification(j.error || 'Uninstallation failed', 'danger'); } })
-      .catch(err => showNotification('Uninstallation error: ' + err.message, 'danger'));
-  }
-  function reinstallService() {
-    if (!confirm('Reinstall the Organizer service? Will uninstall and reinstall with current settings.')) return;
-    const serviceName = document.getElementById('service-name-input').value.trim();
-    const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
-    const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
-    const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
-    showNotification('Reinstalling service... This may take a minute.', 'info');
-    fetch('/api/service/reinstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
-      .then(r => r.json().then(j => ({ok: r.ok, j})))
-      .then(({ok, j}) => { if (ok && j.success) { showNotification('Service reinstalled successfully!', 'success'); if (j.output) console.log('Reinstall:', j.output); } else { showNotification(j.error || 'Reinstallation failed', 'danger'); if (j.error_output) console.error('Reinstall error:', j.error_output); } })
-      .catch(err => showNotification('Reinstallation error: ' + err.message, 'danger'));
-  }
-  function factoryReset() {
-    if (!confirm('⚠️ WARNING: Reset ALL configurations to defaults?\\n\\nIncludes:\\n- File organization rules\\n- User accounts (except admin)\\n- Dashboard layout\\n- All settings\\n\\nCannot be undone!')) return;
-    if (!confirm('Are you absolutely sure? This will erase all custom configurations!')) return;
-    showNotification('Performing factory reset...', 'info');
-    fetch('/api/factory-reset', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}})
-      .then(r => r.json().then(j => ({ok: r.ok, j})))
-      .then(({ok, j}) => { if (ok && j.success) { showNotification('Factory reset complete! Redirecting...', 'success'); setTimeout(() => { window.location.href = '/'; }, 2000); } else { showNotification(j.error || 'Factory reset failed', 'danger'); } })
-      .catch(err => showNotification('Factory reset error: ' + err.message, 'danger'));
-  }
-
-  async function repairAuth() {
-    const username = (document.getElementById('new-username')?.value || '').trim();
-    const password = (document.getElementById('new-password')?.value || '').trim();
-    const body = { username: username || undefined, password: password || undefined, force_basic: true };
-    showNotification('Repairing auth...', 'info');
-    try {
-      const resp = await fetch('/api/admin/repair_auth', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify(body)
-      });
-      const data = await resp.json();
-      if (resp.ok && data.success) {
-        showNotification('Auth repaired for ' + data.username, 'success');
-        fetchConfig();
-      } else {
-        showNotification(data.error || 'Auth repair failed', 'danger');
-      }
-    } catch (e) {
-      showNotification('Auth repair error: ' + e.message, 'danger');
-    }
-  }
-
-  async function viewAuthState() {
-    try {
-      const resp = await fetch('/api/admin/auth_state', { credentials: 'include', headers: getAuthHeaders() });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to fetch auth state');
-      const msg = `User: ${data.dashboard_user}\nMethod: ${data.auth_method}\nFallback: ${data.auth_fallback_enabled}\nSetup: ${data.setup_completed}\nUsers: ${data.users.map(u=>u.username+':' + u.role + ' (hash=' + (u.has_hash?'yes':'no') + ')').join(', ')}`;
-      showNotification(msg.replaceAll('\n','<br/>'), 'info');
-    } catch (e) {
-      showNotification('Auth state error: ' + e.message, 'danger');
-    }
+  if (!__rights.manage_config) {
+    const resetBtn = document.querySelector('button[onclick="factoryReset()"]');
+    if (resetBtn) resetBtn.style.display = 'none';
   }
 }
 
