@@ -50,6 +50,12 @@ class BasicAuthProvider(AuthProvider):
     def _initialize_password_hash(self):
         """Initialize the password hash from config or environment using runtime config."""
         from OrganizerDashboard.config_runtime import get_config, save_config
+        # Also ensure dashboard_config mirrors the admin password hash for consistent auth lookups
+        try:
+            from OrganizerDashboard.config_runtime import get_dashboard_config, save_dashboard_config
+        except Exception:
+            get_dashboard_config = None
+            save_dashboard_config = None
         main = sys.modules.get('__main__')
         
         if main is not None and hasattr(main, 'ADMIN_PASS_HASH') and main.ADMIN_PASS_HASH is not None:
@@ -61,6 +67,24 @@ class BasicAuthProvider(AuthProvider):
             self.admin_pass_hash = stored_hash.encode('utf-8')
             if main is not None and hasattr(main, 'ADMIN_PASS_HASH'):
                 main.ADMIN_PASS_HASH = self.admin_pass_hash
+            # Mirror into dashboard_config users if missing
+            if get_dashboard_config and save_dashboard_config:
+                try:
+                    dash = get_dashboard_config()
+                    updated = False
+                    for u in dash.get('users', []):
+                        if u.get('username') == self.admin_user:
+                            if not u.get('password_hash'):
+                                u['password_hash'] = stored_hash
+                                updated = True
+                            break
+                    if not any(u.get('username') == self.admin_user for u in dash.get('users', [])):
+                        dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': stored_hash})
+                        updated = True
+                    if updated:
+                        save_dashboard_config()
+                except Exception:
+                    pass
             return
         
         plain = get_config().get("dashboard_pass")
@@ -72,6 +96,18 @@ class BasicAuthProvider(AuthProvider):
                 if 'dashboard_pass' in cfg:
                     del cfg['dashboard_pass']
                 save_config()
+                if get_dashboard_config and save_dashboard_config:
+                    dash = get_dashboard_config()
+                    # Update or insert user entry
+                    found = False
+                    for u in dash.get('users', []):
+                        if u.get('username') == self.admin_user:
+                            u['password_hash'] = cfg['dashboard_pass_hash']
+                            found = True
+                            break
+                    if not found:
+                        dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': cfg['dashboard_pass_hash']})
+                    save_dashboard_config()
             except Exception:
                 pass
             return
@@ -84,6 +120,17 @@ class BasicAuthProvider(AuthProvider):
             cfg['dashboard_user'] = self.admin_user
             cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
             save_config()
+            if get_dashboard_config and save_dashboard_config:
+                dash = get_dashboard_config()
+                found = False
+                for u in dash.get('users', []):
+                    if u.get('username') == self.admin_user:
+                        u['password_hash'] = cfg['dashboard_pass_hash']
+                        found = True
+                        break
+                if not found:
+                    dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': cfg['dashboard_pass_hash']})
+                save_dashboard_config()
         except Exception:
             pass
     
@@ -104,9 +151,18 @@ class BasicAuthProvider(AuthProvider):
             for u in users:
                 if u.get('username') == username:
                     pwd_hash = u.get('password_hash')
-                    if not pwd_hash:
-                        return False
-                    return bcrypt.checkpw(password.encode('utf-8'), pwd_hash.encode('utf-8'))
+                    if pwd_hash:
+                        try:
+                            return bcrypt.checkpw(password.encode('utf-8'), pwd_hash.encode('utf-8'))
+                        except Exception:
+                            return False
+                    # Fallback: if this is the admin user and we have admin_pass_hash
+                    if username == self.admin_user and self.admin_pass_hash is not None:
+                        try:
+                            return bcrypt.checkpw(password.encode('utf-8'), self.admin_pass_hash)
+                        except Exception:
+                            return False
+                    return False
         except Exception:
             return False
         return False
