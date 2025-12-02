@@ -6,6 +6,7 @@ from OrganizerDashboard.helpers.helpers import (
     get_windows_version, get_cpu_name, get_private_ip, get_public_ip, service_running, find_organizer_proc, format_bytes, last_n_lines_normalized, load_dashboard_json
 )
 from OrganizerDashboard.auth.auth import check_auth, authenticate
+from flask_login import current_user
 import os
 import platform
 import json
@@ -24,10 +25,14 @@ def dashboard():
     except Exception:
         pass
 
-    # Require Basic Auth after setup
-    auth = request.authorization
-    if not auth or not check_auth(str(auth.username), str(auth.password)):
-        return authenticate()
+    # If session-authenticated, proceed; else redirect to login
+    try:
+        if current_user.is_authenticated:
+            pass
+        else:
+            return redirect('/login')
+    except Exception:
+        return redirect('/login')
 
     dashboard_data = load_dashboard_json()
     return render_template(
