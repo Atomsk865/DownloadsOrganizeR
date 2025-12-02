@@ -740,7 +740,7 @@ async function saveConfiguration() {
             showNotification('Please login before saving configuration', 'warning');
             return;
         }
-        const response = await fetch('/update', {
+        const response = await fetch('/api/update', {
             method: 'POST',
             body: JSON.stringify(payload),
             credentials: 'include',
@@ -789,7 +789,7 @@ async function saveSettings() {
             showNotification('Please login before saving settings', 'warning');
             return;
         }
-        const response = await fetch('/update', {
+        const response = await fetch('/api/update', {
             method: 'POST',
             body: formData,
             credentials: 'include',
