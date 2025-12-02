@@ -7,6 +7,7 @@ The Duplicate File Detection feature automatically identifies files with identic
 ## How It Works
 
 ### 1. Automatic Hash Calculation
+
 - When a file is downloaded and organized, DownloadsOrganizeR calculates its SHA256 hash
 - The hash is stored in `file_hashes.json` along with the file's path
 - This happens transparently during normal file organization
