@@ -38,8 +38,8 @@ for p in CONFIG_PATHS:
         except Exception:
             CONFIG = {}
 
-# Allow overriding the downloads path via env var for testing
-downloads_path_str = os.environ.get("DOWNLOADS_PATH")
+# Allow overriding the watch folder path via config, env var, or fallback to Downloads
+downloads_path_str = CONFIG.get("watch_folder") or os.environ.get("DOWNLOADS_PATH")
 if not downloads_path_str:
     # Try common Windows environment variables, otherwise fallback to user's Downloads
     try:

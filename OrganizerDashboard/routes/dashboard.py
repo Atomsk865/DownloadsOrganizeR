@@ -77,6 +77,10 @@ def dashboard():
     except Exception:
         pass
     
+    # Load config for settings display
+    import OrganizerDashboard
+    config = OrganizerDashboard.config
+    
     return render_template(
         "dashboard.html",
         hostname=socket.gethostname(),
@@ -97,9 +101,10 @@ def dashboard():
         ram_percent=psutil.virtual_memory().percent,
         top_processes=top_processes,
         drives=drives,
-        memory_threshold=0,
-        cpu_threshold=0,
-        logs_dir="",
+        memory_threshold=config.get('memory_threshold_mb', 200),
+        cpu_threshold=config.get('cpu_threshold_percent', 60),
+        logs_dir=config.get('logs_dir', ''),
+        watch_folder=config.get('watch_folder', ''),
         stdout_log="",
         stderr_log="",
         is_windows=(sys.platform == "win32"),
@@ -119,5 +124,6 @@ def get_organizer_config():
         "custom_routes": config.get("custom_routes", {}),
         "memory_threshold_mb": config.get("memory_threshold_mb", 200),
         "cpu_threshold_percent": config.get("cpu_threshold_percent", 60),
-        "logs_dir": config.get("logs_dir", "")
+        "logs_dir": config.get("logs_dir", ""),
+        "watch_folder": config.get("watch_folder", "")
     })
