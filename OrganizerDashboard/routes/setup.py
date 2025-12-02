@@ -242,7 +242,17 @@ def setup_initialize():
     except Exception as e:
         return jsonify({'error': f'Auth manager init failed: {e}'}), 500
 
-    return jsonify({'success': True, 'message': 'Setup completed. Redirecting to login...'})
+    # Optionally auto-login the new admin user
+    try:
+        from flask_login import login_user, UserMixin
+        class _SetupUser(UserMixin):
+            def __init__(self, username, role='admin'):
+                self.id = username
+                self.role = role
+        login_user(_SetupUser(admin_username, role='admin'))
+        return jsonify({'success': True, 'message': 'Setup completed. Logged in as admin.', 'auto_logged_in': True})
+    except Exception:
+        return jsonify({'success': True, 'message': 'Setup completed. Redirecting to login...', 'auto_logged_in': False})
 
 @routes_setup.route('/api/setup/save', methods=['POST'])
 def setup_save():
