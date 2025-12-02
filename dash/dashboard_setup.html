@@ -160,7 +160,16 @@ function submitSetup(){
   }
   showNotification('Applying setup...', 'info');
   fetch('/api/setup/initialize', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
-    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(async r => {
+      const text = await r.text();
+      try {
+        const json = JSON.parse(text);
+        return {ok: r.ok, j: json};
+      } catch (e) {
+        console.error('Response not JSON:', text);
+        return {ok: false, j: {error: 'Server returned invalid response: ' + text.substring(0, 200)}};
+      }
+    })
     .then(({ok,j})=>{
       if(ok && j.success){
         showNotification('Setup complete! Redirecting to login...', 'success');
