@@ -1,9 +1,15 @@
 {% extends "dashboard_base.html" %}
 {% block dashboard_content %}
     <style>
+        #dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1rem;
+            width: 100%;
+        }
         .dashboard-module {
-            cursor: move;
             transition: transform 0.2s, box-shadow 0.2s;
+            min-height: 100px;
         }
         .dashboard-module:hover {
             transform: translateY(-2px);
@@ -12,15 +18,30 @@
         .dashboard-module.dragging {
             opacity: 0.5;
         }
+        .dashboard-module.hidden {
+            display: none;
+        }
+        .dashboard-module.full-width {
+            grid-column: 1 / -1;
+        }
         .drag-handle {
             cursor: move;
             padding: 2px 8px;
-            margin-left: auto;
             font-size: 0.9rem;
             color: #6c757d;
         }
         .drag-handle:hover {
             color: #495057;
+        }
+        .hide-toggle {
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-left: 8px;
+        }
+        .hide-toggle:hover {
+            color: #dc3545;
         }
         .custom-widget-content {
             min-height: 150px;
@@ -30,6 +51,11 @@
             top: 8px;
             right: 8px;
         }
+        @media (max-width: 1199px) {
+            #dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
     
     <div class="text-end mb-3">
@@ -37,15 +63,16 @@
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
         <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
         <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" onclick="resetDashboardLayout()" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+        <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" onclick="showHiddenModules()" title="Show hidden modules"><i class="bi bi-eye"></i> Show Hidden</button>
         <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
         <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none; margin-left:6px;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
     </div>
     
     <!-- Main Dashboard Container -->
     <div class="container-fluid px-3">
-        <div class="row" id="dashboard-grid">
+        <div id="dashboard-grid">
             <!-- System Info Card -->
-            <div class="col-12 mb-3 dashboard-module" data-module="system-info" draggable="false">
+            <div class="dashboard-module full-width" data-module="system-info" draggable="false">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b>System Information</b>
@@ -69,12 +96,12 @@
                 </div>
             </div>
             
-            <!-- Left Column -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="service-status" draggable="true">
-                    <!-- Service Status & Resource Usage Card -->
-                    <div class="card mb-3">
+            <!-- Service Status -->
+            <div class="dashboard-module" data-module="service-status" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Service Status & Resource Usage</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('service-status')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -176,11 +203,11 @@
             </div>
             
             <!-- Drive Space -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="drive-space" draggable="true">
-                    <!-- Drive Space Card -->
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="drive-space" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Drive Space</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('drive-space')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -213,10 +240,11 @@
             </div>
                     
             <!-- Settings -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="settings" draggable="true">
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="settings" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Settings</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('settings')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -252,10 +280,11 @@
             </div>
                 
             <!-- File Categories -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="file-categories" draggable="true">
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="file-categories" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>File Categories</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('file-categories')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -396,10 +425,11 @@
             </div>
             
             <!-- Custom Routes -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="custom-routes" draggable="true">
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="custom-routes" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Custom Routes (Per-Extension)</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('custom-routes')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -427,10 +457,11 @@
             </div>
                 
             <!-- Tag Routes -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="tag-routes" draggable="true">
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="tag-routes" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Tag Routes (Filename-Based Routing)</b>
+                            <span class="hide-toggle" onclick="toggleHideModule('tag-routes')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-2">
@@ -461,13 +492,14 @@
             </div>
             
             <!-- Custom Widget -->
-            <div class="col-12 col-xl-6 dashboard-module" data-module="custom-widget" draggable="true">
-                    <div class="card mb-3">
+            <div class="dashboard-module" data-module="custom-widget" draggable="true">
+                    <div class="card">
                         <div class="card-header d-flex align-items-center">
                             <b>Custom Widget</b>
                             <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget()">
                                 <i class="bi bi-pencil"></i> Edit
                             </button>
+                            <span class="hide-toggle" onclick="toggleHideModule('custom-widget')" title="Hide module"><i class="bi bi-x-circle"></i></span>
                             <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
                         </div>
                         <div class="card-body p-3 custom-widget-content" id="custom-widget-content">

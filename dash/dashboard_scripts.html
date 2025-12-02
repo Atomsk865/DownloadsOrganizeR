@@ -120,6 +120,7 @@ document.getElementById('login-submit').addEventListener('click', async function
             // Reload user-specific layout and widgets
             loadDashboardLayout();
             loadCustomWidget();
+            loadHiddenModules();
             if (__rights.view_recent_files) refreshRecentFiles();
             if (__rights.view_metrics) {
                 updateServiceStatus();
@@ -220,8 +221,10 @@ function loadDashboardLayout() {
 }
 
 function resetDashboardLayout() {
-    if (confirm('Reset dashboard to default layout? This will reload the page.')) {
+    if (confirm('Reset dashboard to default layout? This will reload the page and show all hidden modules.')) {
         localStorage.removeItem('dashboardLayout_' + (__authHeader || 'default'));
+        localStorage.removeItem('hiddenModules_' + (__authHeader || 'default'));
+        localStorage.removeItem('customWidget_' + (__authHeader || 'default'));
         location.reload();
     }
 }
@@ -248,11 +251,79 @@ function loadCustomWidget() {
     }
 }
 
+// Hide/Show Module Functions
+function toggleHideModule(moduleId) {
+    const module = document.querySelector(`[data-module="${moduleId}"]`);
+    if (!module) return;
+    
+    module.classList.add('hidden');
+    saveHiddenModules();
+    updateShowHiddenButton();
+}
+
+function saveHiddenModules() {
+    const hiddenModules = Array.from(document.querySelectorAll('.dashboard-module.hidden'))
+        .map(el => el.dataset.module)
+        .filter(m => m);
+    localStorage.setItem('hiddenModules_' + (__authHeader || 'default'), JSON.stringify(hiddenModules));
+}
+
+function loadHiddenModules() {
+    const saved = localStorage.getItem('hiddenModules_' + (__authHeader || 'default'));
+    if (!saved) return;
+    
+    try {
+        const hiddenModules = JSON.parse(saved);
+        hiddenModules.forEach(moduleId => {
+            const module = document.querySelector(`[data-module="${moduleId}"]`);
+            if (module) module.classList.add('hidden');
+        });
+        updateShowHiddenButton();
+    } catch (e) {
+        console.error('Error loading hidden modules:', e);
+    }
+}
+
+function showHiddenModules() {
+    const hiddenModules = document.querySelectorAll('.dashboard-module.hidden');
+    if (hiddenModules.length === 0) {
+        alert('No hidden modules to show.');
+        return;
+    }
+    
+    const moduleNames = Array.from(hiddenModules).map(el => {
+        const title = el.querySelector('.card-header b');
+        return title ? title.textContent : el.dataset.module;
+    });
+    
+    const message = `Hidden modules:\n\n${moduleNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}\n\nShow all hidden modules?`;
+    
+    if (confirm(message)) {
+        hiddenModules.forEach(module => module.classList.remove('hidden'));
+        saveHiddenModules();
+        updateShowHiddenButton();
+    }
+}
+
+function updateShowHiddenButton() {
+    const btn = document.getElementById('show-hidden-btn');
+    if (!btn) return;
+    
+    const hiddenCount = document.querySelectorAll('.dashboard-module.hidden').length;
+    if (hiddenCount > 0) {
+        btn.classList.remove('d-none');
+        btn.innerHTML = `<i class="bi bi-eye"></i> Show Hidden (${hiddenCount})`;
+    } else {
+        btn.classList.add('d-none');
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
     loadDashboardLayout();
     loadCustomWidget();
+    loadHiddenModules();
 });
 
 function applyRights() {
