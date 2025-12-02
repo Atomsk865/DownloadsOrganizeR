@@ -43,6 +43,9 @@ def update_config():
         custom_routes = data.get('custom_routes')
         if isinstance(custom_routes, dict):
             config['custom_routes'] = custom_routes
+        tag_routes = data.get('tag_routes')
+        if isinstance(tag_routes, dict):
+            config['tag_routes'] = tag_routes
         # network_targets and credentials
         network_targets = data.get('network_targets')
         if isinstance(network_targets, dict):

@@ -362,6 +362,36 @@
                         </div>
                     </div>
                 </div>
+                <!-- Tag Routes Card -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><b>Tag Routes (Filename-Based Routing)</b></div>
+                        <div class="card-body p-2">
+                            <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle"></i> <strong>Tip:</strong> Files containing the tag anywhere in the filename will be moved to the specified folder, regardless of extension. Tag routes have the highest priority.
+                            </div>
+                            <form id="tag-routes-form">
+                            <table class="table table-sm mb-3">
+                                <thead>
+                                    <tr>
+                                        <th>Tag/Keyword</th>
+                                        <th>Target Folder (absolute path)</th>
+                                        <th style="width: 80px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tag-routes-tbody">
+                                    <!-- Rows will be populated dynamically from config or added by user -->
+                                </tbody>
+                            </table>
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" type="button" onclick="addTagRouteRow()">Add Tag Route</button>
+                                <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
+                            </div>
+                        </form>
+                        <small class="text-muted">Examples: "invoice" → C:\Documents\Invoices, "screenshot" → C:\Pictures\Screenshots, "work" → D:\Work</small>
+                        </div>
+                    </div>
+                </div>
                 <!-- Logs Card -->
                 <div class="col-12">
                     <div class="card">

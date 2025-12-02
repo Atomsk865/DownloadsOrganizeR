@@ -86,6 +86,16 @@ try:
 except Exception:
     CUSTOM_ROUTES = {}
 
+# Optional filename tag-based routing: {"tag": "C:/Target/Folder"}
+# Files containing the tag anywhere in the filename will be routed to the specified folder
+TAG_ROUTES = {}
+try:
+    for tag, target in (CONFIG.get("tag_routes") or {}).items():
+        if isinstance(tag, str) and isinstance(target, str) and tag.strip() and target.strip():
+            TAG_ROUTES[tag.lower()] = target.strip()
+except Exception:
+    TAG_ROUTES = {}
+
 IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG}
 IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
 
@@ -218,6 +228,11 @@ def is_network_path(path: Path) -> bool:
 def organize_file(file_path: str) -> None:
     """Move a single file into the matching category folder under Downloads.
 
+    Priority order:
+    1. Tag-based routes (filename contains tag)
+    2. Extension-based custom routes
+    3. Category-based routes (by extension)
+    
     The function is careful to skip incomplete downloads and explicitly
     ignored files.
     """
@@ -225,25 +240,36 @@ def organize_file(file_path: str) -> None:
     if not p.is_file():
         return
     filename = p.name
+    filename_lower = filename.lower()
     ext = p.suffix.lower()
 
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
         return
 
-    # First, check for a custom route for this extension
-    custom_target_path = CUSTOM_ROUTES.get(ext)
-    if custom_target_path:
-        dest_dir = Path(custom_target_path)
-        category_label = "Custom"
-    else:
-        # Fallback to category-based routing inside Downloads
-        target_dir = "Other"
-        for category, extensions in EXTENSION_MAP.items():
-            if ext in extensions:
-                target_dir = category
-                break
-        dest_dir = DOWNLOADS_PATH / target_dir
-        category_label = target_dir
+    # Priority 1: Check for tag-based routes (highest priority)
+    tag_matched = False
+    for tag, target_path in TAG_ROUTES.items():
+        if tag in filename_lower:
+            dest_dir = Path(target_path)
+            category_label = f"Tag:{tag}"
+            tag_matched = True
+            break
+    
+    # Priority 2: Check for extension-based custom routes
+    if not tag_matched:
+        custom_target_path = CUSTOM_ROUTES.get(ext)
+        if custom_target_path:
+            dest_dir = Path(custom_target_path)
+            category_label = "Custom"
+        else:
+            # Priority 3: Fallback to category-based routing inside Downloads
+            target_dir = "Other"
+            for category, extensions in EXTENSION_MAP.items():
+                if ext in extensions:
+                    target_dir = category
+                    break
+            dest_dir = DOWNLOADS_PATH / target_dir
+            category_label = target_dir
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = get_unique_path(dest_dir, filename)
     try:
