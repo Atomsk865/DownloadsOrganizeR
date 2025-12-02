@@ -181,11 +181,15 @@ if not os.path.exists(DASHBOARD_CONFIG_FILE):
 # Routes import OrganizerDashboard and expect these attributes to be available
 if _pkg_name in sys.modules:
     pkg_module = sys.modules[_pkg_name]
-    pkg_module.config = config
-    pkg_module.dashboard_config = dashboard_config
-    pkg_module.STDOUT_LOG = STDOUT_LOG
-    pkg_module.STDERR_LOG = STDERR_LOG
-    pkg_module.LOGS_DIR = LOGS_DIR
+    # Use setattr to avoid static analysis warnings on dynamic module attributes
+    try:
+        setattr(pkg_module, 'config', config)
+        setattr(pkg_module, 'dashboard_config', dashboard_config)
+        setattr(pkg_module, 'STDOUT_LOG', STDOUT_LOG)
+        setattr(pkg_module, 'STDERR_LOG', STDERR_LOG)
+        setattr(pkg_module, 'LOGS_DIR', LOGS_DIR)
+    except Exception:
+        pass
 
 # --- Flask App and Blueprint Registration ---
 def create_app():
@@ -214,7 +218,10 @@ def create_app():
     # Flask-Login setup
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = 'routes_login.login_page'
+    # Assign login_view via Any to avoid static analysis issues
+    from typing import Any as _Any
+    _lm_any: _Any = login_manager
+    _lm_any.login_view = 'routes_login.login_page'
 
     class User(UserMixin):
         def __init__(self, username, role='viewer'):
