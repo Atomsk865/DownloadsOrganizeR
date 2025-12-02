@@ -52,18 +52,25 @@ PowerShell -ExecutionPolicy Bypass -File .\dist\Setup-DownloadsOrganizeR.ps1
 All installers support these parameters:
 
 - `-TargetRoot <path>` - Installation directory (default: `C:\Scripts`)
-- `-InstallService` - Install and start Windows service immediately
+- `-InstallService` - Install Windows service via NSSM (requires NSSM on PATH)
+- `-InstallDotnetService` - Install Windows service via .NET Service Host (requires .NET SDK or prebuilt publish)
 - `-NoStartDashboard` - Skip automatic dashboard startup
 - `-ServiceName <name>` - Custom service name (default: `DownloadsOrganizer`)
 
 **Online installer additional options:**
+
 - `-Branch <branch>` - GitHub branch to download (default: `Prod-Beta`)
 - `-GitHubRepo <owner/repo>` - Repository to download from
+
+**Service installation methods:**
+
+- **NSSM** (traditional): Use `-InstallService` flag; requires NSSM installed
+- **.NET Service Host** (native): Use `-InstallDotnetService` flag; auto-publishes or uses prebuilt binaries
 
 ## Quick Start
 
 1. Run installer as Administrator
-2. Open http://localhost:5000
+2. Open <http://localhost:5000>
 3. Complete first-time setup wizard:
    - Set admin credentials
    - Choose authentication method (Basic/LDAP/Windows)
