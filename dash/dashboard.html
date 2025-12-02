@@ -237,6 +237,10 @@
                         <small class="text-muted ms-2">(Server vs Client; click to copy)</small>
                     </div>
                     <div class="card-body p-2">
+                        <!-- Env mismatch warning injected by JS -->
+                        <div id="env-mismatch" class="alert alert-warning py-2 px-3 mb-2" style="display:none;">
+                            <strong>Heads up:</strong> Your browser appears to be on Windows while the server reports Linux. Make sure you're viewing the dashboard hosted on your Windows machine (not Codespaces).
+                        </div>
                         <!-- Server (host) info -->
                         <div class="mb-2"><span class="badge bg-secondary">Server</span></div>
                         <div class="row">

@@ -460,6 +460,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const lang = navigator.language || (navigator.languages && navigator.languages[0]) || 'unknown';
             langEl.textContent = lang;
         }
+        // Show environment mismatch warning: client seems Windows but server reports Linux
+        const mismatchEl = document.getElementById('env-mismatch');
+        if (mismatchEl) {
+            const clientLooksWindows = /Win/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '');
+            // Server OS is baked into markup; detect Linux via presence of 'Linux' string in System Information row
+            // Fallback: rely on a global injected flag if available
+            const serverOsTextEl = document.querySelector('.dashboard-module[data-module="system-info"] .row small b + span');
+            const serverOsText = serverOsTextEl ? serverOsTextEl.textContent : '';
+            const serverLooksLinux = /Linux/i.test(serverOsText);
+            if (clientLooksWindows && serverLooksLinux) {
+                mismatchEl.style.display = 'block';
+            }
+        }
     } catch (e) {
         // no-op
     }
