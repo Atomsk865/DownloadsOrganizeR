@@ -131,5 +131,10 @@ def get_organizer_config():
         "memory_threshold_mb": config.get("memory_threshold_mb", 200),
         "cpu_threshold_percent": config.get("cpu_threshold_percent", 60),
         "logs_dir": config.get("logs_dir", ""),
-        "watch_folder": config.get("watch_folder", "")
+        # Legacy single watch folder and new list for multi-folder support
+        "watch_folder": config.get("watch_folder", ""),
+        "watch_folders": config.get("watch_folders", []),
+        # Feature flags and VirusTotal API key for UI gating
+        "features": config.get("features", {}),
+        "vt_api_key": config.get("vt_api_key") or config.get("virustotal_api_key") or ""
     })

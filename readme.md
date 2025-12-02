@@ -9,16 +9,21 @@ Automated, real-time organization of your Downloads folder plus a role-aware web
 ### Option 1: Automated Service Installation (Recommended)
 
 1. **Install Python** if you haven't already ([python.org](https://www.python.org/downloads/))
-2. **Download this repository** or clone it:
-   ```bash
-   git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
-   cd DownloadsOrganizeR
-   ```
-3. **Run the installer** (Right-click PowerShell → Run as Administrator):
-   ```powershell
-   .\Install-And-Monitor-OrganizerService.ps1
-   ```
-4. **Done!** The service will start automatically on boot and organize your Downloads in real-time.
+
+1. **Download this repository** or clone it:
+
+  ```bash
+  git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
+  cd DownloadsOrganizeR
+  ```
+
+1. **Run the installer** (Right-click PowerShell → Run as Administrator):
+
+  ```powershell
+  .\Install-And-Monitor-OrganizerService.ps1
+  ```
+
+1. **Done!** The service will start automatically on boot and organize your Downloads in real-time.
 
 ### Option 2: Manual Run (No Service)
 
@@ -39,9 +44,9 @@ pip install -r requirements.txt
 python OrganizerDashboard.py
 ```
 
-Then open: **http://localhost:5000**
+Then open: <http://localhost:5000>
 
-**Default credentials (Dashboard)**
+### Default credentials (Dashboard)
 
 - **Username:** `admin`
 - **Password:** `change_this_password`
@@ -127,6 +132,7 @@ Dashboard main page: modify categories in the "File Categories" section and clic
 ### Dashboard User / Role / Layout Configuration
 
 Navigate to `/config` after login:
+
 - Add/update/delete non-primary users (bcrypt-hashed passwords)
 - Assign roles (admin/operator/viewer) with predefined rights
 - Drag to reorder sections; hide with checkboxes; save persists to `dashboard_config.json`
