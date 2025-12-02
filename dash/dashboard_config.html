@@ -395,6 +395,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Helper function to safely parse JSON responses
+async function parseResponse(response) {
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      const json = await response.json();
+      return { ok: response.ok, status: response.status, json };
+    } catch (e) {
+      return { ok: false, status: response.status, error: 'Invalid JSON response' };
+    }
+  } else {
+    const text = await response.text();
+    return { ok: response.ok, status: response.status, text };
+  }
+}
+
 // Global functions that need to be accessible from onclick handlers
 function resetSetup(){
   if(!confirm('Re-run setup wizard? Users will be redirected to setup page and must complete it again to access dashboard.')) return;
@@ -403,40 +419,113 @@ function resetSetup(){
     .then(({ok,j})=>{ if(ok && j.success){ showNotification('Setup reset. Redirecting to wizard...', 'success'); setTimeout(()=>{ window.location.href='/setup'; },1500); } else { showNotification(j.error||'Reset failed','danger'); } });
 }
 
-function installService() {
+async function installService() {
   if (!confirm('Install the Organizer service? Requires administrator privileges.')) return;
   const serviceName = document.getElementById('service-name-input').value.trim();
   const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
   const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
   const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
   showNotification('Installing service... This may take a minute.', 'info');
-  fetch('/api/service/install', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
-    .then(r => r.json().then(j => ({ok: r.ok, j})))
-    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service installed successfully!', 'success'); if (j.output) console.log('Install:', j.output); } else { showNotification(j.error || 'Installation failed', 'danger'); if (j.error_output) console.error('Install error:', j.error_output); } })
-    .catch(err => showNotification('Installation error: ' + err.message, 'danger'));
+  
+  try {
+    const response = await fetch('/api/service/install', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, 
+      body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})
+    });
+    
+    const result = await parseResponse(response);
+    
+    if (result.status === 401 || result.status === 403) {
+      showNotification('Authentication required. Please login again.', 'warning');
+      return;
+    }
+    
+    if (result.json) {
+      if (result.ok && result.json.success) {
+        showNotification('Service installed successfully!', 'success');
+        if (result.json.output) console.log('Install:', result.json.output);
+      } else {
+        showNotification(result.json.error || 'Installation failed', 'danger');
+        if (result.json.error_output) console.error('Install error:', result.json.error_output);
+      }
+    } else {
+      showNotification(result.text || 'Installation failed', 'danger');
+    }
+  } catch (err) {
+    showNotification('Installation error: ' + err.message, 'danger');
+  }
 }
 
-function uninstallService() {
+async function uninstallService() {
   if (!confirm('Uninstall the Organizer service? This will stop and remove it.')) return;
   const serviceName = document.getElementById('service-name-input').value.trim();
   showNotification('Uninstalling service...', 'info');
-  fetch('/api/service/uninstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName})})
-    .then(r => r.json().then(j => ({ok: r.ok, j})))
-    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service uninstalled successfully!', 'success'); } else { showNotification(j.error || 'Uninstallation failed', 'danger'); } })
-    .catch(err => showNotification('Uninstallation error: ' + err.message, 'danger'));
+  
+  try {
+    const response = await fetch('/api/service/uninstall', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, 
+      body: JSON.stringify({service_name: serviceName})
+    });
+    
+    const result = await parseResponse(response);
+    
+    if (result.status === 401 || result.status === 403) {
+      showNotification('Authentication required. Please login again.', 'warning');
+      return;
+    }
+    
+    if (result.json) {
+      if (result.ok && result.json.success) {
+        showNotification('Service uninstalled successfully!', 'success');
+      } else {
+        showNotification(result.json.error || 'Uninstallation failed', 'danger');
+      }
+    } else {
+      showNotification(result.text || 'Uninstallation failed', 'danger');
+    }
+  } catch (err) {
+    showNotification('Uninstallation error: ' + err.message, 'danger');
+  }
 }
 
-function reinstallService() {
+async function reinstallService() {
   if (!confirm('Reinstall the Organizer service? Will uninstall and reinstall with current settings.')) return;
   const serviceName = document.getElementById('service-name-input').value.trim();
   const scriptsRoot = document.getElementById('scripts-root-input').value.trim();
   const memoryThreshold = parseInt(document.getElementById('memory-threshold-input').value);
   const cpuThreshold = parseInt(document.getElementById('cpu-threshold-input').value);
   showNotification('Reinstalling service... This may take a minute.', 'info');
-  fetch('/api/service/reinstall', {method: 'POST', headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})})
-    .then(r => r.json().then(j => ({ok: r.ok, j})))
-    .then(({ok, j}) => { if (ok && j.success) { showNotification('Service reinstalled successfully!', 'success'); if (j.output) console.log('Reinstall:', j.output); } else { showNotification(j.error || 'Reinstallation failed', 'danger'); if (j.error_output) console.error('Reinstall error:', j.error_output); } })
-    .catch(err => showNotification('Reinstallation error: ' + err.message, 'danger'));
+  
+  try {
+    const response = await fetch('/api/service/reinstall', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json', ...getAuthHeaders()}, 
+      body: JSON.stringify({service_name: serviceName, scripts_root: scriptsRoot, memory_threshold_mb: memoryThreshold, cpu_threshold_percent: cpuThreshold})
+    });
+    
+    const result = await parseResponse(response);
+    
+    if (result.status === 401 || result.status === 403) {
+      showNotification('Authentication required. Please login again.', 'warning');
+      return;
+    }
+    
+    if (result.json) {
+      if (result.ok && result.json.success) {
+        showNotification('Service reinstalled successfully!', 'success');
+        if (result.json.output) console.log('Reinstall:', result.json.output);
+      } else {
+        showNotification(result.json.error || 'Reinstallation failed', 'danger');
+        if (result.json.error_output) console.error('Reinstall error:', result.json.error_output);
+      }
+    } else {
+      showNotification(result.text || 'Reinstallation failed', 'danger');
+    }
+  } catch (err) {
+    showNotification('Reinstallation error: ' + err.message, 'danger');
+  }
 }
 
 function factoryReset() {
