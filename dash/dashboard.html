@@ -38,9 +38,10 @@
                         </div>
                     </div>
                 </div>
-                <!-- Service Status & Resource Usage Card -->
-                <div class="col-12 col-lg-6">
-                    <div class="card h-100">
+                <!-- Left Column -->
+                <div class="col-12 col-xl-6">
+                    <!-- Service Status & Resource Usage Card -->
+                    <div class="card mb-3">
                         <div class="card-header"><b>Service Status & Resource Usage</b></div>
                         <div class="card-body p-2">
                             <div class="mb-2">
@@ -68,10 +69,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Task Manager Card -->
-                <div class="col-12 col-lg-6">
-                    <div class="card h-100">
+                    
+                    <!-- Task Manager Card -->
+                    <div class="card mb-3">
                         <div class="card-header"><b>Task Manager (Top 5 by CPU)</b></div>
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
@@ -96,10 +96,42 @@
                             </table>
                         </div>
                     </div>
+                    
+                    <!-- Recent Files Card -->
+                    <div class="card mb-3">
+                        <div class="card-header"><b>Recent File Movements</b></div>
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-end mb-1">
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="recent-files-list" class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Filename</th>
+                                        <th>Category</th>
+                                        <th>Actions</th>
+                                        <th style="width:50px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-files-tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Loading recent files...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        </div>
+                    </div>
                 </div>
-                <!-- Drive Space Card -->
-                <div class="col-12 col-lg-6">
-                    <div class="card h-100">
+                
+                <!-- Right Column -->
+                <div class="col-12 col-xl-6">
+                    <!-- Drive Space Card -->
+                    <div class="card mb-3">
                         <div class="card-header"><b>Drive Space</b></div>
                         <div class="card-body p-2">
                             <table class="table table-sm mb-0">
@@ -128,10 +160,9 @@
                         </table>
                         </div>
                     </div>
-                </div>
-                <!-- Settings Card -->
-                <div class="col-12 col-lg-6">
-                    <div class="card h-100">
+                    
+                    <!-- Settings Card -->
+                    <div class="card mb-3">
                         <div class="card-header"><b>Settings</b></div>
                         <div class="card-body p-2">
                         <form id="config-form-settings">
@@ -164,40 +195,10 @@
                         </div>
                     </div>
                 </div>
-                <!-- Recent Files Card -->
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header"><b>Recent File Movements</b></div>
-                        <div class="card-body p-2">
-                            <div class="d-flex justify-content-end mb-1">
-                            <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
-                                <i class="bi bi-arrow-clockwise"></i> Refresh
-                            </button>
-                        </div>
-                        <div id="recent-files-list" class="table-responsive">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Filename</th>
-                                        <th>Category</th>
-                                        <th>Actions</th>
-                                        <th style="width:50px"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recent-files-tbody">
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">Loading recent files...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- File Categories Card -->
-                <div class="col-12">
-                    <div class="card">
+                
+                <!-- File Categories Card (Left) -->
+                <div class="col-12 col-xl-6">
+                    <div class="card mb-3">
                         <div class="card-header"><b>File Categories</b></div>
                         <div class="card-body p-2">
                             <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
@@ -335,17 +336,17 @@
                         </div>
                     </div>
                 </div>
-                <!-- Custom Routes Card -->
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header"><b>Custom Routes (Per-Extension Destination Folders)</b></div>
+                <!-- Custom Routes Card (Right) -->
+                <div class="col-12 col-xl-6">
+                    <div class="card mb-3">
+                        <div class="card-header"><b>Custom Routes (Per-Extension)</b></div>
                         <div class="card-body p-2">
                             <form id="custom-routes-form">
                             <table class="table table-sm mb-3">
                                 <thead>
                                     <tr>
                                         <th>Extension</th>
-                                        <th>Target Folder (absolute path)</th>
+                                        <th>Target Folder</th>
                                         <th style="width: 80px;">Action</th>
                                     </tr>
                                 </thead>
@@ -358,13 +359,14 @@
                                 <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
                             </div>
                         </form>
-                        <small class="text-muted">Custom routes take precedence over category routing. Ensure paths exist and are writable.</small>
+                        <small class="text-muted">Custom routes take precedence over category routing.</small>
                         </div>
                     </div>
                 </div>
-                <!-- Tag Routes Card -->
-                <div class="col-12">
-                    <div class="card">
+                
+                <!-- Tag Routes Card (Left) -->
+                <div class="col-12 col-xl-6">
+                    <div class="card mb-3">
                         <div class="card-header"><b>Tag Routes (Filename-Based Routing)</b></div>
                         <div class="card-body p-2">
                             <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
@@ -388,13 +390,14 @@
                                 <button class="btn btn-primary btn-sm" type="button" onclick="saveConfiguration()">Save Configuration</button>
                             </div>
                         </form>
-                        <small class="text-muted">Examples: "invoice" → C:\Documents\Invoices, "screenshot" → C:\Pictures\Screenshots, "work" → D:\Work</small>
+                        <small class="text-muted">Examples: "invoice" → Invoices folder, "screenshot" → Screenshots</small>
                         </div>
                     </div>
                 </div>
-                <!-- Logs Card -->
+                
+                <!-- Logs Card (Right) - Full Width Below -->
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card mb-3">
                         <div class="card-header"><b>Logs (real-time)</b></div>
                         <div class="card-body p-2">
                             <div class="row g-2">
