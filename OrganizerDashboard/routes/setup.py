@@ -155,6 +155,32 @@ def setup_initialize():
     dash_cfg['setup_completed'] = True
     # Increment config version
     dash_cfg['config_version'] = int(dash_cfg.get('config_version', 1)) + 1
+    
+    # Ensure roles are defined (preserve existing or use defaults)
+    if 'roles' not in dash_cfg:
+        dash_cfg['roles'] = {
+            "admin": {
+                "manage_service": True,
+                "manage_config": True,
+                "view_metrics": True,
+                "view_recent_files": True,
+                "modify_layout": True
+            },
+            "operator": {
+                "manage_service": True,
+                "manage_config": False,
+                "view_metrics": True,
+                "view_recent_files": True,
+                "modify_layout": False
+            },
+            "viewer": {
+                "manage_service": False,
+                "manage_config": False,
+                "view_metrics": True,
+                "view_recent_files": True,
+                "modify_layout": False
+            }
+        }
 
     try:
         save_dashboard_config()
