@@ -428,7 +428,32 @@ async function saveSettings() {
             headers: getAuthHeaders()
         });
         if (response.ok) {
-            showNotification('Settings saved successfully', 'success');
+            const result = await response.json();
+            showNotification(result.message || 'Settings saved successfully', 'success');
+            
+            // Check if watch_folder was changed
+            const watchFolder = formData.get('watch_folder');
+            if (watchFolder) {
+                // Ask if user wants to restart the service to apply watch folder change
+                if (confirm('Watch folder setting saved! Would you like to restart the Organizer service now to apply the changes?')) {
+                    try {
+                        const restartResponse = await fetch('/restart', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: getAuthHeaders()
+                        });
+                        if (restartResponse.ok) {
+                            showNotification('Service restarted successfully. Now monitoring: ' + watchFolder, 'success');
+                        } else {
+                            showNotification('Failed to restart service. Please restart manually.', 'warning');
+                        }
+                    } catch (err) {
+                        showNotification('Error restarting service: ' + err.message, 'warning');
+                    }
+                } else {
+                    showNotification('Remember to restart the service manually for watch folder changes to take effect.', 'info');
+                }
+            }
         } else {
             showNotification('Failed to save settings', 'danger');
         }

@@ -22,6 +22,8 @@ def update_config():
         cpu = str(data.get("cpu_threshold_percent", config.get('cpu_threshold_percent'))).strip()
         logs_val = data.get("logs_dir") or config.get('logs_dir')
         logs = logs_val.strip() if isinstance(logs_val, str) else config.get('logs_dir')
+        watch_folder_val = data.get("watch_folder")
+        watch_folder = watch_folder_val.strip() if isinstance(watch_folder_val, str) else None
         try:
             config['memory_threshold_mb'] = int(mem)
         except Exception:
@@ -32,6 +34,8 @@ def update_config():
             return jsonify({"status": "error", "message": "Invalid cpu_threshold_percent"}), 400
         if logs:
             config['logs_dir'] = logs
+        if watch_folder is not None:
+            config['watch_folder'] = watch_folder
         # routes and custom_routes
         routes = data.get('routes')
         if isinstance(routes, dict):
@@ -71,7 +75,8 @@ def update_config():
             new_routes[new_folder] = [e.strip() for e in new_exts.split(",") if e.strip()]
         mem = request.form.get("memory_threshold", str(config['memory_threshold_mb'])).strip()
         cpu = request.form.get("cpu_threshold", str(config['cpu_threshold_percent'])).strip()
-        logs = request.form.get("logs_dir", config['logs_dir']).strip()
+        logs = request.form.get("logs_dir", config.get('logs_dir', '')).strip()
+        watch_folder = request.form.get("watch_folder", config.get('watch_folder', '')).strip()
         try:
             config['memory_threshold_mb'] = int(mem)
         except ValueError:
@@ -82,6 +87,8 @@ def update_config():
             return jsonify({"status": "error", "message": "Invalid CPU threshold value"}), 400
         if logs:
             config['logs_dir'] = logs
+        if watch_folder:
+            config['watch_folder'] = watch_folder
         config['routes'] = new_routes
 
     # Save to all config file locations to ensure service picks it up
