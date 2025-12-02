@@ -87,7 +87,10 @@ def get_private_ip():
 def get_public_ip():
     try:
         import requests  # type: ignore
-        return requests.get("https://api.ipify.org").text
+        response = requests.get("https://api.ipify.org", timeout=3)
+        if response.status_code == 200:
+            return response.text
+        return "Unavailable"
     except Exception:
         return "Unavailable"
 

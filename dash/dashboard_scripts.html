@@ -122,6 +122,7 @@ document.getElementById('login-submit').addEventListener('click', async function
             loadCustomWidget();
             loadHiddenModules();
             loadModuleWidths();
+            loadModuleSizes();
             if (__rights.view_recent_files) refreshRecentFiles();
             if (__rights.view_metrics) {
                 updateServiceStatus();
@@ -227,6 +228,7 @@ function resetDashboardLayout() {
         localStorage.removeItem('hiddenModules_' + (__authHeader || 'default'));
         localStorage.removeItem('customWidget_' + (__authHeader || 'default'));
         localStorage.removeItem('moduleWidths_' + (__authHeader || 'default'));
+        localStorage.removeItem('moduleSizes_' + (__authHeader || 'default'));
         location.reload();
     }
 }
@@ -365,6 +367,69 @@ function loadModuleWidths() {
     }
 }
 
+// Module Resize Functions
+function initModuleResize() {
+    const modules = document.querySelectorAll('.dashboard-module');
+    
+    modules.forEach(module => {
+        // Track resize with ResizeObserver
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const moduleId = entry.target.dataset.module;
+                if (moduleId) {
+                    saveModuleSize(moduleId, entry.target.offsetWidth, entry.target.offsetHeight);
+                }
+            }
+        });
+        
+        resizeObserver.observe(module);
+        
+        // Add visual preview on resize start
+        module.addEventListener('mousedown', (e) => {
+            // Check if clicking near edges (resize area)
+            const rect = module.getBoundingClientRect();
+            const edgeSize = 15;
+            const isNearEdge = 
+                (e.clientX >= rect.right - edgeSize) || 
+                (e.clientY >= rect.bottom - edgeSize) ||
+                (e.clientX <= rect.left + edgeSize) ||
+                (e.clientY <= rect.top + edgeSize);
+                
+            if (isNearEdge) {
+                module.classList.add('resize-preview');
+            }
+        });
+        
+        module.addEventListener('mouseup', () => {
+            module.classList.remove('resize-preview');
+        });
+    });
+}
+
+function saveModuleSize(moduleId, width, height) {
+    const sizes = JSON.parse(localStorage.getItem('moduleSizes_' + (__authHeader || 'default')) || '{}');
+    sizes[moduleId] = { width, height };
+    localStorage.setItem('moduleSizes_' + (__authHeader || 'default'), JSON.stringify(sizes));
+}
+
+function loadModuleSizes() {
+    const saved = localStorage.getItem('moduleSizes_' + (__authHeader || 'default'));
+    if (!saved) return;
+    
+    try {
+        const sizes = JSON.parse(saved);
+        Object.keys(sizes).forEach(moduleId => {
+            const module = document.querySelector(`[data-module="${moduleId}"]`);
+            if (module && sizes[moduleId]) {
+                if (sizes[moduleId].width) module.style.width = sizes[moduleId].width + 'px';
+                if (sizes[moduleId].height) module.style.height = sizes[moduleId].height + 'px';
+            }
+        });
+    } catch (e) {
+        console.error('Error loading module sizes:', e);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
@@ -372,6 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCustomWidget();
     loadHiddenModules();
     loadModuleWidths();
+    loadModuleSizes();
+    initModuleResize();
 });
 
 function applyRights() {

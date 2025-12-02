@@ -81,13 +81,18 @@ def dashboard():
     import OrganizerDashboard
     config = OrganizerDashboard.config
     
+    # Get GPU info
+    from OrganizerDashboard.helpers.helpers import get_gpus
+    gpus = get_gpus()
+    gpu_display = gpus[0] if gpus else "N/A"
+    
     return render_template(
         "dashboard.html",
         hostname=socket.gethostname(),
         os=get_windows_version(),
         cpu=get_cpu_name(),
         ram_gb=round(psutil.virtual_memory().total / (1024**3), 2),
-        gpu=dashboard_data.get("gpu", "N/A"),
+        gpu=gpu_display,
         private_ip=get_private_ip(),
         public_ip=get_public_ip(),
         upload_rate_kb=0,
