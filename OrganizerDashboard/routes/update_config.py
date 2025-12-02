@@ -17,25 +17,25 @@ def update_config():
 
     if request.is_json:
         data = request.get_json() or {}
-        # thresholds and logs
-        mem = str(data.get("memory_threshold_mb", config.get('memory_threshold_mb'))).strip()
-        cpu = str(data.get("cpu_threshold_percent", config.get('cpu_threshold_percent'))).strip()
-        logs_val = data.get("logs_dir") or config.get('logs_dir')
-        logs = logs_val.strip() if isinstance(logs_val, str) else config.get('logs_dir')
+        # thresholds and logs (only update if provided; avoid 400 on missing/blank values)
+        if 'memory_threshold_mb' in data:
+            try:
+                config['memory_threshold_mb'] = int(str(data.get('memory_threshold_mb')).strip())
+            except Exception:
+                return jsonify({"status": "error", "message": "Invalid memory_threshold_mb"}), 400
+        if 'cpu_threshold_percent' in data:
+            try:
+                config['cpu_threshold_percent'] = int(str(data.get('cpu_threshold_percent')).strip())
+            except Exception:
+                return jsonify({"status": "error", "message": "Invalid cpu_threshold_percent"}), 400
+        logs_val = data.get("logs_dir")
+        if isinstance(logs_val, str):
+            logs = logs_val.strip()
+            if logs:
+                config['logs_dir'] = logs
         watch_folder_val = data.get("watch_folder")
-        watch_folder = watch_folder_val.strip() if isinstance(watch_folder_val, str) else None
-        try:
-            config['memory_threshold_mb'] = int(mem)
-        except Exception:
-            return jsonify({"status": "error", "message": "Invalid memory_threshold_mb"}), 400
-        try:
-            config['cpu_threshold_percent'] = int(cpu)
-        except Exception:
-            return jsonify({"status": "error", "message": "Invalid cpu_threshold_percent"}), 400
-        if logs:
-            config['logs_dir'] = logs
-        if watch_folder is not None:
-            config['watch_folder'] = watch_folder
+        if isinstance(watch_folder_val, str):
+            config['watch_folder'] = watch_folder_val.strip()
         # routes and custom_routes
         routes = data.get('routes')
         if isinstance(routes, dict):
@@ -61,13 +61,16 @@ def update_config():
         vt_api_key = data.get('vt_api_key')
         if isinstance(vt_api_key, str):
             config['vt_api_key'] = vt_api_key.strip()
-        # Feature toggles
+        # Feature toggles (JSON)
         features = data.get('features')
         if isinstance(features, dict):
             feats = config.get('features') or {}
-            feats['virustotal_enabled'] = bool(features.get('virustotal_enabled', feats.get('virustotal_enabled', True)))
-            feats['duplicates_enabled'] = bool(features.get('duplicates_enabled', feats.get('duplicates_enabled', True)))
-            feats['reports_enabled'] = bool(features.get('reports_enabled', feats.get('reports_enabled', True)))
+            if 'virustotal_enabled' in features:
+                feats['virustotal_enabled'] = bool(features.get('virustotal_enabled'))
+            if 'duplicates_enabled' in features:
+                feats['duplicates_enabled'] = bool(features.get('duplicates_enabled'))
+            if 'reports_enabled' in features:
+                feats['reports_enabled'] = bool(features.get('reports_enabled'))
             config['features'] = feats
     else:
         # Legacy form support (including feature toggles and vt_api_key)
