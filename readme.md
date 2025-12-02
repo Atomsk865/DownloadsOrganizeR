@@ -64,7 +64,15 @@ python OrganizerDashboard.py
 - 📋 Live stdout/stderr log streaming & clearing
 - 💾 Drive space overview & hardware info
 - 🪪 Multiple authentication methods (Basic, LDAP, Windows) with fallback
-- 🛡️ Rights-based route protection (`manage_service`, `manage_config`, `modify_layout`, `view_metrics`, `view_recent_files`)
+- 🛡️ Rights-based route protection (`manage_service`, `manage_config`, `modify_layout`, `view_metrics`, `view_recent_files`, `send_reports`)
+- 📂 Recent File Movements - View and manage recently organized files with quick actions (open, reveal, remove)
+- 🔗 User Links - Create custom quick-access links with categories and descriptions
+- 📊 Reports & Analytics - Comprehensive file organization reports with advanced filtering:
+  - Date range filtering (today, yesterday, last 7/30 days, custom range)
+  - Category filtering (Images, Videos, Documents, etc.)
+  - File size analysis and storage usage
+  - Organization pattern insights
+  - Export capabilities
 
 ### Authentication & Authorization Options
 
@@ -205,9 +213,18 @@ DownloadsOrganizeR/
 └── readme.md                             # Project overview (this file)
 ```
 
-## New in Dev Branch
+## Latest Features (Prod-Beta Branch)
 
-See `CHANGELOG_DEV_vs_MAIN.md` for differences from `main` (roles, layout editor, rights enforcement, multi-user support).
+### December 2025 Update
+
+- ✅ **User Links Manager** - Create and organize custom quick-access links with categories
+- ✅ **Reports & Analytics** - Comprehensive file organization analytics with advanced filtering
+- ✅ **Recent Files Enhancement** - Quick actions to open files and reveal in folder
+- ✅ **Template Fixes** - Resolved Jinja2 template syntax errors for improved stability
+- ✅ **Config Page Repairs** - Fixed non-functional buttons (Factory Reset, Service Management, Auth tools)
+- ✅ **CSRF Protection** - Enhanced security with flask-wtf integration
+
+See `CHANGELOG_DEV_vs_MAIN.md` for full differences from `main` (roles, layout editor, rights enforcement, multi-user support).
 
 ---
 
