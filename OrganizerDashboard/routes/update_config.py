@@ -5,7 +5,8 @@ import os
 
 routes_update_config = Blueprint('routes_update_config', __name__)
 
-CONFIG_FILE = "organizer_config.json"
+# Try to save to the same locations the Organizer checks
+CONFIG_FILES = ["organizer_config.json", "C:/Scripts/organizer_config.json"]
 
 @routes_update_config.route("/update", methods=["POST"])
 @requires_right('manage_config')
@@ -83,7 +84,28 @@ def update_config():
             config['logs_dir'] = logs
         config['routes'] = new_routes
 
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=4)
+    # Save to all config file locations to ensure service picks it up
+    saved_count = 0
+    errors = []
+    for config_path in CONFIG_FILES:
+        try:
+            # Create directory if it doesn't exist
+            config_dir = os.path.dirname(config_path)
+            if config_dir and not os.path.exists(config_dir):
+                os.makedirs(config_dir, exist_ok=True)
+            
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=4)
+            saved_count += 1
+        except Exception as e:
+            errors.append(f"{config_path}: {str(e)}")
+    
     update_log_paths()
-    return jsonify({"status": "success", "message": "Configuration saved"}), 200
+    
+    if saved_count > 0:
+        msg = f"Configuration saved to {saved_count} location(s). Restart the Organizer service for changes to take effect."
+        if errors:
+            msg += f" Some locations failed: {'; '.join(errors)}"
+        return jsonify({"status": "success", "message": msg}), 200
+    else:
+        return jsonify({"status": "error", "message": f"Failed to save config: {'; '.join(errors)}"}), 500
