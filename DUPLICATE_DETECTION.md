@@ -59,6 +59,7 @@ The Duplicate File Detection feature automatically identifies files with identic
 
 #### GET `/api/duplicates`
 Returns all duplicate file groups:
+
 ```json
 {
   "duplicates": [
@@ -87,7 +88,9 @@ Returns all duplicate file groups:
 ```
 
 #### POST `/api/duplicates/resolve`
+
 Delete specified files:
+
 ```json
 {
   "action": "delete",
@@ -99,6 +102,7 @@ Delete specified files:
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -111,9 +115,11 @@ Response:
 ## Configuration
 
 ### Hash Database Location
+
 Default: `./config/json/file_hashes.json`
 
 Override in `organizer_config.json`:
+
 ```json
 {
   "file_hashes_json": "C:/custom/path/file_hashes.json"
@@ -121,9 +127,11 @@ Override in `organizer_config.json`:
 ```
 
 ### Notification Settings
+
 Notifications are sent when duplicates are detected. Default location: `notification_history.json`
 
 Override in `organizer_config.json`:
+
 ```json
 {
   "notification_history_json": "C:/custom/path/notification_history.json"
@@ -133,6 +141,7 @@ Override in `organizer_config.json`:
 ## File Structure
 
 ### file_hashes.json
+
 ```json
 {
   "0123eb2da45b...": [
@@ -149,6 +158,7 @@ Override in `organizer_config.json`:
 ## Implementation Details
 
 ### Modified Files
+
 - **Organizer.py**: Added hash calculation, duplicate detection, notification sending
   - `calculate_file_hash()`: SHA256 hash calculation
   - `load_file_hashes()`: Load hash database
@@ -178,11 +188,13 @@ Override in `organizer_config.json`:
 ## Testing
 
 Run the test suite:
+
 ```bash
 python test_duplicate_detection.py
 ```
 
 Tests verify:
+
 - Hash calculation accuracy
 - Database structure
 - API endpoint responses
@@ -191,12 +203,14 @@ Tests verify:
 ## Troubleshooting
 
 ### Duplicates Not Showing
+
 1. Check if `file_hashes.json` exists and has data
 2. Verify dashboard is running: `ps aux | grep OrganizerDashboard`
 3. Check browser console for JavaScript errors
 4. Try manual refresh with the Refresh button
 
 ### API Errors
+
 1. Verify authentication credentials
 2. Check dashboard logs: `tail -f /tmp/dashboard_duplicates.log`
 3. Test API directly: `curl -u admin:password http://localhost:5000/api/duplicates`

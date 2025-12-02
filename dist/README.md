@@ -5,6 +5,7 @@ This folder contains streamlined Windows installers to deploy DownloadsOrganizeR
 ## Installation Methods
 
 ### Online Installer (Recommended)
+
 Downloads the latest version from GitHub automatically:
 
 ```powershell
@@ -12,26 +13,31 @@ PowerShell -ExecutionPolicy Bypass -File .\dist\Setup-DownloadsOrganizeR-Online.
 ```
 
 **Advantages:**
+
 - Always gets the latest version
 - Smaller download size
 - Automatic updates available
 
 ### Offline Installer
+
 Use the pre-packaged release from `releases/` folder:
 
 1. Download `releases/v1.0-beta/DownloadsOrganizeR-v1.0-beta.zip`
 2. Extract to a temporary location
 3. Run:
-   ```powershell
-   PowerShell -ExecutionPolicy Bypass -File .\Setup-Offline.ps1
-   ```
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\Setup-Offline.ps1
+```
 
 **Advantages:**
+
 - No internet required
 - Version pinning for stability
 - Historical rollback capability
 
 ### Local Development Installer
+
 For development/testing from local repo:
 
 ```powershell

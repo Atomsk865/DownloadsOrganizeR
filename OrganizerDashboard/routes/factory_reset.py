@@ -39,15 +39,18 @@ def factory_reset():
             with open(main.DASHBOARD_CONFIG_FILE, 'w', encoding='utf-8') as f:
                 json.dump(reset_dashboard_config, f, indent=4)
             
-            # Update in-memory configs
-            main.config = default_config.copy()
-            main.dashboard_config = reset_dashboard_config.copy()
+            # Update in-memory configs (use setattr for dynamic attributes)
+            setattr(main, 'config', default_config.copy())
+            setattr(main, 'dashboard_config', reset_dashboard_config.copy())
             
             # Update package module reference
             pkg_module = sys.modules.get('OrganizerDashboard')
             if pkg_module:
-                pkg_module.config = main.config
-                pkg_module.dashboard_config = main.dashboard_config
+                try:
+                    setattr(pkg_module, 'config', getattr(main, 'config'))
+                    setattr(pkg_module, 'dashboard_config', getattr(main, 'dashboard_config'))
+                except Exception:
+                    pass
             
             # Reinitialize auth manager
             from OrganizerDashboard.auth.auth import initialize_auth_manager

@@ -19,20 +19,23 @@
 If you want to build the installer yourself:
 
 1. Install PyInstaller:
-   ```bash
-   pip install pyinstaller
-   ```
+
+```bash
+pip install pyinstaller
+```
 
 2. Run the builder:
-   ```bash
-   python installer_builder.py
-   ```
+
+```bash
+python installer_builder.py
+```
 
 3. Find the EXE in `dist/exe/DownloadsOrganizeR-Setup.exe`
 
 ## Installer Features
 
 The EXE installer provides:
+
 - **Graphical Interface**: User-friendly tkinter GUI
 - **Embedded Package**: Contains complete v1.0-beta release
 - **Automated Setup**: Creates venv, installs deps, initializes configs
@@ -44,6 +47,7 @@ The EXE installer provides:
 Location: `C:\Scripts` (configurable)
 
 Contents:
+
 - Python virtual environment (`venv/`)
 - Application files (Organizer.py, OrganizerDashboard.py, etc.)
 - Configuration files
@@ -53,19 +57,23 @@ Contents:
 ## Troubleshooting
 
 **"Python not found":**
-- Install Python 3.12+ from https://python.org
+
+- Install Python 3.12+ from <https://python.org>
 - Check "Add Python to PATH" during installation
 - Restart installer
 
 **"Permission denied":**
+
 - Right-click installer → "Run as Administrator"
 
 **"NSSM service failed":**
-- Download NSSM from https://nssm.cc
+
+- Download NSSM from <https://nssm.cc>
 - Extract and add to PATH
 - Or skip service installation
 
 **Antivirus Warning:**
+
 - PyInstaller executables may trigger false positives
 - Add exception or use signed builds for production
 

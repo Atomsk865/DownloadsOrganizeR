@@ -15,18 +15,21 @@ Each release folder (e.g., `v1.0-beta/`) contains:
 2. Extract to a temporary location
 3. Run PowerShell as Administrator
 4. Execute:
-   ```powershell
-   PowerShell -ExecutionPolicy Bypass -File .\Setup-Offline.ps1
-   ```
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File .\Setup-Offline.ps1
+```
 
 ## Using Online Installer (Latest)
 
 For the latest version from GitHub:
+
 ```powershell
 PowerShell -ExecutionPolicy Bypass -File .\dist\Setup-DownloadsOrganizeR-Online.ps1
 ```
 
 Options:
+
 - `-Branch <branch>` - Specify branch (default: Prod-Beta)
 - `-InstallService` - Install Windows service
 - `-NoStartDashboard` - Skip auto-start dashboard
@@ -34,6 +37,7 @@ Options:
 ## Version History
 
 ### v1.0-beta (December 2, 2025)
+
 - Initial production release
 - Setup wizard with Basic/LDAP/Windows auth
 - Dashboard with role-based access control

@@ -12,10 +12,10 @@ Automated, real-time organization of your Downloads folder plus a role-aware web
 
 1. **Download this repository** or clone it:
 
-  ```bash
-  git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
-  cd DownloadsOrganizeR
-  ```
+```bash
+git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
+cd DownloadsOrganizeR
+```
 
 1. **Run the installer** (Right-click PowerShell → Run as Administrator):
 
@@ -26,6 +26,7 @@ Automated, real-time organization of your Downloads folder plus a role-aware web
 1. **Done!** The service will start automatically on boot and organize your Downloads in real-time.
 
 ### Option 2: Manual Run (No Service)
+
 
 ```powershell
 cd DownloadsOrganizeR
@@ -38,6 +39,7 @@ python Organizer.py
 ## Dashboard 📊
 
 Monitor, configure, and customize layout & access control from the web dashboard:
+
 
 ```bash
 pip install -r requirements.txt
@@ -52,6 +54,7 @@ Then open: <http://localhost:5000>
 - **Password:** `change_this_password`
 
 You can override these by setting environment variables before launching the dashboard:
+
 
 ```bash
 export DASHBOARD_USER=myusername
