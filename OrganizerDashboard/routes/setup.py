@@ -1,11 +1,13 @@
 """First-time setup wizard routes."""
 
 from flask import Blueprint, render_template, request, jsonify
+from flask_wtf.csrf import CSRFProtect
 import sys
 import json
 import bcrypt
 
 routes_setup = Blueprint('routes_setup', __name__)
+csrf = CSRFProtect()
 
 @routes_setup.route('/setup', methods=['GET'])
 def setup_page():
@@ -75,6 +77,7 @@ def _validate_windows(data: dict) -> str:
     return ''
 
 @routes_setup.route('/api/setup/initialize', methods=['POST'])
+@csrf.exempt
 def setup_initialize():
     """Perform initial setup or re-run, writing organizer_config.json and dashboard_config.json."""
     from OrganizerDashboard.config_runtime import get_dashboard_config, get_config, save_config, save_dashboard_config
