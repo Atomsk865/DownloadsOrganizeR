@@ -1822,7 +1822,7 @@ async function handleImportFile(event) {
 <script>
 async function loadFeaturesConfig(){
   try{
-    const r = await fetch('/organizer_config.json', {cache:'no-store'});
+    const r = await fetch('/api/organizer/config', {credentials:'include', cache:'no-store', headers: getAuthHeaders()});
     if(r.ok){
       const org = await r.json();
       document.getElementById('cfg-vt-api-key').value = org.vt_api_key || '';
