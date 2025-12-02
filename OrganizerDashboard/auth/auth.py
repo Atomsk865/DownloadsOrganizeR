@@ -48,41 +48,42 @@ class BasicAuthProvider(AuthProvider):
         self._initialize_password_hash()
     
     def _initialize_password_hash(self):
-        """Initialize the password hash from config or environment."""
-        main = sys.modules['__main__']
+        """Initialize the password hash from config or environment using runtime config."""
+        from OrganizerDashboard.config_runtime import get_config, save_config
+        main = sys.modules.get('__main__')
         
-        if hasattr(main, 'ADMIN_PASS_HASH') and main.ADMIN_PASS_HASH is not None:
+        if main is not None and hasattr(main, 'ADMIN_PASS_HASH') and main.ADMIN_PASS_HASH is not None:
             self.admin_pass_hash = main.ADMIN_PASS_HASH
             return
         
-        stored_hash = self.config.get("dashboard_pass_hash")
+        stored_hash = get_config().get("dashboard_pass_hash")
         if stored_hash:
             self.admin_pass_hash = stored_hash.encode('utf-8')
-            if hasattr(main, 'ADMIN_PASS_HASH'):
+            if main is not None and hasattr(main, 'ADMIN_PASS_HASH'):
                 main.ADMIN_PASS_HASH = self.admin_pass_hash
             return
         
-        plain = self.config.get("dashboard_pass")
+        plain = get_config().get("dashboard_pass")
         if plain:
             self.admin_pass_hash = bcrypt.hashpw(plain.encode('utf-8'), bcrypt.gensalt())
             try:
-                self.config['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
-                if 'dashboard_pass' in self.config:
-                    del self.config['dashboard_pass']
-                with open(main.CONFIG_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(self.config, f, indent=4)
+                cfg = get_config()
+                cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
+                if 'dashboard_pass' in cfg:
+                    del cfg['dashboard_pass']
+                save_config()
             except Exception:
                 pass
             return
         
         # Use default password from environment
-        default_pass = getattr(main, 'ADMIN_PASS', 'change_this_password')
+        default_pass = getattr(main, 'ADMIN_PASS', 'change_this_password') if main is not None else 'change_this_password'
         self.admin_pass_hash = bcrypt.hashpw(default_pass.encode('utf-8'), bcrypt.gensalt())
         try:
-            self.config['dashboard_user'] = self.admin_user
-            self.config['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
-            with open(main.CONFIG_FILE, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=4)
+            cfg = get_config()
+            cfg['dashboard_user'] = self.admin_user
+            cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
+            save_config()
         except Exception:
             pass
     
@@ -97,8 +98,8 @@ class BasicAuthProvider(AuthProvider):
 
         # Support additional users loaded from dashboard_config
         try:
-            main = sys.modules['__main__']
-            dashboard_config = getattr(main, 'dashboard_config', {})
+            from OrganizerDashboard.config_runtime import get_dashboard_config
+            dashboard_config = get_dashboard_config()
             users = dashboard_config.get('users', [])
             for u in users:
                 if u.get('username') == username:
@@ -284,8 +285,17 @@ _auth_manager: Optional[AuthManager] = None
 def initialize_auth_manager():
     """Initialize the global auth manager with config from main module."""
     global _auth_manager
-    main = sys.modules['__main__']
-    _auth_manager = AuthManager(main.config)
+    try:
+        from OrganizerDashboard.config_runtime import get_config
+        cfg = get_config()
+        _auth_manager = AuthManager(cfg)
+    except Exception:
+        # Fallback to legacy behavior using __main__ if available
+        try:
+            main = sys.modules['__main__']
+            _auth_manager = AuthManager(getattr(main, 'config', {}))
+        except Exception:
+            _auth_manager = AuthManager({})
 
 
 def initialize_password_hash():
@@ -332,11 +342,11 @@ def requires_right(right_name: str):
             g.current_user = auth.username
             # Resolve role & rights
             try:
-                main = sys.modules['__main__']
-                dashboard_config = getattr(main, 'dashboard_config', {})
+                from OrganizerDashboard.config_runtime import get_dashboard_config
+                dashboard_config = get_dashboard_config()
                 roles = dashboard_config.get('roles', {})
                 # Determine role
-                if auth.username == getattr(main, 'ADMIN_USER', 'admin'):
+                if auth.username == getattr(sys.modules.get('__main__'), 'ADMIN_USER', 'admin'):
                     role_name = 'admin'
                 else:
                     role_name = None

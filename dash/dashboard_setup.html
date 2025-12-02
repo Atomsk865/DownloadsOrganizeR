@@ -1,0 +1,183 @@
+{% extends "dashboard_base.html" %}
+{% block dashboard_content %}
+<div class="container mt-3" style="max-width: 900px;">
+  <div class="card">
+    <div class="card-header"><b>Initial Dashboard Setup</b></div>
+    <div class="card-body p-3">
+      <p class="text-muted"><small>Welcome! Complete this one-time setup to secure and configure your dashboard. After completion you will be redirected to the main dashboard and this wizard will be disabled.</small></p>
+      <form id="setup-form" onsubmit="return false;">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label mb-1"><small><b>Admin Username</b></small></label>
+            <input class="form-control form-control-sm" id="admin-username" placeholder="admin" value="admin" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label mb-1"><small><b>Admin Password</b></small></label>
+            <input type="password" class="form-control form-control-sm" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
+            <div class="progress mt-1" style="height:6px;">
+              <div id="pw-strength-bar" class="progress-bar bg-danger" style="width:5%"></div>
+            </div>
+            <small id="pw-feedback" class="text-muted"></small>
+          </div>
+        </div>
+        <hr/>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label mb-1"><small><b>Authentication Method</b></small></label>
+            <select class="form-select form-select-sm" id="auth-method" onchange="toggleAuthSections()">
+              {% for m in available_methods %}
+                <option value="{{ m }}">{{ m|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label mb-1"><small><b>Enable Fallback (Basic)</b></small></label>
+            <select class="form-select form-select-sm" id="fallback-enabled">
+              <option value="true" selected>Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary btn-sm w-100" onclick="submitSetup()">Complete Setup</button>
+          </div>
+        </div>
+        <!-- LDAP Section -->
+        <div id="ldap-section" class="mt-3" style="display:none;">
+          <div class="border rounded p-2 bg-light">
+            <div class="mb-2"><small><b>LDAP / Active Directory Settings</b></small></div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-server" placeholder="ldap://server:389">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-base-dn" placeholder="dc=example,dc=com">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-user-template" placeholder="uid={username},{base_dn}" value="uid={username},{base_dn}">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-search-filter" placeholder="(uid={username})" value="(uid={username})">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-bind-dn" placeholder="Service bind DN (optional)">
+              </div>
+              <div class="col-md-6">
+                <input type="password" class="form-control form-control-sm" id="ldap-bind-password" placeholder="Bind password (optional)">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="ldap-allowed-groups" placeholder="Group DNs (comma separated)">
+              </div>
+              <div class="col-md-6 form-check ms-2">
+                <input class="form-check-input" type="checkbox" id="ldap-use-ssl" checked>
+                <label class="form-check-label"><small>Use SSL/TLS</small></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Windows Auth Section -->
+        <div id="windows-section" class="mt-3" style="display:none;">
+          <div class="border rounded p-2 bg-light">
+            <div class="mb-2"><small><b>Windows Authentication Settings</b></small></div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="win-domain" placeholder="DOMAIN (optional)">
+              </div>
+              <div class="col-md-6">
+                <input class="form-control form-control-sm" id="win-allowed-groups" placeholder="Group names (comma separated)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+function toggleAuthSections(){
+  const method = document.getElementById('auth-method').value;
+  document.getElementById('ldap-section').style.display = method === 'ldap' ? 'block' : 'none';
+  document.getElementById('windows-section').style.display = method === 'windows' ? 'block' : 'none';
+}
+function evaluatePassword(){
+  const pw = document.getElementById('admin-password').value;
+  let score = 0;
+  if(pw.length >= 12) score += 25;
+  if(/[A-Z]/.test(pw)) score += 15;
+  if(/[a-z]/.test(pw)) score += 15;
+  if(/\d/.test(pw)) score += 15;
+  if(/[^A-Za-z0-9]/.test(pw)) score += 30;
+  const bar = document.getElementById('pw-strength-bar');
+  bar.style.width = Math.min(score,100) + '%';
+  bar.className = 'progress-bar ' + (score<40?'bg-danger':score<70?'bg-warning':'bg-success');
+  const fb = document.getElementById('pw-feedback');
+  fb.textContent = score<40?'Weak password':score<70?'Moderate password':'Strong password';
+}
+function submitSetup(){
+  const adminUsername = document.getElementById('admin-username').value.trim();
+  const adminPassword = document.getElementById('admin-password').value;
+  const authMethod = document.getElementById('auth-method').value;
+  const fallbackEnabled = document.getElementById('fallback-enabled').value === 'true';
+  if(!adminUsername || !adminPassword){
+    showNotification('Admin username and password required', 'danger');
+    return;
+  }
+  // Basic client-side validation mirroring server rules
+  const unameRegex = /^[A-Za-z0-9_-]{3,32}$/;
+  if(!unameRegex.test(adminUsername)){
+    showNotification('Username must be 3-32 chars (letters, numbers, _ -)', 'danger'); return;
+  }
+  const pwIssues = [];
+  if(adminPassword.length < 12) pwIssues.push('>=12 chars');
+  if(!/[A-Z]/.test(adminPassword)) pwIssues.push('uppercase');
+  if(!/[a-z]/.test(adminPassword)) pwIssues.push('lowercase');
+  if(!/\d/.test(adminPassword)) pwIssues.push('digit');
+  if(!/[^A-Za-z0-9]/.test(adminPassword)) pwIssues.push('special');
+  if(pwIssues.length){
+    showNotification('Password needs: ' + pwIssues.join(', '), 'danger'); return;
+  }
+  const payload = {
+    admin_username: adminUsername,
+    admin_password: adminPassword,
+    auth_method: authMethod,
+    auth_fallback_enabled: fallbackEnabled
+  };
+  if(authMethod === 'ldap'){
+    payload.server = document.getElementById('ldap-server').value.trim();
+    payload.base_dn = document.getElementById('ldap-base-dn').value.trim();
+    payload.user_dn_template = document.getElementById('ldap-user-template').value.trim();
+    payload.search_filter = document.getElementById('ldap-search-filter').value.trim();
+    payload.bind_dn = document.getElementById('ldap-bind-dn').value.trim();
+    payload.bind_password = document.getElementById('ldap-bind-password').value;
+    payload.allowed_groups = document.getElementById('ldap-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
+    payload.use_ssl = document.getElementById('ldap-use-ssl').checked;
+    if(!payload.server || !payload.base_dn){
+      showNotification('LDAP server and base DN are required', 'danger'); return;
+    }
+  }
+  if(authMethod === 'windows'){
+    payload.domain = document.getElementById('win-domain').value.trim();
+    payload.allowed_groups = document.getElementById('win-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
+  }
+  showNotification('Applying setup...', 'info');
+  fetch('/api/setup/initialize', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(ok && j.success){
+        showNotification('Setup complete! Redirecting...', 'success');
+        setTimeout(()=>{ window.location.href='/'; },1500);
+      } else {
+        showNotification(j.error||'Setup failed','danger');
+      }
+    })
+    .catch(err=> showNotification('Setup error: '+ err.message, 'danger'));
+}
+// Minimal notification helper fallback if dashboard_scripts not loaded yet
+function showNotification(msg, type){
+  let alert = document.createElement('div');
+  alert.className = 'alert alert-' + (type||'info') + ' alert-dismissible fade show';
+  alert.role = 'alert';
+  alert.innerHTML = '<small>' + msg + '</small><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+  document.querySelector('.card-body').prepend(alert);
+}
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, Response
+from flask import Blueprint, render_template, request, jsonify, Response, redirect
 import socket
 import sys
 import psutil
@@ -14,6 +14,15 @@ routes_dashboard = Blueprint('routes_dashboard', __name__)
 
 @routes_dashboard.route("/")
 def dashboard():
+    # Redirect to setup wizard if initial setup not completed
+    try:
+        import sys
+        main = sys.modules['__main__']
+        dash_cfg = getattr(main, 'dashboard_config', {})
+        if not dash_cfg.get('setup_completed', False):
+            return redirect('/setup')
+    except Exception:
+        pass
     dashboard_data = load_dashboard_json()
     return render_template(
         "dashboard.html",
