@@ -22,7 +22,7 @@
                 <div class="col-md-3"><small><b>Private IP:</b> <span class="copy-value" onclick="copyToClipboard('{{ private_ip }}', this)" title="Click to copy">{{ private_ip }}</span></small></div>
                 <div class="col-md-3">
                     <small><b>Public IP:</b> <span id="public-ip-display" class="copy-value" onclick="copyPublicIP(this)" onmouseover="revealPublicIP()" onmouseout="hidePublicIP()" title="Hover to reveal, click to copy" style="cursor:pointer;">•••.•••.•••.•••</span></small>
-                    <iframe src="https://ipchicken.com" style="display:none;" id="ipchicken-frame" onload="extractPublicIP()"></iframe>
+                    <iframe src="https://ipchicken.com" style="display:none;" id="ipchicken-frame"></iframe>
                 </div>
                 <div class="col-md-3">
                     <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
