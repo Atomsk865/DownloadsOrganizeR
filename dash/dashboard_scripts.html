@@ -2114,7 +2114,7 @@ async function resolveDuplicates(filePaths) {
         }
     } catch (error) {
         console.error('Error resolving duplicates:', error);
-        showToast('Error: ' + error.message, 'error');
+        showNotification('Error: ' + error.message, 'danger');
     }
 }
 
@@ -2133,11 +2133,11 @@ async function scanVirusTotal(filePath, fileName) {
         if (res.ok) {
             const attrs = data.data && data.data.attributes;
             const stats = attrs && attrs.last_analysis_stats;
-            // Toast summary
+            // Notification summary
             if (stats) {
-                showToast(`VT: ${fileName} clean:${stats.undetected} malicious:${stats.malicious} suspicious:${stats.suspicious||0}`, 'info');
+                showNotification(`VT: ${fileName} clean:${stats.undetected} malicious:${stats.malicious} suspicious:${stats.suspicious||0}`, 'info');
             } else {
-                showToast('VirusTotal scan requested. Check VT for detailed report.', 'info');
+                showNotification('VirusTotal scan requested. Check VT for detailed report.', 'info');
             }
             // Populate modal details
             try {
@@ -2174,10 +2174,10 @@ async function scanVirusTotal(filePath, fileName) {
                 console.warn('Failed to render VT modal:', e);
             }
         } else {
-            showToast('VirusTotal error: ' + (data.error || res.status), 'error');
+            showNotification('VirusTotal error: ' + (data.error || res.status), 'danger');
         }
     } catch (e) {
-        showToast('VirusTotal request failed: ' + e.message, 'error');
+        showNotification('VirusTotal request failed: ' + e.message, 'danger');
     }
 }
 // Statistics Charts
