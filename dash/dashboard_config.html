@@ -1877,14 +1877,25 @@ async function saveFeaturesConfig(){
     });
     const j = await r.json().catch(()=>({}));
     if(r.ok){ 
-      showNotification('Features saved', 'success');
+      // Use window.showNotification to ensure we get the real function, not the fallback
+      if (typeof window.showNotification === 'function') {
+        window.showNotification('Features saved', 'success');
+      }
       // Reload developer mode to apply changes immediately
       if(typeof loadDeveloperMode === 'function') {
         loadDeveloperMode();
       }
     }
-    else { showNotification('Failed to save features: ' + (j.message||r.status), 'warning'); }
-  } catch(e){ showNotification('Error saving features: ' + e.message, 'danger'); }
+    else { 
+      if (typeof window.showNotification === 'function') {
+        window.showNotification('Failed to save features: ' + (j.message||r.status), 'warning'); 
+      }
+    }
+  } catch(e){ 
+    if (typeof window.showNotification === 'function') {
+      window.showNotification('Error saving features: ' + e.message, 'danger'); 
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', loadFeaturesConfig);
