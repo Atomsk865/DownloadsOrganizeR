@@ -9,15 +9,15 @@
             padding-left: var(--sidebar-width, 20%);
         }
         .sidebar-resizer {
-            position: absolute;
+            position: fixed;
             left: calc(var(--sidebar-width, 20%));
             top: 0;
-            width: 6px;
-            height: 100%; /* limit to container height */
+            bottom: 0;
+            width: 8px;
             cursor: col-resize;
             background: transparent;
             border-left: 2px solid transparent;
-            z-index: 20; /* below overlays, above content edge */
+            z-index: 1001; /* above content, below modals */
             pointer-events: auto; /* only this thin strip is interactive */
         }
         .sidebar-resizer:hover, .sidebar-resizer.active {
