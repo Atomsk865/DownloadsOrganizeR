@@ -2578,15 +2578,68 @@ document.addEventListener('DOMContentLoaded', function(){
     const byId = (id)=>document.getElementById(id);
     const bind = (id, handler)=>{ const el = byId(id); if(el && typeof handler === 'function') el.addEventListener('click', handler); };
 
+    // Auth & main controls
     bind('login-btn', window.promptLogin);
+    bind('login-btn-sidebar', window.promptLogin);
     bind('logout-btn', window.logout);
+    bind('logout-btn-sidebar', window.logout);
     bind('btn-show-hidden', window.showHiddenModules);
     bind('btn-reset-layout', window.resetDashboardLayout);
     bind('btn-add-widget', window.addCustomWidget);
     bind('reset-layout-btn', window.resetDashboardLayout);
     bind('show-hidden-btn', window.showHiddenModules);
     bind('dev-reset-btn', window.devResetToSetup);
+    bind('dev-reset-btn-sidebar', window.devResetToSetup);
+    
+    // Service controls
+    bind('btn-start-service', window.startService);
+    bind('btn-stop-service', window.stopService);
+    bind('btn-restart-service', window.restartService);
+    bind('service-name-btn', window.copyServiceName);
+    
+    // Module actions
     bind('btn-duplicates-refresh', window.loadDuplicates);
     bind('btn-recent-refresh', window.refreshRecentFiles);
+    bind('btn-save-settings', window.saveSettings);
+    bind('btn-add-category', window.addCategoryRow);
+    bind('btn-save-config', window.saveConfiguration);
+    bind('btn-add-custom-route', window.addCustomRouteRow);
+    bind('btn-save-custom-routes', window.saveConfiguration);
+    bind('btn-add-tag-route', window.addTagRouteRow);
+    bind('btn-save-tag-routes', window.saveConfiguration);
+    
+    // Event delegation for hide toggles (data-module attribute)
+    document.addEventListener('click', function(e){
+        const toggle = e.target.closest('.hide-toggle');
+        if(toggle && toggle.dataset.module && typeof window.toggleHideModule === 'function'){
+            window.toggleHideModule(toggle.dataset.module);
+        }
+        
+        // Delete row buttons (onclick="deleteRow(this)")
+        if(e.target.matches('button') && e.target.textContent.trim() === 'Delete' && typeof window.deleteRow === 'function'){
+            window.deleteRow(e.target);
+        }
+        
+        // Copy-value spans with copyToClipboard
+        const copySpan = e.target.closest('.copy-value');
+        if(copySpan && typeof window.copyToClipboard === 'function'){
+            const text = copySpan.textContent.trim();
+            window.copyToClipboard(text, copySpan);
+        }
+    });
+    
+    // Public IP hover/out events
+    const publicIpSpan = byId('public-ip-display');
+    if(publicIpSpan){
+        publicIpSpan.addEventListener('mouseover', window.revealPublicIP);
+        publicIpSpan.addEventListener('mouseout', window.hidePublicIP);
+        publicIpSpan.addEventListener('click', function(){ if(typeof window.copyPublicIP === 'function') window.copyPublicIP(this); });
+    }
+    
+    // Extract public IP iframe onload
+    const ipFrame = byId('ipchicken-frame');
+    if(ipFrame && typeof window.extractPublicIP === 'function'){
+        ipFrame.addEventListener('load', window.extractPublicIP);
+    }
 });
 </script>
