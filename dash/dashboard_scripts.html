@@ -656,6 +656,11 @@ function copyPublicIP(el) {
         showNotification('Public IP not yet loaded', 'warning');
     }
 }
+// Export public IP helpers to global for inline handlers and iframe load
+window.extractPublicIP = extractPublicIP;
+window.revealPublicIP = revealPublicIP;
+window.hidePublicIP = hidePublicIP;
+window.copyPublicIP = copyPublicIP;
 
 // Ensure these functions are globally accessible for inline event handlers
 window.revealPublicIP = revealPublicIP;
