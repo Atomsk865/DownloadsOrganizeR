@@ -2120,6 +2120,7 @@ async function resolveDuplicates(filePaths) {
 
 async function scanVirusTotal(filePath, fileName) {
     try {
+        console.log('Scanning file with VT:', filePath);
         const res = await fetch('/api/recent_files/virustotal', {
             method: 'POST',
             credentials: 'include',
@@ -2129,6 +2130,11 @@ async function scanVirusTotal(filePath, fileName) {
             },
             body: JSON.stringify({ path: filePath })
         });
+        console.log('VT Response status:', res.status);
+        if (!res.ok && res.status === 404) {
+            showNotification('VirusTotal endpoint not found. Please restart the dashboard service.', 'warning');
+            return;
+        }
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
             const attrs = data.data && data.data.attributes;
