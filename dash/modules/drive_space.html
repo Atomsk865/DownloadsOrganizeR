@@ -1,0 +1,35 @@
+<div class="dashboard-module" data-module="drive-space" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>Drive Space</b>
+            <span class="hide-toggle" data-module="drive-space" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Total</th>
+                        <th>Used</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in drives %}
+                    <tr>
+                        <td>{{ drive.device }}</td>
+                        <td><small>{{ drive.total }}</small></td>
+                        <td><small>{{ drive.used }}</small></td>
+                        <td>
+                            <div class="progress" style="min-width: 50px;">
+                                <div class="progress-bar {% if drive.percent < 50 %}bg-success{% elif drive.percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ drive.percent }}%; font-size:11px;">{{ drive.percent }}%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

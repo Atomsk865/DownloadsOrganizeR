@@ -1,0 +1,37 @@
+<div class="dashboard-module wide" data-module="recent-files" draggable="true">
+    <!-- Recent Files Card -->
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center">
+            <b>Recent File Movements</b>
+            <a href="/docs/recent-files" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
+                <small><i class="bi bi-book"></i> Docs</small>
+            </a>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <div class="d-flex justify-content-end mb-1">
+                <button id="btn-recent-refresh" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div id="recent-files-list" class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Filename</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                            <th style="width:50px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-files-tbody">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Loading recent files...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

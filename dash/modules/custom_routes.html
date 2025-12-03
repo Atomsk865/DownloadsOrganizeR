@@ -1,0 +1,30 @@
+<div class="dashboard-module" data-module="custom-routes" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>Custom Routes (Per-Extension)</b>
+            <span class="hide-toggle" data-module="custom-routes" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <form id="custom-routes-form">
+                <table class="table table-sm mb-3" style="table-layout: fixed;" id="custom-routes-table">
+                    <thead>
+                        <tr>
+                            <th id="cr-ext-col" style="width: 25%">Extension</th>
+                            <th id="cr-folder-col" style="width: 55%">Target Folder</th>
+                            <th id="cr-action-col" style="width: 20%">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="custom-routes-tbody">
+                        <!-- Rows will be populated dynamically from config or added by user -->
+                    </tbody>
+                </table>
+                <div class="d-flex gap-2 mt-2">
+                    <button id="btn-add-custom-route" class="btn btn-success btn-sm" type="button">Add Route</button>
+                    <button id="btn-save-custom-routes" class="btn btn-primary btn-sm" type="button">Save Configuration</button>
+                </div>
+            </form>
+            <small class="text-muted">Custom routes take precedence over category routing.</small>
+        </div>
+    </div>
+</div>

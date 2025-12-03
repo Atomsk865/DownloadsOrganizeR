@@ -1,0 +1,44 @@
+<div class="dashboard-module wide" data-module="system-info" draggable="false" id="system-info-card">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>System Information</b>
+            <small class="ms-2" style="color: var(--text-secondary);">(Server vs Client; click to copy)</small>
+        </div>
+        <div class="card-body p-2">
+            <!-- Env mismatch warning injected by JS -->
+            <div id="env-mismatch" class="alert alert-warning py-2 px-3 mb-2" style="display:none;">
+                <strong>Heads up:</strong> Your browser appears to be on Windows while the server reports Linux. Make sure you're viewing the dashboard hosted on your Windows machine (not Codespaces).
+            </div>
+            <!-- Server (host) info -->
+            <div class="mb-2"><span class="badge bg-secondary">Server</span></div>
+            <div class="row">
+                <div class="col-md-3"><small><b>Hostname:</b> <span class="copy-value" onclick="copyToClipboard('{{ hostname }}', this)" title="Click to copy">{{ hostname }}</span></small></div>
+                <div class="col-md-3"><small><b>OS:</b> <span class="copy-value" onclick="copyToClipboard('{{ os }}', this)" title="Click to copy">{{ os }}</span></small></div>
+                <div class="col-md-3"><small><b>CPU:</b> <span class="copy-value" onclick="copyToClipboard('{{ cpu }}', this)" title="Click to copy">{{ cpu }}</span></small></div>
+                <div class="col-md-3"><small><b>RAM:</b> <span class="copy-value" onclick="copyToClipboard('{{ ram_gb }} GB', this)" title="Click to copy">{{ ram_gb }} GB</span></small></div>
+            </div>
+            <div class="row mt-1">
+                <div class="col-md-3"><small><b>GPU:</b> <span class="copy-value" onclick="copyToClipboard('{{ gpu }}', this)" title="Click to copy">{{ gpu }}</span></small></div>
+                <div class="col-md-3"><small><b>Private IP:</b> <span class="copy-value" onclick="copyToClipboard('{{ private_ip }}', this)" title="Click to copy">{{ private_ip }}</span></small></div>
+                <div class="col-md-3">
+                    <small><b>Public IP:</b> <span id="public-ip-display" class="copy-value" onclick="copyPublicIP(this)" onmouseover="revealPublicIP()" onmouseout="hidePublicIP()" title="Hover to reveal, click to copy" style="cursor:pointer;">•••.•••.•••.•••</span></small>
+                    <iframe src="https://ipchicken.com" style="display:none;" id="ipchicken-frame" onload="extractPublicIP()"></iframe>
+                </div>
+                <div class="col-md-3">
+                    <a href="https://www.speedtest.net/" target="_blank" class="btn btn-outline-secondary btn-sm">Speed Test</a>
+                </div>
+            </div>
+
+            <!-- Client (browser) info -->
+            <div class="mt-3 mb-2"><span class="badge bg-info" style="color:#000;">Client</span></div>
+            <div class="row">
+                <div class="col-md-6"><small><b>Client IP:</b> <span class="copy-value" onclick="copyToClipboard('{{ client_ip }}', this)" title="Click to copy">{{ client_ip }}</span></small></div>
+                <div class="col-md-6"><small><b>User-Agent:</b> <span class="copy-value" onclick="copyToClipboard('{{ client_ua }}', this)" title="Click to copy">{{ client_ua }}</span></small></div>
+            </div>
+            <div class="row mt-1">
+                <div class="col-md-6"><small><b>Platform:</b> <span id="client-platform" class="copy-value" onclick="copyToClipboard(document.getElementById('client-platform').innerText, this)" title="Click to copy">detecting…</span></small></div>
+                <div class="col-md-6"><small><b>Language:</b> <span id="client-lang" class="copy-value" onclick="copyToClipboard(document.getElementById('client-lang').innerText, this)" title="Click to copy">detecting…</span></small></div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="col-12 col-xl-6 dashboard-module" data-module="task-manager" draggable="true">
+    <!-- Task Manager Card -->
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center">
+            <b>Task Manager (Top 5 by CPU)</b>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th><small>PID</small></th>
+                        <th><small>Name</small></th>
+                        <th><small>CPU %</small></th>
+                        <th><small>RAM MB</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc in top_processes %}
+                    <tr>
+                        <td><small>{{ proc.pid }}</small></td>
+                        <td><small>{{ proc.name }}</small></td>
+                        <td><small>{{ proc.cpu|round(1) }}</small></td>
+                        <td><small>{{ proc.mem }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

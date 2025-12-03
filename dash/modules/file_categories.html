@@ -1,0 +1,161 @@
+<div class="dashboard-module" data-module="file-categories" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>File Categories</b>
+            <span class="hide-toggle" data-module="file-categories" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
+                <i class="bi bi-info-circle"></i> <strong>Note:</strong> Changes to file categories and custom routes require restarting the Organizer service to take effect.
+            </div>
+            <form id="config-form">
+                <table class="table table-sm mb-3" style="table-layout: fixed; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Folder</th>
+                            <th style="width: 60%;">Extensions (comma-separated)</th>
+                            <th style="width: 25%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Images -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_1" value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Music -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_2" value="Music"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_2" value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Videos -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_3" value="Videos"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_3" value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Documents -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_4" value="Documents"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_4" value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Archives -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_5" value="Archives"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_5" value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Executables -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_6" value="Executables"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_6" value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Shortcuts -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_7" value="Shortcuts"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_7" value="lnk, url, desktop, webloc">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Scripts -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_8" value="Scripts"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_8" value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Fonts -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_9" value="Fonts"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_9" value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Logs -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_10" value="Logs"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_10" value="log, out, err">
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Other -->
+                        <tr>
+                            <td><input class="form-control form-control-sm" type="text" name="folder_11" value="Other"></td>
+                            <td>
+                                <input class="form-control form-control-sm" type="text" name="exts_11" value="">
+                            </td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" type="button" >Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="d-flex gap-2 mt-2">
+                    <button id="btn-add-category" class="btn btn-success btn-sm" type="button">Add Category</button>
+                    <button id="btn-save-config" class="btn btn-primary btn-sm" type="button">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

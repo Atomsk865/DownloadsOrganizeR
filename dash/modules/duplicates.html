@@ -1,0 +1,39 @@
+<div class="dashboard-module wide" data-module="duplicates" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b><i class="bi bi-files"></i> Duplicate Files</b>
+            <span id="badge-duplicates-state" class="badge bg-secondary ms-2">Unknown</span>
+            <a href="/docs/duplicate-detection" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
+                <small><i class="bi bi-book"></i> Docs</small>
+            </a>
+            <span class="hide-toggle" data-module="duplicates" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div id="duplicates-disabled-banner" class="alert alert-warning m-3 d-none" role="alert">
+            <i class="bi bi-slash-circle"></i> Duplicates feature is disabled. Enable it in Features & Integrations.
+        </div>
+        <div class="card-body" id="duplicates-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="badge bg-warning" id="duplicates-count">0 duplicate groups</span>
+                    <span class="badge bg-danger" id="wasted-space">0 B wasted</span>
+                    <span class="badge bg-info" id="watched-folders-badge" title="Watched folders">watching 0</span>
+                </div>
+                <button id="btn-duplicates-refresh" class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="duplicates-container">
+                <div class="text-center text-muted">
+                    <i class="bi bi-hourglass-split fs-1"></i>
+                    <p>Loading duplicates...</p>
+                </div>
+            </div>
+            <div class="mt-2" id="watched-folders-list" style="display:none">
+                <small class="text-muted">Watched folders:</small>
+                <ul class="mb-0" id="watched-folders-ul"></ul>
+            </div>
+        </div>
+    </div>
+</div>

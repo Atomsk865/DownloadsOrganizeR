@@ -1,0 +1,92 @@
+<div class="dashboard-module wide" data-module="statistics" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b><i class="bi bi-graph-up"></i> File Organization Statistics</b>
+            <span id="badge-reports-state" class="badge bg-secondary ms-2">Unknown</span>
+            <span class="hide-toggle" data-module="statistics" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div id="reports-disabled-banner" class="alert alert-warning m-3 d-none" role="alert">
+            <i class="bi bi-slash-circle"></i> Reports feature is disabled. Enable it in Features & Integrations.
+        </div>
+        <div class="card-body" id="statistics-body">
+            <!-- Overview Stats -->
+            <div class="row mb-3">
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-total-files">0</h4>
+                            <small>Total Files</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-success text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-today">0</h4>
+                            <small>Today</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-info text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-week">0</h4>
+                            <small>This Week</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-month">0</h4>
+                            <small>This Month</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-categories">0</h4>
+                            <small>Categories</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 text-center">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body p-2">
+                            <h4 class="mb-0" id="stat-avg-day">0</h4>
+                            <small>Avg/Day</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row">
+                <div class="col-lg-6 mb-3">
+                    <h6>Files by Category</h6>
+                    <canvas id="chart-category" height="200"></canvas>
+                </div>
+                <div class="col-lg-6 mb-3">
+                    <h6>Top 10 File Extensions</h6>
+                    <canvas id="chart-extensions" height="200"></canvas>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <h6>Activity Timeline (Last 30 Days)</h6>
+                    <canvas id="chart-timeline" height="80"></canvas>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h6>Activity by Hour of Day</h6>
+                    <canvas id="chart-hourly" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

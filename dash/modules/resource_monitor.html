@@ -1,0 +1,34 @@
+<div class="dashboard-module wide" data-module="service-status" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b><i class="bi bi-activity"></i> Resource Monitor</b>
+            <span class="hide-toggle" data-module="service-status" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small><b>Service Status:</b></small>
+                        <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1">{{ service_status }}</span>
+                    </div>
+                    <small class="text-muted"><i class="bi bi-info-circle"></i> Use sidebar for quick controls</small>
+                </div>
+            </div>
+            <div class="mb-2">
+                <small><b>Memory Usage:</b></small>
+                <span class="text-sm">Service: {{ service_memory_mb }} MB | System: {{ total_memory_mb }}/{{ total_memory_gb }}GB</span>
+                <div class="progress mb-1" style="height:18px;">
+                    <div class="progress-bar {% if ram_percent < 50 %}bg-success{% elif ram_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ ram_percent }}%; font-size:11px;">{{ ram_percent }}%</div>
+                </div>
+            </div>
+            <div class="mb-2">
+                <small><b>CPU Usage:</b></small>
+                <span class="text-sm">Service: {{ service_cpu_percent }}% | System: {{ total_cpu_percent }}%</span>
+                <div class="progress mb-1" style="height:18px;">
+                    <div class="progress-bar {% if total_cpu_percent < 50 %}bg-success{% elif total_cpu_percent < 80 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:11px;">{{ total_cpu_percent }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

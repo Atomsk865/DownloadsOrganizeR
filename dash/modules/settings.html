@@ -1,0 +1,38 @@
+<div class="dashboard-module" data-module="settings" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>Settings</b>
+            <span class="hide-toggle" data-module="settings" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <form id="config-form-settings">
+                <div class="row mb-2">
+                    <div class="col-md-12">
+                        <label for="watch_folder" class="form-label" style="font-size: 0.85rem;"><b>Watch Folder</b></label>
+                        <input id="watch_folder" class="form-control form-control-sm" type="text" name="watch_folder" value="{{ watch_folder }}" placeholder="e.g., C:\Users\YourName\Downloads">
+                        <small class="form-text text-muted">The folder to monitor for new files. Leave empty to use the default Downloads folder.</small>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="memory_threshold" class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
+                        <input id="memory_threshold" class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cpu_threshold" class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
+                        <input id="cpu_threshold" class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="logs_dir" class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                        <input id="logs_dir" class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                    </div>
+                </div>
+                <div class="alert alert-warning alert-sm mt-2 mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Important:</strong> Changing the watch folder requires restarting the Organizer service.
+                </div>
+                <button id="btn-save-settings" class="btn btn-primary btn-sm mt-2" type="button">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</div>

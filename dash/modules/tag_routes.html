@@ -1,0 +1,33 @@
+<div class="dashboard-module" data-module="tag-routes" draggable="true">
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <b>Tag Routes (Filename-Based Routing)</b>
+            <span class="hide-toggle" data-module="tag-routes" title="Hide module"><i class="bi bi-x-circle"></i></span>
+            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+        </div>
+        <div class="card-body p-2">
+            <div class="alert alert-info alert-sm mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
+                <i class="bi bi-info-circle"></i> <strong>Tip:</strong> Files containing the tag anywhere in the filename will be moved to the specified folder, regardless of extension. Tag routes have the highest priority.
+            </div>
+            <form id="tag-routes-form">
+                <table class="table table-sm mb-3" style="table-layout: fixed;" id="tag-routes-table">
+                    <thead>
+                        <tr>
+                            <th id="tr-tag-col" style="width: 25%">Tag/Keyword</th>
+                            <th id="tr-folder-col" style="width: 55%">Target Folder (absolute path)</th>
+                            <th id="tr-action-col" style="width: 20%">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tag-routes-tbody">
+                        <!-- Rows will be populated dynamically from config or added by user -->
+                    </tbody>
+                </table>
+                <div class="d-flex gap-2 mt-2">
+                    <button id="btn-add-tag-route" class="btn btn-success btn-sm" type="button">Add Tag Route</button>
+                    <button id="btn-save-tag-routes" class="btn btn-primary btn-sm" type="button">Save Configuration</button>
+                </div>
+            </form>
+            <small class="text-muted">Examples: "invoice" → Invoices folder, "screenshot" → Screenshots</small>
+        </div>
+    </div>
+</div>
