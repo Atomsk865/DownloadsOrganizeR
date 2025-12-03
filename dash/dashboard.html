@@ -431,8 +431,8 @@
                 <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize • Double-click for presets"></div>
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
-                    <button id="login-btn" class="btn btn-outline-primary btn-sm">Login</button>
-                    <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none">Logout</button>
+                    <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
+                    <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="if(typeof logout==='function')logout()">Logout</button>
                     <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
                     <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
                     <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" title="Show hidden modules"><i class="bi bi-eye"></i> Show Hidden</button>
