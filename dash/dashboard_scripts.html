@@ -2552,6 +2552,62 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
+// Service control functions
+async function startService() {
+    await serviceAction('start');
+}
+
+async function stopService() {
+    await serviceAction('stop');
+}
+
+async function restartService() {
+    await serviceAction('restart');
+}
+
+async function serviceAction(action) {
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before performing service actions', 'warning');
+            return;
+        }
+        const response = await fetch(`/${action}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(`Service ${action}ed successfully`, 'success');
+            setTimeout(updateServiceStatus, 1000);
+        } else {
+            showNotification(data.message || `Failed to ${action} service`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+async function updateServiceStatus() {
+    try {
+        const response = await fetch('/metrics');
+        const data = await response.json();
+        const badge = document.getElementById('service-badge');
+        const sidebarBadge = document.getElementById('service-badge-sidebar');
+        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
+        if (badge) {
+            badge.textContent = data.service_status;
+            badge.className = `badge ${statusClass} ms-1`;
+        }
+        if (sidebarBadge) {
+            sidebarBadge.textContent = data.service_status;
+            sidebarBadge.className = `badge ${statusClass} ms-1`;
+        }
+    } catch (error) {
+        console.error('Error updating service status:', error);
+    }
+}
+
 // Export implementations to window for inline handlers
 (function(){
     const exportNames = [
@@ -2559,9 +2615,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'saveCustomWidgets','loadCustomWidgets','initSidebarResizer','initDragAndDrop','saveDashboardLayout','loadDashboardLayout',
         'showNotification','toggleNotificationCenter','markAllNotificationsRead','clearAllNotifications',
         'revealPublicIP','hidePublicIP','extractPublicIP','copyPublicIP',
-        'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName',
+        'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName','copyToClipboard','deleteRow',
         'toggleHideModule','saveSettings','addCategoryRow','saveConfiguration','addCustomRouteRow','addTagRouteRow',
-        'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus'
+        'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus',
+        'startService','stopService','restartService','serviceAction','showHiddenModules'
     ];
     exportNames.forEach(function(name){
         try {
