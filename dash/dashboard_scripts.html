@@ -1516,6 +1516,18 @@ document.addEventListener('DOMContentLoaded', function() {
     initResizableTables();
     syncAuthButtons();
     initSidebarResizer();
+    
+    // Initialize notification center (only once on page load)
+    loadNotificationCenter();
+    // Clear any existing notification polling interval
+    if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+    }
+    // Start notification polling every 30 seconds
+    notificationPollingInterval = setInterval(loadNotificationCenter, 30000);
+    
+    // Check if we should show intro
+    checkShowIntro();
 
     // Cookie-based auth persistence helpers
     function setCookie(name, value, days) {
@@ -2169,6 +2181,7 @@ async function loadStatistics() {
 
 // Notification Center Functions
 let notificationCenterOpen = false;
+let notificationPollingInterval = null;
 
 async function loadNotificationCenter() {
     try {
@@ -2367,15 +2380,6 @@ function showNotificationWithHistory(message, type) {
         console.error('Failed to save notification:', err);
     });
 }
-
-// Load notification center on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadNotificationCenter();
-    // Refresh notification center every 30 seconds
-    setInterval(loadNotificationCenter, 30000);
-    // Check if we should show intro
-    checkShowIntro();
-});
 
 // Keyboard Shortcuts and Command Palette
 const commands = [
