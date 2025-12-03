@@ -144,9 +144,35 @@
         [data-theme="dark"] .btn-outline-success,
         [data-theme="dark"] .btn-outline-danger,
         [data-theme="dark"] .btn-outline-warning,
-        [data-theme="dark"] .btn-outline-info {
+        [data-theme="dark"] .btn-outline-info,
+        [data-theme="dark"] .btn-outline-dark {
             color: var(--text-primary);
             border-color: var(--border-color);
+        }
+        [data-theme="dark"] a,
+        [data-theme="dark"] a.btn,
+        [data-theme="dark"] .card a {
+            color: #9ec5fe; /* light-blue links on dark */
+        }
+        [data-theme="dark"] a:hover {
+            color: #cfe2ff;
+        }
+        
+        /* Card headers in dark mode: improve readability */
+        [data-theme="dark"] .card-header {
+            background-color: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="dark"] .card-header small,
+        [data-theme="dark"] .card-header .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* Badges contrast in dark mode */
+        [data-theme="dark"] .badge.bg-secondary {
+            background-color: #495057 !important;
+            color: #ffffff !important;
         }
         [data-theme="dark"] .btn-outline-primary:hover {
             background-color: #0d6efd;
