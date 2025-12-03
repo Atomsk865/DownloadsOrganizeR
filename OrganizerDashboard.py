@@ -263,7 +263,14 @@ def create_app():
     from OrganizerDashboard.routes.network import routes_network
     from OrganizerDashboard.routes.tasks import routes_tasks
     from OrganizerDashboard.routes.hardware import routes_hardware
-    from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
+    try:
+        from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
+        print("✓ api_recent_files imported successfully")
+    except Exception as e:
+        print(f"✗ Failed to import api_recent_files: {e}")
+        import traceback
+        traceback.print_exc()
+        routes_api_recent_files = None
     from OrganizerDashboard.routes.api_open_file import routes_api_open_file
     from OrganizerDashboard.routes.auth_settings import routes_auth_settings
     from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
@@ -303,9 +310,12 @@ def create_app():
     app.register_blueprint(routes_network)
     app.register_blueprint(routes_tasks)
     app.register_blueprint(routes_hardware)
-    print("Registering routes_api_recent_files blueprint...")
-    app.register_blueprint(routes_api_recent_files)
-    print("✓ routes_api_recent_files registered")
+    if routes_api_recent_files:
+        print("Registering routes_api_recent_files blueprint...")
+        app.register_blueprint(routes_api_recent_files)
+        print("✓ routes_api_recent_files registered")
+    else:
+        print("⚠ Skipping routes_api_recent_files (import failed)")
     app.register_blueprint(routes_api_open_file)
     app.register_blueprint(routes_auth_settings)
     app.register_blueprint(routes_dashboard_config)
