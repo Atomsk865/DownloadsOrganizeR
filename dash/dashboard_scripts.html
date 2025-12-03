@@ -168,7 +168,26 @@ document.getElementById('login-submit').addEventListener('click', async function
             const data = await response.json();
             __rights = data.rights || {};
             __configVersion = data.config_version || 0;
-            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            
+            // Properly hide and clean up the modal
+            const modalEl = document.getElementById('loginModal');
+            if (modalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInstance.hide();
+                
+                // Wait for modal to finish hiding, then clean up
+                setTimeout(() => {
+                    // Remove any lingering backdrops
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    modalEl.style.display = 'none';
+                    modalEl.setAttribute('aria-hidden', 'true');
+                    modalEl.classList.remove('show');
+                }, 300);
+            }
+            
             document.getElementById('login-btn').classList.add('d-none');
             document.getElementById('logout-btn').classList.remove('d-none');
             // Show config link if user has manage_config or modify_layout rights
