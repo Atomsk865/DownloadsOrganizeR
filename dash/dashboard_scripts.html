@@ -63,6 +63,61 @@ async function fetchCSRFToken() {
     }
 }
 
+// Sidebar resizer logic (top-level)
+function initSidebarResizer() {
+    const resizer = document.getElementById('sidebar-resizer');
+    const container = document.querySelector('.dashboard-container');
+    if (!resizer || !container) return;
+
+    // Restore saved width
+    const saved = localStorage.getItem('sidebarWidth');
+    if (saved) {
+        document.documentElement.style.setProperty('--sidebar-width', saved);
+    }
+
+    let startX = 0;
+    function onMouseDown(e) {
+        startX = e.clientX;
+        resizer.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        const rect = container.getBoundingClientRect();
+        const diffPx = e.clientX - rect.left;
+        let pct = (diffPx / rect.width) * 100;
+        pct = Math.max(15, Math.min(35, pct)); // clamp between 15% and 35%
+        const pctStr = pct.toFixed(1) + '%';
+        document.documentElement.style.setProperty('--sidebar-width', pctStr);
+    }
+
+    function onMouseUp() {
+        resizer.classList.remove('active');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
+        try { localStorage.setItem('sidebarWidth', current); } catch(e) {}
+    }
+
+    resizer.addEventListener('mousedown', onMouseDown);
+
+    // Double-click to cycle presets
+    const presets = [15, 20, 25, 30, 35];
+    resizer.addEventListener('dblclick', function() {
+        const currentStr = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim() || '20%';
+        const current = parseFloat(currentStr);
+        let idx = presets.findIndex(p => Math.abs(p - current) < 0.51);
+        idx = (idx + 1) % presets.length;
+        const nextPct = presets[idx];
+        const pctStr = nextPct.toFixed(0) + '%';
+        document.documentElement.style.setProperty('--sidebar-width', pctStr);
+        try { localStorage.setItem('sidebarWidth', pctStr); } catch(e) {}
+    });
+}
+
 // Login functionality
 function promptLogin() {
     document.getElementById('change-password-section').style.display = 'none';
@@ -128,67 +183,7 @@ document.getElementById('login-submit').addEventListener('click', async function
             syncAuthButtons();
             initSidebarResizer();
             initMobileCollapsible();
-                updateServiceStatus();
-
-        // Sidebar resizer logic
-        function initSidebarResizer() {
-            const resizer = document.getElementById('sidebar-resizer');
-            const container = document.querySelector('.dashboard-container');
-            if (!resizer || !container) return;
-    
-            // Restore saved width
-            const saved = localStorage.getItem('sidebarWidth');
-            if (saved) {
-                document.documentElement.style.setProperty('--sidebar-width', saved);
-            }
-    
-            let startX = 0;
-            let startPct = 0;
-    
-            function onMouseDown(e) {
-                startX = e.clientX;
-                const rect = container.getBoundingClientRect();
-                const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim() || '20%';
-                startPct = parseFloat(current);
-                resizer.classList.add('active');
-                document.body.style.cursor = 'col-resize';
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            }
-    
-            function onMouseMove(e) {
-                const rect = container.getBoundingClientRect();
-                const diffPx = e.clientX - rect.left;
-                let pct = (diffPx / rect.width) * 100;
-                pct = Math.max(15, Math.min(35, pct)); // clamp between 15% and 35%
-                const pctStr = pct.toFixed(1) + '%';
-                document.documentElement.style.setProperty('--sidebar-width', pctStr);
-            }
-    
-            function onMouseUp() {
-                resizer.classList.remove('active');
-                document.body.style.cursor = '';
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
-                try { localStorage.setItem('sidebarWidth', current); } catch(e) {}
-            }
-    
-            resizer.addEventListener('mousedown', onMouseDown);
-    
-            // Double-click to cycle presets
-            const presets = [15, 20, 25, 30, 35];
-            resizer.addEventListener('dblclick', function() {
-                const currentStr = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim() || '20%';
-                const current = parseFloat(currentStr);
-                let idx = presets.findIndex(p => Math.abs(p - current) < 0.51);
-                idx = (idx + 1) % presets.length;
-                const nextPct = presets[idx];
-                const pctStr = nextPct.toFixed(0) + '%';
-                document.documentElement.style.setProperty('--sidebar-width', pctStr);
-                try { localStorage.setItem('sidebarWidth', pctStr); } catch(e) {}
-            });
-        }
+            updateServiceStatus();
                 streamLog('stdout');
                 streamLog('stderr');
             }
@@ -535,7 +530,6 @@ function syncAuthButtons() {
     if (logoutBtnSidebar) logoutBtnSidebar.onclick = logout;
 }
     syncAuthButtons();
-    syncAuthButtons();
 
 // Hide/Show Module Functions
 function toggleHideModule(moduleId) {
@@ -860,20 +854,6 @@ function applyRights() {
 
 // Service Control Functions
 async function serviceAction(action) {
-    // Service Control Functions for sidebar
-    async function startService() {
-        await performServiceAction('start');
-    }
-
-    async function stopService() {
-        await performServiceAction('stop');
-    }
-
-    async function restartService() {
-        await performServiceAction('restart');
-    }
-
-    async function performServiceAction(action) {
         try {
             if (!__authHeader) {
                 showNotification('Please login before performing service actions', 'warning');
@@ -894,33 +874,6 @@ async function serviceAction(action) {
         } catch (error) {
             showNotification(`Error: ${error.message}`, 'danger');
         }
-    }
-
-    const button = event.target;
-    button.disabled = true;
-    try {
-        if (!__authHeader) {
-            showNotification('Please login before performing service actions', 'warning');
-            button.disabled = false;
-            return;
-        }
-        const response = await fetch(`/${action}`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders()
-        });
-        const data = await response.json();
-        if (response.ok) {
-            showNotification(`Service ${action}ed successfully`, 'success');
-            setTimeout(updateServiceStatus, 1000);
-        } else {
-            showNotification(data.message || `Failed to ${action} service`, 'danger');
-        }
-    } catch (error) {
-        showNotification(`Error: ${error.message}`, 'danger');
-    } finally {
-        button.disabled = false;
-    }
 }
 
 // Update service status
@@ -1492,9 +1445,10 @@ async function removeRecentFile(index) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-        loadCustomWidgets();
-        initResizableTables();
-        syncAuthButtons();
+    loadCustomWidgets();
+    initResizableTables();
+    syncAuthButtons();
+    initSidebarResizer();
     // Restore auth from sessionStorage if available
     try {
         const storedAuth = sessionStorage.getItem('authHeader');
