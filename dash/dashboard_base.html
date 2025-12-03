@@ -912,6 +912,31 @@
                 tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
             }
         });
+
+        // Fallback stubs to prevent inline onclick errors when scripts haven't loaded
+        (function(){
+            const warn = (name)=>()=>console.warn(`Function ${name} is not defined yet.`);
+            const ensure = (name)=>{ if(typeof window[name] !== 'function') window[name] = warn(name); };
+            [
+                'loadDuplicates',
+                'revealPublicIP',
+                'hidePublicIP',
+                'toggleNotificationCenter',
+                'addCustomWidget',
+                'promptLogin',
+                'logout',
+                'resetDashboardLayout',
+                'showHiddenModules',
+                'copyServiceName',
+                'refreshRecentFiles',
+                'toggleHideModule',
+                'saveSettings',
+                'addCategoryRow',
+                'saveConfiguration',
+                'addCustomRouteRow',
+                'addTagRouteRow'
+            ].forEach(ensure);
+        })();
     </script>
     <style>
         /* Global modern UI polish */
