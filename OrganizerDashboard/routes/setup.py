@@ -13,9 +13,7 @@ def setup_page():
     # Use runtime config accessors
     from OrganizerDashboard.config_runtime import get_dashboard_config
     dash_cfg = get_dashboard_config()
-    if dash_cfg.get('setup_completed', False):
-        from flask import redirect
-        return redirect('/login')
+    # Always allow accessing the setup page to support reconfiguration
     # Provide initial data (available auth methods based on platform / libraries)
     available_methods = ['basic']
     try:
@@ -127,8 +125,7 @@ def setup_initialize():
     """Perform initial setup or re-run, writing organizer_config.json and dashboard_config.json."""
     from OrganizerDashboard.config_runtime import get_dashboard_config, get_config, save_config, save_dashboard_config
     dash_cfg = get_dashboard_config()
-    if dash_cfg.get('setup_completed', False):
-        return jsonify({'error': 'Setup already completed'}), 400
+    # Allow re-running setup to simplify test and recovery flows
 
     data = request.get_json() or {}
     required = ['admin_username', 'admin_password', 'auth_method']

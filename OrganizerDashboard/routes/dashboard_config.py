@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for
+from flask_login import current_user
 import json
 import sys
 import bcrypt
@@ -8,13 +9,12 @@ routes_dashboard_config = Blueprint('routes_dashboard_config', __name__)
 @routes_dashboard_config.route('/config', methods=['GET'])
 def config_page():
     """Render dashboard configuration UI (users, roles, layout)."""
-    from OrganizerDashboard.auth.auth import requires_auth
-    @requires_auth
-    def _inner():
-        main = sys.modules['__main__']
-        dash_cfg = getattr(main, 'dashboard_config', {})
-        return render_template('dashboard_config.html', roles=dash_cfg.get('roles', {}))
-    return _inner()
+    # Redirect unauthenticated users to login, otherwise render config
+    if not getattr(current_user, 'is_authenticated', False):
+        return redirect(url_for('routes_login.login_page'))
+    main = sys.modules['__main__']
+    dash_cfg = getattr(main, 'dashboard_config', {})
+    return render_template('dashboard_config.html', roles=dash_cfg.get('roles', {}))
 
 @routes_dashboard_config.route('/api/dashboard/config', methods=['GET'])
 def get_dashboard_config():
