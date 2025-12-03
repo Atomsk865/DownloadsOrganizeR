@@ -338,6 +338,12 @@ function submitSetup(){
           const p = adminPassword;
           if (u && p && window.btoa) {
             window.__authHeader = 'Basic ' + btoa(u + ':' + p);
+            // Persist auth to sessionStorage so config page can use it
+            try {
+              sessionStorage.setItem('authHeader', window.__authHeader);
+            } catch (storageErr) {
+              console.warn('Could not save auth to sessionStorage:', storageErr);
+            }
           }
         } catch (e) { /* no-op */ }
         showNotification('Setup complete! Redirecting to configuration…', 'success');

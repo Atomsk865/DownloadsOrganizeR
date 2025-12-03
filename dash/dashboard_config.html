@@ -1881,9 +1881,17 @@ async function saveFeaturesConfig(){
       if (typeof window.showNotification === 'function') {
         window.showNotification('Features saved', 'success');
       }
+      // Reload organizer config to update VT API key and feature flags globally
+      if(typeof window.loadOrganizerConfig === 'function') {
+        await window.loadOrganizerConfig();
+      }
       // Reload developer mode to apply changes immediately
       if(typeof loadDeveloperMode === 'function') {
         loadDeveloperMode();
+      }
+      // Refresh recent files to show/hide VT button
+      if(typeof refreshRecentFiles === 'function') {
+        refreshRecentFiles();
       }
     }
     else { 
