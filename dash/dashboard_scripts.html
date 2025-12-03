@@ -853,6 +853,18 @@ function applyRights() {
 }
 
 // Service Control Functions
+async function startService() {
+    await serviceAction('start');
+}
+
+async function stopService() {
+    await serviceAction('stop');
+}
+
+async function restartService() {
+    await serviceAction('restart');
+}
+
 async function serviceAction(action) {
         try {
             if (!__authHeader) {
@@ -2276,11 +2288,11 @@ async function deleteNotification(notificationId) {
     }
 }
 
-// Enhanced showNotification to also save to notification center
-const originalShowNotification = showNotification;
-function showNotification(message, type) {
-    // Show toast notification
-    originalShowNotification(message, type);
+// Enhanced showNotification with notification center integration
+// (Note: original showNotification is defined earlier in the script)
+function showNotificationWithHistory(message, type) {
+    // Show toast notification using original function
+    showNotification(message, type);
     
     // Save to notification center
     fetch('/api/notifications', {
@@ -2588,61 +2600,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
-// Service control functions
-async function startService() {
-    await serviceAction('start');
-}
-
-async function stopService() {
-    await serviceAction('stop');
-}
-
-async function restartService() {
-    await serviceAction('restart');
-}
-
-async function serviceAction(action) {
-    try {
-        if (!__authHeader) {
-            showNotification('Please login before performing service actions', 'warning');
-            return;
-        }
-        const response = await fetch(`/${action}`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders()
-        });
-        const data = await response.json();
-        if (response.ok) {
-            showNotification(`Service ${action}ed successfully`, 'success');
-            setTimeout(updateServiceStatus, 1000);
-        } else {
-            showNotification(data.message || `Failed to ${action} service`, 'danger');
-        }
-    } catch (error) {
-        showNotification(`Error: ${error.message}`, 'danger');
-    }
-}
-
-async function updateServiceStatus() {
-    try {
-        const response = await fetch('/metrics');
-        const data = await response.json();
-        const badge = document.getElementById('service-badge');
-        const sidebarBadge = document.getElementById('service-badge-sidebar');
-        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
-        if (badge) {
-            badge.textContent = data.service_status;
-            badge.className = `badge ${statusClass} ms-1`;
-        }
-        if (sidebarBadge) {
-            sidebarBadge.textContent = data.service_status;
-            sidebarBadge.className = `badge ${statusClass} ms-1`;
-        }
-    } catch (error) {
-        console.error('Error updating service status:', error);
-    }
-}
+// Note: Service control functions (startService, stopService, restartService, serviceAction, updateServiceStatus)
+// are already defined earlier in dashboard_scripts.html around line 856-900.
 
 // Export implementations to window for inline handlers
 (function(){
