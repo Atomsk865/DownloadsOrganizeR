@@ -16,11 +16,12 @@
             left: calc(var(--sidebar-width, 20%));
             top: 0;
             width: 6px;
-            height: 100vh;
+            height: 100%; /* limit to container height */
             cursor: col-resize;
             background: transparent;
             border-left: 2px solid transparent;
-            z-index: 200;
+            z-index: 20; /* below overlays, above content edge */
+            pointer-events: auto; /* only this thin strip is interactive */
         }
         .sidebar-resizer:hover, .sidebar-resizer.active {
             border-left-color: #0d6efd;

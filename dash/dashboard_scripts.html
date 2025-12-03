@@ -529,6 +529,10 @@ function syncAuthButtons() {
             configLinkSidebar.classList.remove('d-none');
         }
     }
+    
+    // Ensure sidebar button onclicks are wired even if DOM updated
+    if (loginBtnSidebar) loginBtnSidebar.onclick = promptLogin;
+    if (logoutBtnSidebar) logoutBtnSidebar.onclick = logout;
 }
     syncAuthButtons();
     syncAuthButtons();
