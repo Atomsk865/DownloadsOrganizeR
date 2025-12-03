@@ -12,11 +12,11 @@
             </div>
             <div class="modal-body">
                 <div class="mb-2">
-                    <label class="form-label">Username</label>
+                    <label for="login-username" class="form-label">Username</label>
                     <input id="login-username" class="form-control" type="text" value="admin">
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Password</label>
+                    <label for="login-password" class="form-label">Password</label>
                     <input id="login-password" class="form-control" type="password">
                 </div>
                 <div id="change-password-section" style="display:none;">
@@ -1553,8 +1553,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Statistics Charts
 // Duplicate Files Management
-async function loadDuplicates() {
+async function refreshRecentFiles() {
+    const btn = document.getElementById('btn-recent-refresh');
+    const originalText = btn ? btn.innerHTML : '';
+    
     try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+        }
+        
         const res = await fetch('/api/duplicates', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -1566,15 +1574,32 @@ async function loadDuplicates() {
             // Update badges
             document.getElementById('duplicates-count').textContent = 
                 `${data.total_duplicates} duplicate group${data.total_duplicates !== 1 ? 's' : ''}`;
+        showNotification('Recent files refreshed successfully', 'success');
             document.getElementById('wasted-space').textContent = 
                 `${data.wasted_space_human} wasted`;
+        showNotification('Failed to refresh: ' + error.message, 'danger');
             
-            // Render duplicate groups
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading recent files</td></tr>';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
             const container = document.getElementById('duplicates-container');
             
             if (data.duplicates.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-success">
+async function loadDuplicates() {
+    const btn = document.getElementById('btn-duplicates-refresh');
+    const originalText = btn ? btn.innerHTML : '';
+    
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Scanning...';
+        }
+        
                         <i class="bi bi-check-circle fs-1"></i>
                         <p>No duplicate files found!</p>
                     </div>
@@ -1582,20 +1607,23 @@ async function loadDuplicates() {
                 return;
             }
             
+            showNotification(`Found ${data.total_duplicates} duplicate group${data.total_duplicates !== 1 ? 's' : ''}`, 'info');
             let html = '';
-            data.duplicates.forEach((group, index) => {
                 html += `
+        showNotification('Resetting dashboard layout...', 'info');
                     <div class="card mb-3">
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span>
+        setTimeout(() => location.reload(), 500);
                                     <strong>${group.count} files</strong> - ${group.total_size_human}
                                     <small class="text-muted">(Hash: ${group.hash.substring(0, 12)}...)</small>
                                 </span>
-                                <div>
                                     <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})">
                                         <i class="bi bi-clock"></i> Keep Newest
                                     </button>
+    
+    showNotification('Resetting to setup wizard...', 'warning');
+    
                                     <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})">
                                         <i class="bi bi-file-earmark"></i> Keep Largest
                                     </button>
@@ -1650,11 +1678,19 @@ async function loadDuplicates() {
             // Store data globally for action functions
             window.duplicatesData = data;
         } else {
-            showToast('Failed to load duplicates', 'error');
+            console.error('Failed to load duplicates');
+            showNotification('Failed to load duplicates', 'danger');
         }
     } catch (error) {
         console.error('Error loading duplicates:', error);
-        showToast('Error loading duplicates: ' + error.message, 'error');
+        showNotification('Error loading duplicates: ' + error.message, 'danger');
+    } finally {
+        const btn = document.getElementById('btn-duplicates-refresh');
+        const originalText = '<i class="bi bi-arrow-clockwise"></i> Refresh';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
 }
 

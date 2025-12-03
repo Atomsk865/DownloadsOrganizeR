@@ -8,11 +8,11 @@
       <form id="setup-form" onsubmit="return false;">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label mb-1"><small><b>Admin Username</b></small></label>
+            <label for="admin-username" class="form-label mb-1"><small><b>Admin Username</b></small></label>
             <input class="form-control form-control-sm" id="admin-username" placeholder="admin" value="admin" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label mb-1 d-flex align-items-center justify-content-between">
+            <label for="admin-password" class="form-label mb-1 d-flex align-items-center justify-content-between">
               <small><b>Admin Password</b></small>
               <div class="d-flex align-items-center gap-2">
                 <a href="/docs/authentication" target="_blank" class="text-decoration-none"><small><i class="bi bi-book"></i> Docs</small></a>
@@ -37,7 +37,7 @@
         <hr/>
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label mb-1"><small><b>Authentication Method</b></small></label>
+            <label for="auth-method" class="form-label mb-1"><small><b>Authentication Method</b></small></label>
             <select class="form-select form-select-sm" id="auth-method" onchange="toggleAuthSections()">
               {% for m in available_methods %}
                 <option value="{{ m }}">{{ m|capitalize }}</option>
@@ -45,7 +45,7 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label mb-1"><small><b>Enable Fallback (Basic)</b></small></label>
+            <label for="fallback-enabled" class="form-label mb-1"><small><b>Enable Fallback (Basic)</b></small></label>
             <select class="form-select form-select-sm" id="fallback-enabled">
               <option value="true" selected>Yes</option>
               <option value="false">No</option>
@@ -62,7 +62,7 @@
             </div>
             <div class="row g-2">
               <div class="col-md-8">
-                <label class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
+                <label for="vt-api-key" class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
                 <input class="form-control form-control-sm" id="vt-api-key" placeholder="Paste your VirusTotal API key" value="{{ vt_api_key }}">
                 <small class="text-muted">Used for hash lookups in Recent Files. If empty, VT features are disabled.</small>
               </div>
@@ -70,15 +70,15 @@
                 <label class="form-label mb-1"><small><b>Feature Toggles</b></small></label>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="feat-virustotal" {% if features.virustotal_enabled %}checked{% endif %}>
-                  <label class="form-check-label"><small>Enable VirusTotal integration</small></label>
+                  <label for="feat-virustotal" class="form-check-label"><small>Enable VirusTotal integration</small></label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="feat-duplicates" {% if features.duplicates_enabled %}checked{% endif %}>
-                  <label class="form-check-label"><small>Enable Duplicate Detection</small></label>
+                  <label for="feat-duplicates" class="form-check-label"><small>Enable Duplicate Detection</small></label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="feat-reports" {% if features.reports_enabled %}checked{% endif %}>
-                  <label class="form-check-label"><small>Enable Reports & Analytics</small></label>
+                  <label for="feat-reports" class="form-check-label"><small>Enable Reports & Analytics</small></label>
                 </div>
               </div>
             </div>
@@ -156,7 +156,7 @@
               </div>
               <div class="col-md-6 form-check ms-2">
                 <input class="form-check-input" type="checkbox" id="ldap-use-ssl" checked>
-                <label class="form-check-label"><small>Use SSL/TLS</small></label>
+                <label for="ldap-use-ssl" class="form-check-label"><small>Use SSL/TLS</small></label>
               </div>
             </div>
           </div>
