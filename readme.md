@@ -1,279 +1,115 @@
-# DownloadsOrganizeR 📦
+# DownloadsOrganizeR
 
-Automated, real-time organization of your Downloads folder plus a role-aware web dashboard for monitoring, configuration, and service control.
+DownloadsOrganizeR is a Windows-based service and web dashboard that automatically organizes files in your Downloads folder into intuitive categories (Images, Videos, Documents, Archives, Audio, Installers, Code, Data, Apps, and Other). It monitors your Downloads in real time, moves files to categorized subfolders, and provides a browser-based dashboard for visibility, configuration, and health monitoring.
 
----
+This README is user‑centric: quick install, how it works, features, configuration, and troubleshooting. For deeper details, see `docs/`.
 
-## Quick Start (5 minutes)
+- Supported OS: Windows (service). Development can run cross‑platform for the dashboard, but organizing service targets Windows.
 
-### Option 1: Automated Service Installation (Recommended)
+## Quick Start
 
-1. **Install Python** if you haven't already ([python.org](https://www.python.org/downloads/))
+1. Install prerequisites
 
-1. **Download this repository** or clone it:
+   - Windows 10/11
+   - PowerShell 5.1+
+   - Python 3.10+
 
-```bash
-git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
-cd DownloadsOrganizeR
-```
+2. Install the service (Administrator)
 
-1. **Run the installer** (Right-click PowerShell → Run as Administrator):
+   - Open PowerShell as Admin in the repo folder
+   - Run:
 
-  ```powershell
-  .\Install-And-Monitor-OrganizerService.ps1
+     ```powershell
+     ./Install-And-Monitor-OrganizerService.ps1
+     ```
+
+   - This installs NSSM, copies `Organizer.py` to `C:\Scripts`, and creates a Windows service `DownloadsOrganizer`.
+
+3. Start the Dashboard (optional for monitoring)
+
+  Run:
+
+  ```bash
+  pip install -r requirements.txt
+  python OrganizerDashboard.py
   ```
 
-1. **Done!** The service will start automatically on boot and organize your Downloads in real-time.
+  Visit `http://localhost:5000` (default credentials: `admin` / `change_this_password`)
 
-### Option 2: Manual Run (No Service)
+Want more detail? See `docs/INSTALL.md`.
 
+## What It Does
 
-```powershell
-cd DownloadsOrganizeR
-pip install -r requirements.txt
-python Organizer.py
+- Watches your Downloads folder for new or changed files.
+- Classifies by extension into categories.
+- Moves files into categorized subfolders inside Downloads.
+- Ensures unique filenames if duplicates exist (`name (1).ext`).
+- Skips incomplete downloads (e.g., `.crdownload`, `.tmp`).
+- Provides a web dashboard for monitoring, configuration, logs, and health.
+
+## Key Features
+
+- Real‑time organization using Watchdog.
+- Extension‑to‑category routing with configurable rules.
+- Collision‑safe moves via unique paths.
+- Dashboard modules: Recent Files, Duplicates, File Categories, Resource Monitor, System Info, Statistics, Settings, Admin Tools, Reports & Analytics, User Links.
+- Health thresholds (CPU, memory) configurable.
+- Service logging and dashboard log management.
+
+See `docs/FEATURES.md` for full descriptions and scenarios.
+
+## How It Works
+
+```text
+User Downloads → [Watchdog Observer] → Organizer.py → Categorizes Files
+                                              ↓
+                                    organizer_config.json (routes)
+                                              ↓
+                                    OrganizerDashboard.py
+                                    (reads logs & config)
 ```
 
----
+Core paths:
 
-## Dashboard 📊
+- Organizer service: `C:\Scripts\Organizer.py`
+- Config: `C:\Scripts\organizer_config.json`
+- Service logs: `C:\Scripts\service-logs\`
+- Downloads: `C:\Users\{username}\Downloads\`
 
-Monitor, configure, and customize layout & access control from the web dashboard:
+Learn more in `docs/ARCHITECTURE.md`.
 
+## Configuration Overview
 
-```bash
-pip install -r requirements.txt
-python OrganizerDashboard.py
-```
+- The dashboard reads and writes `organizer_config.json` for routes and thresholds.
+- Organizer.py currently contains a hardcoded `EXTENSION_MAP`. Keep it in sync with config when adding categories.
+- Environment variables for dashboard auth:
+  - `DASHBOARD_USER` (default `admin`)
+  - `DASHBOARD_PASS` (default `change_this_password`)
 
-Then open: <http://localhost:5000>
-
-### Default credentials (Dashboard)
-
-- **Username:** `admin`
-- **Password:** `change_this_password`
-
-You can override these by setting environment variables before launching the dashboard:
-
-
-```bash
-export DASHBOARD_USER=myusername
-export DASHBOARD_PASS=mypassword
-python OrganizerDashboard.py
-```
-
-### Dashboard Features
-
-- 🔍 Real-time service monitoring & control (rights gated)
-- 📈 CPU, RAM, network usage & top processes
-- 🧩 Drag-and-drop dashboard layout editor (`/config`)
-- 👥 User & role management (admin/operator/viewer)
-- ⚙️ File organization rule editor
-- 📋 Live stdout/stderr log streaming & clearing
-- 💾 Drive space overview & hardware info
-- 🪪 Multiple authentication methods (Basic, LDAP, Windows) with fallback
-- 🛡️ Rights-based route protection (`manage_service`, `manage_config`, `modify_layout`, `view_metrics`, `view_recent_files`, `send_reports`)
-- 📂 Recent File Movements - View and manage recently organized files with quick actions (open, reveal, remove)
-- 🔗 User Links - Create custom quick-access links with categories and descriptions
-- 📊 Reports & Analytics - Comprehensive file organization reports with advanced filtering:
-  - Date range filtering (today, yesterday, last 7/30 days, custom range)
-  - Category filtering (Images, Videos, Documents, etc.)
-  - File size analysis and storage usage
-  - Organization pattern insights
-  - Export capabilities
-
-### Authentication & Authorization Options
-
-Supported auth methods:
-
-1. **Basic** (Default) – Bcrypt hashed password (admin + additional configured users)
-2. **LDAP/Active Directory** – Bind + optional group filtering
-3. **Windows Local/Domain** – Native logon (Windows only)
-
-If the primary method fails and fallback is enabled, Basic authentication is attempted.
-
-Configure via `organizer_config.json` or `/api/auth/settings`:
-
-```json
-{
-  "auth_method": "basic",  // or "ldap" or "windows"
-  "auth_fallback_enabled": true
-}
-```
-
-📖 **See [AUTHENTICATION.md](AUTHENTICATION.md) for complete setup guide**  
-⚡ **See [AUTH_QUICK_REFERENCE.md](AUTH_QUICK_REFERENCE.md) for quick commands**
-
----
-
-## What Gets Organized?
-
-Files are automatically sorted into folders by type:
-
-| Category | File Types |
-|----------|-----------|
-| **Images** | jpg, png, gif, svg, webp, heic, psd, ai, ... |
-| **Videos** | mp4, mkv, avi, mov, wmv, webm, flv, ... |
-| **Music** | mp3, wav, flac, aac, ogg, wma, m4a, ... |
-| **Documents** | pdf, doc, docx, txt, excel, ppt, csv, ... |
-| **Archives** | zip, rar, 7z, tar, gz, iso, ... |
-| **Executables** | exe, msi, bat, cmd, ps1, app, ... |
-| **Scripts** | py, js, html, css, json, xml, ts, php, ... |
-| **Fonts** | ttf, otf, woff, eot, ... |
-| **Shortcuts** | lnk, url, webloc, ... |
-| **Logs** | log, out, err |
-| **Other** | Everything else |
-
----
-
-## Configuration
-
-### File Organization Rules
-
-Dashboard main page: modify categories in the "File Categories" section and click Save. Persisted to `organizer_config.json`.
-
-### Dashboard User / Role / Layout Configuration
-
-Navigate to `/config` after login:
-
-- Add/update/delete non-primary users (bcrypt-hashed passwords)
-- Assign roles (admin/operator/viewer) with predefined rights
-- Drag to reorder sections; hide with checkboxes; save persists to `dashboard_config.json`
-
-### Watch Folders & VirusTotal
-
-- `watch_folders`: Absolute paths the Organizer monitors. Configure during Setup (Recommended Watch Folders) or later under Configuration → Watched Folders. Used by `Organizer.py` to start filesystem observers and for initial scans.
-- `vt_api_key`: VirusTotal v3 API key for hash lookups. Configure during Setup or under Configuration → Features & Integrations. When present and enabled, Recent Files shows a “Scan with VirusTotal” button and a detailed modal; responses are cached to `./config/json/vt_cache.json`.
-
-Feature toggles: When a feature is disabled in `features` (e.g., `virustotal_enabled`, `duplicates_enabled`, `reports_enabled`), related UI controls are hidden or show a small disabled notice, and API endpoints return empty data or a 400 error where appropriate.
-
-Example `organizer_config.json` snippet:
-
-```json
-{
-  "watch_folders": [
-    "C:/Users/YourName/Downloads",
-    "/home/youruser/Downloads"
-  ],
-  "vt_api_key": "YOUR_VIRUSTOTAL_API_KEY",
-  "features": {
-    "virustotal_enabled": true,
-    "duplicates_enabled": true,
-    "reports_enabled": true
-  },
-  "file_moves_json": "./config/json/file_moves.json",
-  "file_hashes_json": "./config/json/file_hashes.json",
-  "vt_cache_json": "./config/json/vt_cache.json",
-  "logs_dir": "./logs"
-}
-```
-
-See Configuration → Features & Integrations in the dashboard to adjust these at any time.
-
-
-### Environment Variables (Primary Admin Credentials)
-
-Set before starting `OrganizerDashboard.py` to override defaults:
-
-```bash
-set DASHBOARD_USER=myusername
-set DASHBOARD_PASS=mypassword
-python OrganizerDashboard.py
-```
-
----
+See `docs/INSTALL.md` for configuration steps.
 
 ## Troubleshooting
 
-### Service won't start?
+- Files not moving? Check `C:\Users\{username}\Downloads\organizer.log` for details.
+- Incomplete downloads are ignored until finished (`.crdownload`, `.part`, `.tmp`).
+- Verify extensions exist in routes (case‑insensitive).
+- Confirm destination folders are writable.
+- Dashboard not loading? Ensure `pip install -r requirements.txt` and Python 3.10+.
 
-- Check service logs (NSSM): `C:\<InstallDir>\service-logs\organizer_stdout.log`
-- Ensure Python is in PATH: `python --version`
-- Try running manually from install directory: `cd C:\<InstallDir> && python Organizer.py`
-
-### Dashboard won't connect?
-
-- Verify service is running: Check Windows Services
-- Ensure port 5000 is available: `netstat -ano | findstr :5000`
-- Check firewall settings
-
-### Files not organizing?
-
-- Check the organizer log: `./logs/organizer.log`
-- Verify routes/categories in `organizer_config.json`
-- Ensure destination folders are writable
-- Confirm JSON state paths exist: `./config/json/` (created automatically)
-
----
+More in `docs/BUGS.md` and `docs/INSTALL.md`.
 
 ## Uninstall
 
-Remove the Windows service:
-
-```powershell
-nssm remove DownloadsOrganizer confirm
-```
-
-Then delete the installed organizer directory (e.g., `C:\<InstallDir>`) if desired.
-
----
-
-## Requirements
-
-- **Windows** (Service installation only, dashboard works cross-platform)
-- **Python 3.7+**
-- **Dependencies:**
-
-```text
-watchdog==6.0.0     # File monitoring
-Flask==3.1.2        # Dashboard web framework
-psutil==7.1.3       # System metrics
-bcrypt==4.0.1       # Password hashing
-gputil==1.4.0       # GPU info (optional)
-ldap3==2.9.1        # LDAP authentication (optional)
-pywin32==306        # Windows authentication (Windows only, optional)
-flask-login==0.6.3  # Session management
-```
-
----
-
-## File Structure
-
-```text
-DownloadsOrganizeR/
-├── Organizer.py                          # Core file system watcher & mover
-├── OrganizerDashboard.py                 # Flask dashboard entry point
-├── dashboard_config.json                 # Dashboard users/roles/layout (generated)
-├── organizer_config.json                 # Organizer routing & thresholds
-├── Install-And-Monitor-OrganizerService.ps1  # Windows service installer
-├── Monitor-OrganizerService.ps1          # Generated health monitor script
-├── OrganizerDashboard/                   # Dashboard blueprints & auth helpers
-├── dash/                                 # Jinja2 templates (dashboard & config)
-├── requirements.txt                      # Python dependencies
-└── readme.md                             # Project overview (this file)
-```
-
-## Latest Features (Prod-Beta Branch)
-
-### December 2025 Update
-
-- ✅ **User Links Manager** - Create and organize custom quick-access links with categories
-- ✅ **Reports & Analytics** - Comprehensive file organization analytics with advanced filtering
-- ✅ **Recent Files Enhancement** - Quick actions to open files and reveal in folder
-- ✅ **Template Fixes** - Resolved Jinja2 template syntax errors for improved stability
-- ✅ **Config Page Repairs** - Fixed non-functional buttons (Factory Reset, Service Management, Auth tools)
-- ✅ **CSRF Protection** - Enhanced security with flask-wtf integration
-
-See `CHANGELOG_DEV_vs_MAIN.md` for full differences from `main` (roles, layout editor, rights enforcement, multi-user support).
-
----
+- Remove the Windows service:
+  - `nssm remove DownloadsOrganizer confirm`
 
 ## License
 
-[LICENSE](LICENSE)
+See `LICENSE`.
 
----
+## Documentation Index
 
-## Support
-
-Found a bug? Have a feature request? Open an issue on [GitHub](https://github.com/Atomsk865/DownloadsOrganizeR/issues).
+- `docs/INSTALL.md` – Installation and configuration
+- `docs/FEATURES.md` – Feature details and scenarios
+- `docs/BUGS.md` – Known issues and limitations
+- `docs/ARCHITECTURE.md` – System overview and file paths
