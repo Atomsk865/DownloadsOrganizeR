@@ -261,8 +261,41 @@ function resetDashboardLayout() {
 }
 
 // Custom Widget Functions
-function editCustomWidget() {
-    const content = document.getElementById('custom-widget-content');
+// Custom Widget Functions - Multiple widgets support
+let customWidgetCounter = 0;
+
+function addCustomWidget() {
+    const container = document.getElementById('custom-widgets-container');
+    if (!container) return;
+    
+    customWidgetCounter++;
+    const widgetId = 'custom-widget-' + customWidgetCounter;
+    
+    const widgetHtml = `
+        <div class="dashboard-module" data-module="${widgetId}" draggable="true">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <b>Custom Widget ${customWidgetCounter}</b>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widgetId}')">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    <span class="hide-toggle" onclick="removeCustomWidget('${widgetId}')" title="Remove widget"><i class="bi bi-trash"></i></span>
+                    <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                </div>
+                <div class="card-body p-3 custom-widget-content" id="${widgetId}-content">
+                    <p class="text-muted text-center mb-0">Click Edit to add custom content, embeds, or widgets</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', widgetHtml);
+    saveCustomWidgets();
+    initDragAndDrop(); // Re-init drag for new widget
+}
+
+function editCustomWidget(widgetId) {
+    const content = document.getElementById(widgetId + '-content');
     if (!content) return;
     
     const currentHtml = content.innerHTML;
@@ -270,17 +303,174 @@ function editCustomWidget() {
     
     if (newHtml !== null) {
         content.innerHTML = newHtml;
-        localStorage.setItem('customWidget_' + (__authHeader || 'default'), newHtml);
+        saveCustomWidgets();
     }
 }
 
-function loadCustomWidget() {
-    const saved = localStorage.getItem('customWidget_' + (__authHeader || 'default'));
-    const content = document.getElementById('custom-widget-content');
-    if (saved && content) {
-        content.innerHTML = saved;
+function removeCustomWidget(widgetId) {
+    if (!confirm('Remove this widget?')) return;
+    const widget = document.querySelector(`[data-module="${widgetId}"]`);
+    if (widget) {
+        widget.remove();
+        saveCustomWidgets();
     }
 }
+
+function saveCustomWidgets() {
+    const container = document.getElementById('custom-widgets-container');
+    if (!container) return;
+    
+    const widgets = [];
+    container.querySelectorAll('.dashboard-module').forEach(widget => {
+        const id = widget.dataset.module;
+        const content = document.getElementById(id + '-content');
+        if (content) {
+            widgets.push({
+                id: id,
+                html: content.innerHTML
+            });
+        }
+    });
+    
+    localStorage.setItem('customWidgets_' + (__authHeader || 'default'), JSON.stringify(widgets));
+}
+
+function loadCustomWidgets() {
+    const saved = localStorage.getItem('customWidgets_' + (__authHeader || 'default'));
+    if (!saved) return;
+    
+    try {
+        const widgets = JSON.parse(saved);
+        const container = document.getElementById('custom-widgets-container');
+        if (!container) return;
+        
+        container.innerHTML = ''; // Clear existing
+        
+        widgets.forEach(widget => {
+            const widgetNum = widget.id.replace('custom-widget-', '');
+            customWidgetCounter = Math.max(customWidgetCounter, parseInt(widgetNum) || 0);
+            
+            const widgetHtml = `
+                <div class="dashboard-module" data-module="${widget.id}" draggable="true">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <b>Custom Widget ${widgetNum}</b>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widget.id}')">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <span class="hide-toggle" onclick="removeCustomWidget('${widget.id}')" title="Remove widget"><i class="bi bi-trash"></i></span>
+                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                        </div>
+                        <div class="card-body p-3 custom-widget-content" id="${widget.id}-content">
+                            ${widget.html}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', widgetHtml);
+        });
+        
+        initDragAndDrop(); // Re-init drag for loaded widgets
+    } catch (e) {
+        console.error('Error loading custom widgets:', e);
+    }
+}
+// Resizable Table Columns
+function makeTableResizable(table) {
+    if (!table || table.classList.contains('resizable-init')) return;
+    table.classList.add('resizable-table', 'resizable-init');
+    
+    const thead = table.querySelector('thead');
+    if (!thead) return;
+    
+    const headers = thead.querySelectorAll('th');
+    headers.forEach((th, index) => {
+        // Skip last column
+        if (index === headers.length - 1) return;
+        
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        th.style.position = 'relative';
+        th.appendChild(handle);
+        
+        let startX, startWidth, targetTh;
+        
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            targetTh = this.parentElement;
+            startX = e.pageX;
+            startWidth = targetTh.offsetWidth;
+            
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        
+        function onMouseMove(e) {
+            if (!targetTh) return;
+            const diff = e.pageX - startX;
+            const newWidth = Math.max(50, startWidth + diff);
+            targetTh.style.width = newWidth + 'px';
+            targetTh.style.minWidth = newWidth + 'px';
+        }
+        
+        function onMouseUp() {
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            targetTh = null;
+        }
+    });
+}
+
+// Make all tables resizable
+function initResizableTables() {
+    document.querySelectorAll('.dashboard-module table, .config-module table').forEach(table => {
+        makeTableResizable(table);
+    });
+}
+
+// Sync sidebar buttons with main buttons
+function syncAuthButtons() {
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const configLink = document.getElementById('config-link');
+    
+    const loginBtnSidebar = document.getElementById('login-btn-sidebar');
+    const logoutBtnSidebar = document.getElementById('logout-btn-sidebar');
+    const configLinkSidebar = document.getElementById('config-link-sidebar');
+    
+    if (loginBtn && loginBtnSidebar) {
+        if (loginBtn.classList.contains('d-none')) {
+            loginBtnSidebar.classList.add('d-none');
+        } else {
+            loginBtnSidebar.classList.remove('d-none');
+        }
+    }
+    
+    if (logoutBtn && logoutBtnSidebar) {
+        if (logoutBtn.classList.contains('d-none')) {
+            logoutBtnSidebar.classList.add('d-none');
+        } else {
+            logoutBtnSidebar.classList.remove('d-none');
+        }
+    }
+    
+    if (configLink && configLinkSidebar) {
+        if (configLink.classList.contains('d-none')) {
+            configLinkSidebar.classList.add('d-none');
+        } else {
+            configLinkSidebar.classList.remove('d-none');
+        }
+    }
+}
+    syncAuthButtons();
+    syncAuthButtons();
 
 // Hide/Show Module Functions
 function toggleHideModule(moduleId) {
@@ -656,6 +846,42 @@ function applyRights() {
 
 // Service Control Functions
 async function serviceAction(action) {
+    // Service Control Functions for sidebar
+    async function startService() {
+        await performServiceAction('start');
+    }
+
+    async function stopService() {
+        await performServiceAction('stop');
+    }
+
+    async function restartService() {
+        await performServiceAction('restart');
+    }
+
+    async function performServiceAction(action) {
+        try {
+            if (!__authHeader) {
+                showNotification('Please login before performing service actions', 'warning');
+                return;
+            }
+            const response = await fetch(`/${action}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: getAuthHeaders()
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showNotification(`Service ${action}ed successfully`, 'success');
+                setTimeout(updateServiceStatus, 1000);
+            } else {
+                showNotification(data.message || `Failed to ${action} service`, 'danger');
+            }
+        } catch (error) {
+            showNotification(`Error: ${error.message}`, 'danger');
+        }
+    }
+
     const button = event.target;
     button.disabled = true;
     try {
@@ -688,10 +914,22 @@ async function updateServiceStatus() {
     try {
         const response = await fetch('/metrics');
         const data = await response.json();
+        
+        // Update both main and sidebar badges
         const badge = document.getElementById('service-badge');
+        const badgeSidebar = document.getElementById('service-badge-sidebar');
         const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
-        badge.textContent = data.service_status;
-        badge.className = `badge ${statusClass} ms-1`;
+        
+        if (badge) {
+            badge.textContent = data.service_status;
+            badge.className = `badge ${statusClass} ms-1`;
+        }
+        
+        if (badgeSidebar) {
+            badgeSidebar.textContent = data.service_status;
+            badgeSidebar.className = `badge ${statusClass} ms-1`;
+            badgeSidebar.style.fontSize = '0.7rem';
+        }
     } catch (error) {
         console.error('Error updating service status:', error);
     }
@@ -1240,6 +1478,9 @@ async function removeRecentFile(index) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+        loadCustomWidgets();
+        initResizableTables();
+        syncAuthButtons();
     // Restore auth from sessionStorage if available
     try {
         const storedAuth = sessionStorage.getItem('authHeader');
