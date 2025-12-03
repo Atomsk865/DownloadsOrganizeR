@@ -843,24 +843,6 @@ function applyRights() {
             b.title = 'Insufficient rights (manage_service)';
         });
     }
-    async function pollRights() {
-        if (!__authHeader) return; // only when logged in
-        try {
-            const resp = await fetch('/auth/session', { headers: getAuthHeaders(), credentials: 'include' });
-            if (!resp.ok) return;
-            const data = await resp.json();
-            const newVersion = data.config_version || 0;
-            if (newVersion !== __configVersion) {
-                __configVersion = newVersion;
-                __rights = data.rights || {};
-                applyRights();
-                if (__rights.view_metrics) updateServiceStatus();
-                if (__rights.view_recent_files) refreshRecentFiles();
-            }
-        } catch (e) {
-            // Silent failures acceptable
-        }
-    }
     // Config save gating
     if (!__rights.manage_config) {
         const cfgBtn = document.querySelector('#config-form button.btn-primary');
@@ -877,6 +859,26 @@ function applyRights() {
     // Call page-specific rights application if available (e.g., for config page)
     if (typeof applyConfigRights === 'function') {
         applyConfigRights();
+    }
+}
+
+// Poll rights periodically to detect config changes
+async function pollRights() {
+    if (!__authHeader) return; // only when logged in
+    try {
+        const resp = await fetch('/auth/session', { headers: getAuthHeaders(), credentials: 'include' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const newVersion = data.config_version || 0;
+        if (newVersion !== __configVersion) {
+            __configVersion = newVersion;
+            __rights = data.rights || {};
+            applyRights();
+            if (__rights.view_metrics) updateServiceStatus();
+            if (__rights.view_recent_files) refreshRecentFiles();
+        }
+    } catch (e) {
+        // Silent failures acceptable
     }
 }
 
