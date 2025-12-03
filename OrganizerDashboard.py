@@ -303,7 +303,9 @@ def create_app():
     app.register_blueprint(routes_network)
     app.register_blueprint(routes_tasks)
     app.register_blueprint(routes_hardware)
+    print("Registering routes_api_recent_files blueprint...")
     app.register_blueprint(routes_api_recent_files)
+    print("✓ routes_api_recent_files registered")
     app.register_blueprint(routes_api_open_file)
     app.register_blueprint(routes_auth_settings)
     app.register_blueprint(routes_dashboard_config)
@@ -343,6 +345,14 @@ def create_app():
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
+
+    # Debug: List all registered routes
+    print("\n=== Registered Routes ===")
+    for rule in app.url_map.iter_rules():
+        if 'recent_files' in rule.rule:
+            methods = ', '.join(rule.methods) if rule.methods else 'GET'
+            print(f"  {rule.rule} -> {rule.endpoint} [{methods}]")
+    print("========================\n")
 
     return app
 
