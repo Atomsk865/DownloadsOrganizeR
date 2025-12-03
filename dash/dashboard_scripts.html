@@ -2291,10 +2291,7 @@ async function markNotificationRead(notificationId) {
         await fetch(`/api/notifications/${notificationId}/read`, {
             method: 'POST',
             credentials: 'include',
-            headers: { 
-                'Authorization': __authHeader,
-                'Content-Type': 'application/json'
-            }
+            headers: getAuthHeaders()
         });
         loadNotificationCenter();
     } catch (err) {
@@ -2307,10 +2304,7 @@ async function markAllNotificationsRead() {
         await fetch('/api/notifications/mark-all-read', {
             method: 'POST',
             credentials: 'include',
-            headers: { 
-                'Authorization': __authHeader,
-                'Content-Type': 'application/json'
-            }
+            headers: getAuthHeaders()
         });
         loadNotificationCenter();
         showNotification('All notifications marked as read', 'success');
@@ -2326,10 +2320,7 @@ async function clearAllNotifications() {
         await fetch('/api/notifications/clear', {
             method: 'POST',
             credentials: 'include',
-            headers: { 
-                'Authorization': __authHeader,
-                'Content-Type': 'application/json'
-            }
+            headers: getAuthHeaders()
         });
         loadNotificationCenter();
         showNotification('All notifications cleared', 'success');
@@ -2343,10 +2334,7 @@ async function deleteNotification(notificationId) {
         await fetch(`/api/notifications/${notificationId}`, {
             method: 'DELETE',
             credentials: 'include',
-            headers: { 
-                'Authorization': __authHeader,
-                'Content-Type': 'application/json'
-            }
+            headers: getAuthHeaders()
         });
         loadNotificationCenter();
     } catch (err) {
