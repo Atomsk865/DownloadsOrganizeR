@@ -2,6 +2,9 @@
 {% block dashboard_content %}
     <style>
         /* Main dashboard layout with sidebar */
+        .container-fluid {
+            padding-left: var(--sidebar-width, 20%);
+        }
         .dashboard-container {
             display: block;
             min-height: 100vh;
@@ -260,6 +263,10 @@
         }
         
         @media (max-width: 992px) {
+            .container-fluid,
+            .dashboard-container {
+                padding-left: 0;
+            }
             #dashboard-grid {
                 grid-template-columns: 1fr;
                 padding: 1rem;
