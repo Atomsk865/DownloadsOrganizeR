@@ -2551,3 +2551,24 @@ document.addEventListener('DOMContentLoaded', function() {
     initMobileCollapsible();
 });
 </script>
+<script>
+// Export implementations to window for inline handlers
+(function(){
+    const exportNames = [
+        'promptLogin','logout','resetDashboardLayout','addCustomWidget','editCustomWidget','removeCustomWidget',
+        'saveCustomWidgets','loadCustomWidgets','initSidebarResizer','initDragAndDrop','saveDashboardLayout','loadDashboardLayout',
+        'showNotification','toggleNotificationCenter','markAllNotificationsRead','clearAllNotifications',
+        'revealPublicIP','hidePublicIP','extractPublicIP','copyPublicIP',
+        'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName',
+        'toggleHideModule','saveSettings','addCategoryRow','saveConfiguration','addCustomRouteRow','addTagRouteRow',
+        'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus'
+    ];
+    exportNames.forEach(function(name){
+        try {
+            if (typeof window[name] !== 'function' && typeof eval(name) === 'function') {
+                window[name] = eval(name);
+            }
+        } catch(e) {}
+    });
+})();
+</script>
