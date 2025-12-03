@@ -124,10 +124,58 @@ document.getElementById('login-submit').addEventListener('click', async function
             // Reload user-specific layout and widgets
             loadDashboardLayout();
             loadCustomWidget();
-            loadHiddenModules();
-            if (__rights.view_recent_files) refreshRecentFiles();
-            if (__rights.view_metrics) {
+            initResizableTables();
+            syncAuthButtons();
+            initSidebarResizer();
+            initMobileCollapsible();
                 updateServiceStatus();
+
+        // Sidebar resizer logic
+        function initSidebarResizer() {
+            const resizer = document.getElementById('sidebar-resizer');
+            const container = document.querySelector('.dashboard-container');
+            if (!resizer || !container) return;
+    
+            // Restore saved width
+            const saved = localStorage.getItem('sidebarWidth');
+            if (saved) {
+                document.documentElement.style.setProperty('--sidebar-width', saved);
+            }
+    
+            let startX = 0;
+            let startPct = 0;
+    
+            function onMouseDown(e) {
+                startX = e.clientX;
+                const rect = container.getBoundingClientRect();
+                const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim() || '20%';
+                startPct = parseFloat(current);
+                resizer.classList.add('active');
+                document.body.style.cursor = 'col-resize';
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            }
+    
+            function onMouseMove(e) {
+                const rect = container.getBoundingClientRect();
+                const diffPx = e.clientX - rect.left;
+                let pct = (diffPx / rect.width) * 100;
+                pct = Math.max(15, Math.min(35, pct)); // clamp between 15% and 35%
+                const pctStr = pct.toFixed(1) + '%';
+                document.documentElement.style.setProperty('--sidebar-width', pctStr);
+            }
+    
+            function onMouseUp() {
+                resizer.classList.remove('active');
+                document.body.style.cursor = '';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                const current = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
+                try { localStorage.setItem('sidebarWidth', current); } catch(e) {}
+            }
+    
+            resizer.addEventListener('mousedown', onMouseDown);
+        }
                 streamLog('stdout');
                 streamLog('stderr');
             }
