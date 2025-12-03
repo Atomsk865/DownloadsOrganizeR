@@ -1,0 +1,88 @@
+{% extends "dashboard_base.html" %}
+{% block dashboard_content %}
+<div class="container mt-3" style="max-width: 1000px;">
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <b><i class="bi bi-bug"></i> Environment Test & Verbose Logger</b>
+      <span class="ms-auto text-muted"><small>Runs endpoint checks and logs expected vs actual</small></span>
+    </div>
+    <div class="card-body p-3">
+      <div class="mb-2">
+        <button id="run-all-tests" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run All Tests</button>
+        <button id="clear-log" class="btn btn-outline-secondary btn-sm ms-2"><i class="bi bi-trash"></i> Clear Log</button>
+      </div>
+      <div class="alert alert-info py-2"><small>This tool makes client-side requests to common endpoints and records: request, expected feedback, and actual feedback. It includes auth headers and cookies when available.</small></div>
+      <div id="env-log" class="border rounded p-2" style="min-height: 240px; background: var(--bg-secondary);"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Minimal helpers reusing globals if available
+const hasAuthHeader = typeof window.__authHeader === 'string' && window.__authHeader.length > 0;
+function authHeaders(){
+  const h = {}; 
+  if (hasAuthHeader) h['Authorization'] = window.__authHeader;
+  if (typeof window.__csrfToken === 'string' && window.__csrfToken.length) h['X-CSRFToken'] = window.__csrfToken;
+  return h;
+}
+
+function logEntry({name, method, url, expected, status, ok, body, error}){
+  const container = document.getElementById('env-log');
+  const el = document.createElement('div');
+  el.className = 'mb-2 p-2 rounded';
+  el.style.background = 'var(--bg-primary)';
+  const statusBadge = ok ? '<span class="badge bg-success">OK</span>' : '<span class="badge bg-danger">FAIL</span>';
+  const safeBody = (typeof body === 'string') ? body : JSON.stringify(body, null, 2);
+  el.innerHTML = `
+    <div class="d-flex align-items-center gap-2"><b>${name}</b> ${statusBadge}</div>
+    <div><small><b>Request:</b> ${method} ${url}</small></div>
+    <div><small><b>Expected:</b> ${expected}</small></div>
+    <div><small><b>Status:</b> ${status}</small></div>
+    ${error ? `<div class="text-danger"><small><b>Error:</b> ${error}</small></div>` : ''}
+    <pre class="mt-1 mb-0" style="white-space: pre-wrap;">${safeBody || ''}</pre>
+  `;
+  container.appendChild(el);
+}
+
+async function runCheck({name, method='GET', url, expected, body}){
+  try {
+    const resp = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
+      body: body ? JSON.stringify(body) : undefined
+    });
+    let out;
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      out = await resp.json();
+    } else {
+      out = await resp.text();
+    }
+    logEntry({name, method, url, expected, status: resp.status, ok: resp.ok, body: out});
+  } catch (e) {
+    logEntry({name, method, url, expected, status: 'n/a', ok: false, error: e.message, body: ''});
+  }
+}
+
+async function runAll(){
+  document.getElementById('env-log').innerHTML = '';
+  const tests = [
+    { name: 'Ping', method: 'GET', url: '/api/env/ping', expected: '200 with {"pong": true}' },
+    { name: 'Dashboard root', method: 'GET', url: '/', expected: '200 or redirect (302) depending on auth/setup' },
+    { name: 'Config page', method: 'GET', url: '/config', expected: '200 when authenticated; 302 to login/setup otherwise' },
+    { name: 'Recent Files API', method: 'GET', url: '/api/recent_files', expected: '200 JSON list or 401/403' },
+    { name: 'Duplicates page', method: 'GET', url: '/duplicates', expected: '200 renders page or 302' },
+    { name: 'Notifications API', method: 'GET', url: '/api/notifications', expected: '200 JSON array or 401/403' },
+    { name: 'Start Service', method: 'POST', url: '/start', expected: '200 JSON success (Windows env)' },
+    { name: 'Stop Service', method: 'POST', url: '/stop', expected: '200 JSON success (Windows env)' },
+    { name: 'Restart Service', method: 'POST', url: '/restart', expected: '200 JSON success (Windows env)' }
+  ];
+  for (const t of tests){ await runCheck(t); }
+}
+
+document.getElementById('run-all-tests').addEventListener('click', runAll);
+document.getElementById('clear-log').addEventListener('click', ()=>{ document.getElementById('env-log').innerHTML=''; });
+</script>
+{% endblock %}
