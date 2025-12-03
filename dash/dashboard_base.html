@@ -45,6 +45,9 @@
         .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
         hr { margin: 1rem 0; opacity: 0.2; }
         .text-sm { font-size: 0.85rem; color: var(--text-secondary); }
+        /* Ensure action cells show full buttons and wrap nicely */
+        td > .d-flex.flex-wrap.gap-1 { flex-wrap: wrap !important; gap: 0.25rem !important; }
+        td > .d-flex.flex-wrap.gap-1 .btn { white-space: nowrap; }
         
         /* Dark mode toggle */
         .theme-toggle {

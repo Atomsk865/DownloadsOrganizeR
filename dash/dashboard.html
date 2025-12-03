@@ -403,9 +403,9 @@
                             <button id="login-btn-sidebar" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;" onclick="promptLogin()">Login</button>
                             <button id="logout-btn-sidebar" class="btn btn-outline-secondary btn-sm d-none" style="font-size: 0.75rem;" onclick="logout()">Logout</button>
                             <a id="config-link-sidebar" href="/config" class="btn btn-outline-success btn-sm d-none" style="font-size: 0.75rem;"><i class="bi bi-gear-fill"></i> Config</a>
-                            <button class="btn btn-outline-info btn-sm" style="font-size: 0.75rem;" onclick="showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
-                            <button class="btn btn-outline-warning btn-sm" style="font-size: 0.75rem;" onclick="resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
-                            <button class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;" onclick="addCustomWidget()"><i class="bi bi-plus-circle"></i> Add Widget</button>
+                            <button id="btn-show-hidden" class="btn btn-outline-info btn-sm" style="font-size: 0.75rem;"><i class="bi bi-eye"></i> Show Hidden</button>
+                            <button id="btn-reset-layout" class="btn btn-outline-warning btn-sm" style="font-size: 0.75rem;"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+                            <button id="btn-add-widget" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;"><i class="bi bi-plus-circle"></i> Add Widget</button>
                         </div>
                     </div>
                 </div>
@@ -430,12 +430,12 @@
                 <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize • Double-click for presets"></div>
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
-                    <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
-                    <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="logout()">Logout</button>
+                    <button id="login-btn" class="btn btn-outline-primary btn-sm">Login</button>
+                    <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none">Logout</button>
                     <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
-                    <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" onclick="resetDashboardLayout()" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
-                    <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" onclick="showHiddenModules()" title="Show hidden modules"><i class="bi bi-eye"></i> Show Hidden</button>
-                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm" onclick="devResetToSetup()" title="DEV: Delete all config and force setup wizard"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                    <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+                    <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" title="Show hidden modules"><i class="bi bi-eye"></i> Show Hidden</button>
+                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm" title="DEV: Delete all config and force setup wizard"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
                     <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
                     <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none;" onclick="copyServiceName()" title="Click to copy service name">Service: <span id="service-name">...</span></button>
                 </div>
@@ -545,7 +545,7 @@
                                 <span class="badge bg-danger" id="wasted-space">0 B wasted</span>
                                 <span class="badge bg-info" id="watched-folders-badge" title="Watched folders">watching 0</span>
                             </div>
-                            <button class="btn btn-sm btn-primary" onclick="loadDuplicates()">
+                            <button id="btn-duplicates-refresh" class="btn btn-sm btn-primary">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
@@ -702,7 +702,7 @@
                         </div>
                         <div class="card-body p-2">
                             <div class="d-flex justify-content-end mb-1">
-                            <button class="btn btn-sm btn-outline-primary" onclick="refreshRecentFiles()">
+                            <button id="btn-recent-refresh" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
@@ -825,7 +825,7 @@
                                     <tr>
                                         <th>Folder</th>
                                         <th>Extensions (comma-separated)</th>
-                                        <th style="width: 80px;">Action</th>
+                                        <th style="width: 140px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -837,7 +837,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_1" value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- ...other categories as before... -->
@@ -848,7 +850,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_2" value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Videos -->
@@ -858,7 +862,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_3" value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Documents -->
@@ -868,7 +874,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_4" value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Archives -->
@@ -878,7 +886,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_5" value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Executables -->
@@ -888,7 +898,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_6" value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Shortcuts -->
@@ -898,7 +910,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_7" value="lnk, url, desktop, webloc">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Scripts -->
@@ -908,7 +922,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_8" value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Fonts -->
@@ -918,7 +934,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_9" value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Logs -->
@@ -928,7 +946,9 @@
                                             <input class="form-control form-control-sm" type="text" name="exts_10" value="log, out, err">
                                         </td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Other -->
