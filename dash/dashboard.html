@@ -1,6 +1,6 @@
 {% extends "dashboard_base.html" %}
-{% block dashboard_content %}
-    <style>
+{% block extra_head %}
+<style>
         /* Main dashboard layout with sidebar */
         .container-fluid {
             padding-left: var(--sidebar-width, 20%);
@@ -68,7 +68,6 @@
             position: relative;
             background: transparent;
             border-radius: 0.5rem;
-            container-type: inline-size;
         }
         
         .dashboard-module.full-width {
@@ -371,7 +370,8 @@
             }
         }
     </style>
-    
+{% endblock %}
+{% block dashboard_content %}
     <!-- Main Dashboard Layout: sidebar outside container -->
     <!-- Fixed Left Sidebar -->
     <div id="sidebar">
@@ -482,7 +482,7 @@
         </div>
     </div>
         <!-- VirusTotal Modal -->
-        <div class="modal fade" id="vtModal" tabindex="-1" aria-labelledby="vtModalLabel" aria-hidden="true">
+        <div class="modal fade" id="vtModal" tabindex="-1" aria-labelledby="vtModalLabel" aria-hidden="true" role="dialog">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">

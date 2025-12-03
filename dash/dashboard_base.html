@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizer Service Dashboard</title>
-    <!-- Inline favicon to avoid 404 -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230d6efd'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='28' fill='white' font-family='Arial'%3ED%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
@@ -387,6 +386,97 @@
             font-size: 3rem;
             opacity: 0.3;
         }
+        /* Global modern UI polish */
+        .card { border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+        .form-control, .form-select { transition: box-shadow 0.2s ease, transform 0.08s ease; }
+        .form-control:hover, .form-select:hover { box-shadow: 0 0 0 4px rgba(13,110,253,0.1); }
+        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 4px rgba(13,110,253,0.2); }
+        .btn { transition: transform 0.08s ease, box-shadow 0.2s ease; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .progress { border-radius: 10px; overflow: hidden; }
+
+        /* Mobile/Tablet touch improvements */
+        @media (max-width: 768px) {
+            .input-group.input-group-sm .form-control,
+            .input-group.input-group-sm .btn,
+            .btn-sm {
+                min-height: 44px;
+                padding: 0.5rem 0.75rem;
+                font-size: 1rem;
+            }
+            .notification-bell .btn {
+                width: 54px;
+                height: 54px;
+            }
+            .theme-toggle {
+                padding: 10px 14px;
+            }
+            /* General touch-friendly improvements */
+            .form-control,
+            .form-select,
+            input[type="text"],
+            input[type="password"],
+            input[type="email"],
+            textarea {
+                min-height: 44px;
+                font-size: 1rem;
+                padding: 0.5rem 0.75rem;
+            }
+            .btn {
+                min-height: 44px;
+                padding: 0.5rem 0.875rem;
+                font-size: 1rem;
+            }
+            /* Increase spacing */
+            .card {
+                margin-bottom: 1rem;
+            }
+            .card-header {
+                padding: 0.85rem 1rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            /* Stack navbar items */
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            /* Better table readability */
+            .table {
+                font-size: 0.9rem;
+            }
+            .table th,
+            .table td {
+                padding: 0.6rem 0.5rem;
+            }
+            /* Modal improvements */
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            /* Command palette full width on mobile */
+            .command-palette {
+                width: 95vw;
+                max-width: none;
+            }
+        }
+        @media (max-width: 480px) {
+            .dashboard-title {
+                font-size: 1.5rem;
+                margin: 15px 0 15px 0;
+            }
+            .notification-bell,
+            .theme-toggle {
+                top: 10px;
+            }
+            .notification-bell {
+                right: 60px;
+            }
+            .theme-toggle {
+                right: 10px;
+            }
+        }
         /* Sidebar layout and resizer */
         #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width); z-index: 1000; overflow-y: auto; }
         .dashboard-container { padding-left: var(--sidebar-width); }
@@ -661,6 +751,7 @@
             }
         }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 <!-- Theme Toggle -->
@@ -887,8 +978,6 @@
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
     {% block dashboard_content %}{% endblock %}
 </div>
-    <!-- Bootstrap JS (required for modals, tooltips, etc.) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/start_organizer.js') }}"></script>
     <script>
         // Dark mode functionality
@@ -919,96 +1008,5 @@
         });
     </script>
     {% include "dashboard_scripts.html" %}
-    <style>
-        /* Global modern UI polish */
-        .card { border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-        .form-control, .form-select { transition: box-shadow 0.2s ease, transform 0.08s ease; }
-        .form-control:hover, .form-select:hover { box-shadow: 0 0 0 4px rgba(13,110,253,0.1); }
-        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 4px rgba(13,110,253,0.2); }
-        .btn { transition: transform 0.08s ease, box-shadow 0.2s ease; }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
-        .input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-        .progress { border-radius: 10px; overflow: hidden; }
-
-        /* Mobile/Tablet touch improvements */
-        @media (max-width: 768px) {
-            .input-group.input-group-sm .form-control,
-            .input-group.input-group-sm .btn,
-            .btn-sm {
-                min-height: 44px;
-                padding: 0.5rem 0.75rem;
-                font-size: 1rem;
-            }
-            .notification-bell .btn {
-                width: 54px;
-                height: 54px;
-            }
-            .theme-toggle {
-                padding: 10px 14px;
-            }
-            /* General touch-friendly improvements */
-            .form-control,
-            .form-select,
-            input[type="text"],
-            input[type="password"],
-            input[type="email"],
-            textarea {
-                min-height: 44px;
-                font-size: 1rem;
-                padding: 0.5rem 0.75rem;
-            }
-            .btn {
-                min-height: 44px;
-                padding: 0.5rem 0.875rem;
-                font-size: 1rem;
-            }
-            /* Increase spacing */
-            .card {
-                margin-bottom: 1rem;
-            }
-            .card-header {
-                padding: 0.85rem 1rem;
-            }
-            .card-body {
-                padding: 1rem;
-            }
-            /* Stack navbar items */
-            .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            /* Better table readability */
-            .table {
-                font-size: 0.9rem;
-            }
-            .table th,
-            .table td {
-                padding: 0.6rem 0.5rem;
-            }
-            /* Modal improvements */
-            .modal-dialog {
-                margin: 0.5rem;
-            }
-            /* Command palette full width on mobile */
-            .command-palette {
-                width: 95vw;
-                max-width: none;
-            }
-        }
-        @media (max-width: 480px) {
-            .dashboard-title {
-                font-size: 1.5rem;
-                margin: 15px 0 15px 0;
-            }
-            .notification-bell,
-            .theme-toggle {
-                top: 10px;
-            }
-            .notification-bell {
-                right: 60px;
-            }
-            .theme-toggle {
-                right: 10px;
-            }
-        }
-    </style>
+</body>
+</html>
