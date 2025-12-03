@@ -9,9 +9,15 @@ routes_dashboard_config = Blueprint('routes_dashboard_config', __name__)
 @routes_dashboard_config.route('/config', methods=['GET'])
 def config_page():
     """Render dashboard configuration UI (users, roles, layout)."""
-    # Redirect unauthenticated users to login, otherwise render config
-    if not getattr(current_user, 'is_authenticated', False):
+    # Check both session auth (Flask-Login) and Basic Auth header
+    from OrganizerDashboard.auth.auth import check_auth
+    auth = request.authorization
+    is_authenticated = getattr(current_user, 'is_authenticated', False)
+    has_basic_auth = auth and check_auth(str(auth.username), str(auth.password))
+    
+    if not is_authenticated and not has_basic_auth:
         return redirect(url_for('routes_login.login_page'))
+    
     main = sys.modules['__main__']
     dash_cfg = getattr(main, 'dashboard_config', {})
     return render_template('dashboard_config.html', roles=dash_cfg.get('roles', {}))
