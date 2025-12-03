@@ -329,6 +329,10 @@ def create_app():
     csrf.exempt(routes_dev_reset)  # Dev-only, no auth required
     # Exempt config update API from CSRF; relies on auth + basic rights
     csrf.exempt(routes_update_config)
+    # Exempt service control endpoints; guarded by auth/rights server-side
+    csrf.exempt(routes_start_service)
+    csrf.exempt(routes_stop_service)
+    csrf.exempt(routes_restart_service)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager

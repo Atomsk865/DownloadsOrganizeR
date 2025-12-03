@@ -74,7 +74,7 @@ async function runAll(){
     { name: 'Dashboard root', method: 'GET', url: '/', expected: '200 or redirect (302) depending on auth/setup' },
     { name: 'Config page', method: 'GET', url: '/config', expected: '200 when authenticated; 302 to login/setup otherwise' },
     { name: 'Recent Files API', method: 'GET', url: '/api/recent_files', expected: '200 JSON list or 401/403' },
-    { name: 'Duplicates page', method: 'GET', url: '/duplicates', expected: '200 renders page or 302' },
+    { name: 'Duplicates API', method: 'GET', url: '/api/duplicates', expected: '200 JSON payload or 400 if feature disabled' },
     { name: 'Notifications API', method: 'GET', url: '/api/notifications', expected: '200 JSON array or 401/403' },
     { name: 'Start Service', method: 'POST', url: '/start', expected: '200 JSON success (Windows env)' },
     { name: 'Stop Service', method: 'POST', url: '/stop', expected: '200 JSON success (Windows env)' },
