@@ -66,3 +66,25 @@ STDERR_LOG = None
 update_log_paths()
 
 __all__ = ['config', 'ADMIN_USER', 'ADMIN_PASS', 'ADMIN_PASS_HASH', 'SERVICE_NAME', 'LOGS_DIR', 'STDOUT_LOG', 'STDERR_LOG', 'update_log_paths', 'DEFAULT_CONFIG']
+
+# --- App Factory Bridge ---
+# Tests import OrganizerDashboard and expect a create_app() symbol.
+# Provide a thin wrapper that delegates to the top-level OrganizerDashboard.py.
+def create_app():
+    import importlib.util
+    import sys as _sys
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(__file__))
+    entry = _os.path.join(root, 'OrganizerDashboard.py')
+    spec = importlib.util.spec_from_file_location('OrganizerDashboard_entry', entry)
+    if spec and spec.loader:
+        mod = importlib.util.module_from_spec(spec)
+        # Register the dynamic module name so OrganizerDashboard.py can reference sys.modules[__name__]
+        import sys as _sys
+        _sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        if hasattr(mod, 'create_app'):
+            return mod.create_app()
+    raise AttributeError('OrganizerDashboard.create_app not available')
+
+__all__.append('create_app')

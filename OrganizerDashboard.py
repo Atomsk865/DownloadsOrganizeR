@@ -198,7 +198,11 @@ def create_app():
     """
     # Make this module the __main__ for auth manager expectations
     import sys as _sys
-    _sys.modules['__main__'] = sys.modules[__name__]
+    # Safely set __main__ for auth manager expectations, even when dynamically imported
+    try:
+        _sys.modules['__main__'] = sys.modules[__name__]
+    except KeyError:
+        _sys.modules['__main__'] = _sys.modules.get('__main__', sys.modules[__name__])
 
     app = Flask(__name__, template_folder='dash')
     # Basic secret key for session cookies; can be overridden via env
@@ -333,6 +337,8 @@ def create_app():
     csrf.exempt(routes_start_service)
     csrf.exempt(routes_stop_service)
     csrf.exempt(routes_restart_service)
+    # Exempt environment test utility endpoints (includes POST to run pytest)
+    csrf.exempt(routes_env)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
