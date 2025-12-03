@@ -2572,3 +2572,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 })();
 </script>
+<script>
+// Bind UI events to real implementations (rewire from inline handlers)
+document.addEventListener('DOMContentLoaded', function(){
+    const byId = (id)=>document.getElementById(id);
+    const bind = (id, handler)=>{ const el = byId(id); if(el && typeof handler === 'function') el.addEventListener('click', handler); };
+
+    bind('login-btn', window.promptLogin);
+    bind('logout-btn', window.logout);
+    bind('btn-show-hidden', window.showHiddenModules);
+    bind('btn-reset-layout', window.resetDashboardLayout);
+    bind('btn-add-widget', window.addCustomWidget);
+    bind('reset-layout-btn', window.resetDashboardLayout);
+    bind('show-hidden-btn', window.showHiddenModules);
+    bind('dev-reset-btn', window.devResetToSetup);
+    bind('btn-duplicates-refresh', window.loadDuplicates);
+    bind('btn-recent-refresh', window.refreshRecentFiles);
+});
+</script>
