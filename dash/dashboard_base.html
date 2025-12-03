@@ -381,20 +381,21 @@
             font-size: 3rem;
             opacity: 0.3;
         }
-        /* Sidebar resizer helper text for both themes */
-        #sidebar-resizer::after {
+        /* Sidebar layout and resizer */
+        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width); z-index: 1000; overflow-y: auto; }
+        .dashboard-container { padding-left: var(--sidebar-width); }
+        .sidebar-resizer { position: fixed; top: 0; bottom: 0; left: calc(var(--sidebar-width)); width: 8px; cursor: col-resize; z-index: 1001; background: transparent; }
+        .sidebar-resizer:hover::after {
             content: "Drag to resize • Double-click for presets";
             position: fixed;
             top: 8px;
             left: calc(var(--sidebar-width) + 12px);
             font-size: 11px;
-            color: rgba(0,0,0,0.5);
+            color: rgba(0,0,0,0.55);
             z-index: 1002;
             pointer-events: none;
         }
-        [data-theme="dark"] #sidebar-resizer::after {
-            color: rgba(255,255,255,0.6);
-        }
+        [data-theme="dark"] .sidebar-resizer:hover::after { color: rgba(255,255,255,0.7); }
         @media (max-width: 768px) {
             .notification-dropdown {
                 width: calc(100vw - 30px);
