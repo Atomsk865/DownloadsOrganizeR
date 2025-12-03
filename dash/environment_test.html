@@ -7,6 +7,16 @@
       <span class="ms-auto text-muted"><small>Runs endpoint checks and logs expected vs actual</small></span>
     </div>
     <div class="card-body p-3">
+      <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center gap-2" role="alert">
+        <div>
+          <strong>Organizer service offline?</strong>
+          <div class="small text-muted">Start it without signing in so required files are generated.</div>
+        </div>
+        <div class="ms-md-auto d-flex align-items-center gap-2">
+          <button id="btn-start-organizer-env" class="btn btn-outline-secondary btn-sm" type="button">Start Organizer</button>
+          <small id="start-organizer-status-env" class="text-muted"></small>
+        </div>
+      </div>
       <div class="mb-2 d-flex flex-wrap gap-2">
         <button id="run-all-tests" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run Endpoint Checks</button>
         <button id="run-pytests" class="btn btn-outline-primary btn-sm"><i class="bi bi-bug"></i> Run Test Suite (pytest)</button>
@@ -99,5 +109,9 @@ async function runPytests(){
 }
 
 document.getElementById('run-pytests').addEventListener('click', runPytests);
+
+if (window.attachStartOrganizerButton) {
+  window.attachStartOrganizerButton('btn-start-organizer-env', 'start-organizer-status-env');
+}
 </script>
 {% endblock %}

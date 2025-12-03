@@ -217,6 +217,20 @@ let draggedElement = null;
 function initDragAndDrop() {
     const modules = document.querySelectorAll('.dashboard-module[draggable="true"]');
     modules.forEach(module => {
+        if (module.dataset.dragInit === 'true') return;
+        module.dataset.dragInit = 'true';
+        module.dataset.dragHandleActive = 'false';
+
+        module.addEventListener('mousedown', function(e) {
+            this.dataset.dragHandleActive = e.target.closest('.drag-handle') ? 'true' : 'false';
+        });
+        module.addEventListener('mouseup', function() {
+            this.dataset.dragHandleActive = 'false';
+        });
+        module.addEventListener('mouseleave', function() {
+            this.dataset.dragHandleActive = 'false';
+        });
+
         module.addEventListener('dragstart', handleDragStart);
         module.addEventListener('dragover', handleDragOver);
         module.addEventListener('dragenter', handleDragEnter);
@@ -227,8 +241,14 @@ function initDragAndDrop() {
 }
 
 function handleDragStart(e) {
+    if (this.dataset.dragHandleActive !== 'true') {
+        draggedElement = null;
+        e.preventDefault();
+        return false;
+    }
     draggedElement = this;
     this.classList.add('dragging');
+    this.dataset.dragHandleActive = 'false';
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', this.innerHTML);
     
@@ -279,6 +299,7 @@ function handleDrop(e) {
 
 function handleDragEnd(e) {
     this.classList.remove('dragging');
+    this.dataset.dragHandleActive = 'false';
     
     // Remove visual feedback
     document.querySelectorAll('.dashboard-module').forEach(m => {
@@ -754,14 +775,18 @@ function saveTagRoutesColumnPrefs() {
 // Load organizer config and apply feature gating
 async function loadOrganizerConfig() {
     try {
-        const resp = await fetch('/api/organizer/config', { credentials: 'include', headers: getAuthHeaders() });
+        const resp = await fetch('/api/organizer/config', {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: getAuthHeaders()
+        });
         if (!resp.ok) return;
         const cfg = await resp.json();
         const features = cfg.features || {};
         __organizerFeatures = {
-            virustotal_enabled: !!features.virustotal_enabled,
-            duplicates_enabled: !!features.duplicates_enabled,
-            reports_enabled: !!features.reports_enabled
+            virustotal_enabled: features.virustotal_enabled !== false,
+            duplicates_enabled: features.duplicates_enabled !== false,
+            reports_enabled: features.reports_enabled !== false
         };
         __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';
         applyFeatureGating();
@@ -1321,21 +1346,17 @@ function showNotification(message, type) {
 }
 
 // Recent Files Functions
-async function loadOrganizerConfig(){
-    try {
-        const resp = await fetch('/api/organizer/config', { credentials: 'include', cache: 'no-store', headers: getAuthHeaders() });
-        if (resp.ok) {
-            const cfg = await resp.json();
-            __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';
-            const feats = cfg.features || {};
-            __organizerFeatures.virustotal_enabled = feats.virustotal_enabled !== false;
-            __organizerFeatures.duplicates_enabled = feats.duplicates_enabled !== false;
-            __organizerFeatures.reports_enabled = feats.reports_enabled !== false;
-        }
-    } catch (e) { /* ignore */ }
-}
 async function refreshRecentFiles() {
+    const btn = document.getElementById('btn-recent-refresh');
+    const tbody = document.getElementById('recent-files-tbody');
+    const originalHtml = btn ? btn.innerHTML : '';
+    
     try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+        }
+        
         const response = await fetch('/api/recent_files', {
             credentials: 'include',
             headers: getAuthHeaders()
@@ -1349,8 +1370,15 @@ async function refreshRecentFiles() {
         displayRecentFiles(files);
     } catch (error) {
         console.error('Error fetching recent files:', error);
-        const tbody = document.getElementById('recent-files-tbody');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading recent files</td></tr>';
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading recent files</td></tr>';
+        }
+        showNotification('Failed to refresh recent files: ' + error.message, 'danger');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml || '<i class="bi bi-arrow-clockwise"></i> Refresh';
+        }
     }
 }
 
@@ -1610,88 +1638,113 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Statistics Charts
+
 // Duplicate Files Management
-async function refreshRecentFiles() {
-    const btn = document.getElementById('btn-recent-refresh');
-    const originalText = btn ? btn.innerHTML : '';
-    
-    try {
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
-        }
-        
-        const res = await fetch('/api/duplicates', {
-            credentials: 'include',
-            headers: { 'Authorization': __authHeader }
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
-            
-            // Update badges
-            document.getElementById('duplicates-count').textContent = 
-                `${data.total_duplicates} duplicate group${data.total_duplicates !== 1 ? 's' : ''}`;
-        showNotification('Recent files refreshed successfully', 'success');
-            document.getElementById('wasted-space').textContent = 
-                `${data.wasted_space_human} wasted`;
-        showNotification('Failed to refresh: ' + error.message, 'danger');
-            
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading recent files</td></tr>';
-        }
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
-            const container = document.getElementById('duplicates-container');
-            
-            if (data.duplicates.length === 0) {
 async function loadDuplicates() {
     const btn = document.getElementById('btn-duplicates-refresh');
-    const originalText = btn ? btn.innerHTML : '';
+    const originalHtml = btn ? btn.innerHTML : '';
+    const container = document.getElementById('duplicates-container');
+    const countBadge = document.getElementById('duplicates-count');
+    const wastedBadge = document.getElementById('wasted-space');
     
     try {
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Scanning...';
         }
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border text-primary mb-2"></div>
+                    <p class="mb-0">Scanning for duplicates...</p>
+                </div>`;
+        }
         
-                        <i class="bi bi-check-circle fs-1"></i>
-                        <p>No duplicate files found!</p>
-                    </div>
+        const res = await fetch('/api/duplicates', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (!res.ok) {
+            let message = 'Failed to load duplicates';
+            try {
+                const err = await res.json();
+                message = err.error || message;
+            } catch (_) {}
+            throw new Error(message);
+        }
+        
+        const data = await res.json();
+        window.duplicatesData = data;
+        
+        if (countBadge) {
+            countBadge.textContent = `${data.total_duplicates} duplicate group${data.total_duplicates === 1 ? '' : 's'}`;
+        }
+        if (wastedBadge) {
+            wastedBadge.textContent = `${data.wasted_space_human} wasted`;
+        }
+        if (!container) return;
+        
+        if (!data.duplicates || data.duplicates.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-success py-4">
+                    <i class="bi bi-check-circle fs-1"></i>
+                    <p class="mb-0">No duplicate files found!</p>
+                </div>`;
+            return;
+        }
+        
+        const cards = data.duplicates.map((group, index) => {
+            const files = Array.isArray(group.files) ? group.files : [];
+            const fileCount = group.count || files.length;
+            const totalSizeLabel = escapeHtml(group.total_size_human || '');
+            const hashPreviewRaw = (group.hash || '').substring(0, 12);
+            const hashPreview = hashPreviewRaw ? escapeHtml(hashPreviewRaw) : '';
+            const hashDisplay = hashPreview ? `${hashPreview}...` : 'n/a';
+            const fileRows = files.map((file, fileIndex) => {
+                const safePath = escapeHtml(file.path || '');
+                const deletePath = JSON.stringify(file.path || '');
+                const sizeLabel = escapeHtml(file.size_human || '');
+                const modifiedLabel = escapeHtml(file.modified_human || '');
+                return `
+                    <tr>
+                        <td><input type="checkbox" data-group="${index}" data-file="${fileIndex}" data-path="${safePath}"></td>
+                        <td><i class="bi bi-file-earmark"></i> ${escapeHtml(file.name || 'Unknown')}</td>
+                        <td>${sizeLabel || '—'}</td>
+                        <td><small>${modifiedLabel || '—'}</small></td>
+                        <td><small class="text-muted">${safePath}</small></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
                 `;
-                return;
-            }
+            }).join('');
             
-            showNotification(`Found ${data.total_duplicates} duplicate group${data.total_duplicates !== 1 ? 's' : ''}`, 'info');
-            let html = '';
-                html += `
-        showNotification('Resetting dashboard layout...', 'info');
-                    <div class="card mb-3">
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-        setTimeout(() => location.reload(), 500);
-                                    <strong>${group.count} files</strong> - ${group.total_size_human}
-                                    <small class="text-muted">(Hash: ${group.hash.substring(0, 12)}...)</small>
-                                </span>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})">
-                                        <i class="bi bi-clock"></i> Keep Newest
-                                    </button>
-    
-    showNotification('Resetting to setup wizard...', 'warning');
-    
-                                    <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})">
-                                        <i class="bi bi-file-earmark"></i> Keep Largest
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAllDuplicates(${index})">
-                                        <i class="bi bi-trash"></i> Delete All
-                                    </button>
-                                </div>
+            return `
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                            <div>
+                                <strong>${fileCount} files</strong> - ${totalSizeLabel || 'Unknown size'}
+                                <small class="text-muted">(Hash: ${hashDisplay})</small>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})">
+                                    <i class="bi bi-clock"></i> Keep Newest
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})">
+                                    <i class="bi bi-file-earmark"></i> Keep Largest
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAllDuplicates(${index})">
+                                    <i class="bi bi-trash"></i> Delete All
+                                </button>
                             </div>
                         </div>
-                        <div class="card-body p-0">
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
                                 <thead>
                                     <tr>
@@ -1704,50 +1757,29 @@ async function loadDuplicates() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                `;
-                
-                group.files.forEach((file, fileIndex) => {
-                    html += `
-                        <tr>
-                            <td><input type="checkbox" data-group="${index}" data-file="${fileIndex}" data-path="${file.path}"></td>
-                            <td><i class="bi bi-file-earmark"></i> ${file.name}</td>
-                            <td>${file.size_human}</td>
-                            <td>${file.modified_human}</td>
-                            <td><small class="text-muted">${file.path}</small></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile('${file.path}')" title="Delete this file">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                
-                html += `
+                                    ${fileRows || '<tr><td colspan="6" class="text-center text-muted">No file details available</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-            
-            // Store data globally for action functions
-            window.duplicatesData = data;
-        } else {
-            console.error('Failed to load duplicates');
-            showNotification('Failed to load duplicates', 'danger');
-        }
+                </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = cards;
     } catch (error) {
         console.error('Error loading duplicates:', error);
-        showNotification('Error loading duplicates: ' + error.message, 'danger');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> ${escapeHtml(error.message || 'Failed to load duplicates')}
+                </div>`;
+        }
+        showNotification('Failed to load duplicates: ' + error.message, 'danger');
     } finally {
-        const btn = document.getElementById('btn-duplicates-refresh');
-        const originalText = '<i class="bi bi-arrow-clockwise"></i> Refresh';
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.innerHTML = originalHtml || '<i class="bi bi-arrow-clockwise"></i> Refresh';
         }
     }
 }
@@ -1863,8 +1895,7 @@ async function resolveDuplicates(filePaths) {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': __authHeader,
-                'X-CSRF-Token': getCsrfToken()
+                ...getAuthHeaders()
             },
             body: JSON.stringify({
                 action: 'delete',
@@ -1895,8 +1926,7 @@ async function scanVirusTotal(filePath, fileName) {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': __authHeader,
-                'X-CSRF-Token': getCsrfToken()
+                ...getAuthHeaders()
             },
             body: JSON.stringify({ path: filePath })
         });

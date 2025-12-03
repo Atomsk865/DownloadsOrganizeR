@@ -28,11 +28,31 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
               </form>
+              <div class="alert alert-warning mt-3" role="alert">
+                <div class="d-flex flex-column gap-2">
+                  <div>
+                    <strong>Organizer files missing?</strong>
+                    <div class="small text-muted">Start the organizer service to regenerate download metadata before logging in.</div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-start-organizer-login">Start Organizer</button>
+                    <small id="start-organizer-status-login" class="text-muted"></small>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/start_organizer.js') }}"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        if (window.attachStartOrganizerButton) {
+          window.attachStartOrganizerButton('btn-start-organizer-login', 'start-organizer-status-login');
+        }
+      });
+    </script>
   </body>
 </html>

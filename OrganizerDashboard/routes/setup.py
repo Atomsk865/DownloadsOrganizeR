@@ -4,6 +4,9 @@ from flask import Blueprint, render_template, request, jsonify, current_app
 import sys
 import json
 import bcrypt
+import os
+import subprocess
+from pathlib import Path
 
 routes_setup = Blueprint('routes_setup', __name__)
 
@@ -119,6 +122,90 @@ def _validate_windows(data: dict) -> str:
         if any((not isinstance(g, str)) or (len(g.strip()) == 0) for g in groups):
             return 'Windows allowed_groups contains empty or non-string entry'
     return ''
+
+
+@routes_setup.route('/api/setup/organizer-status', methods=['GET'])
+def organizer_status():
+    """Return whether the organizer process/service is currently running."""
+    from OrganizerDashboard.helpers.helpers import find_organizer_proc, service_running
+
+    proc = find_organizer_proc()
+    payload = {
+        'success': True,
+        'running': bool(proc),
+        'pid': proc.pid if proc else None
+    }
+
+    # On Windows include service_running to distinguish SCM state
+    if sys.platform == 'win32':
+        try:
+            payload['service_running'] = bool(service_running())
+        except Exception:
+            payload['service_running'] = None
+
+    return jsonify(payload)
+
+
+@routes_setup.route('/api/setup/start-organizer', methods=['POST'])
+def start_organizer_process():
+        """Start the organizer service/process without requiring authentication."""
+        from OrganizerDashboard.helpers.helpers import find_organizer_proc
+
+        existing = find_organizer_proc()
+        if existing:
+            return jsonify({
+                'success': True,
+                'already_running': True,
+                'pid': existing.pid
+            })
+
+        if sys.platform == 'win32':
+            service_name = "DownloadsOrganizer"
+            try:
+                result = subprocess.run([
+                    'sc', 'start', service_name
+                ], capture_output=True, text=True, check=True)
+                return jsonify({
+                    'success': True,
+                    'already_running': False,
+                    'message': result.stdout.strip()
+                })
+            except subprocess.CalledProcessError as exc:
+                # Fall through to Python process spawn if the Windows service cannot start
+                error_msg = exc.stderr or exc.stdout or str(exc)
+            except FileNotFoundError:
+                error_msg = 'sc.exe not available to start Windows service'
+            else:
+                error_msg = ''
+            if not error_msg:
+                return jsonify({'success': False, 'error': 'Unknown error starting Windows service'}), 500
+        else:
+            error_msg = ''
+
+        # Cross-platform fallback: spawn Organizer.py within the repo directory
+        root = Path(__file__).resolve().parents[2]
+        organizer_path = root / 'Organizer.py'
+        if not organizer_path.exists():
+            return jsonify({'success': False, 'error': 'Organizer.py not found'}), 404
+
+        env = os.environ.copy()
+        env.setdefault('PYTHONUNBUFFERED', '1')
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, str(organizer_path)],
+                cwd=str(root),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=env
+            )
+            return jsonify({
+                'success': True,
+                'already_running': False,
+                'pid': proc.pid
+            })
+        except Exception as exc:
+            fallback_error = error_msg or str(exc)
+            return jsonify({'success': False, 'error': fallback_error}), 500
 
 @routes_setup.route('/api/setup/initialize', methods=['POST'])
 def setup_initialize():

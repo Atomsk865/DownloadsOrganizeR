@@ -6,6 +6,11 @@ C:\Scripts\
 organizer_config.json
 dashboard_config.json
 
+# TEMP: auto-generated recent-files artifacts (remove before pushing to main)
+file_moves.json
+config/json/file_moves.json
+test_destination.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
