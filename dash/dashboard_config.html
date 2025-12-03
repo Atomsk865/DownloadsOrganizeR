@@ -838,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (__authHeader) {
     fetch('/auth_check', {
       credentials: 'include',
-      headers: { 'Authorization': __authHeader }
+      headers: getAuthHeaders()
     }).then(response => {
       if (response.ok) {
         return response.json();
@@ -1316,7 +1316,7 @@ function filterUsers() {
     }
   });
   function loadWatchFoldersConfig() {
-    fetch('/api/watch_folders', { credentials: 'include', headers: { 'Authorization': __authHeader }})
+    fetch('/api/watch_folders', { credentials: 'include', headers: getAuthHeaders() })
       .then(r => r.json())
       .then(data => {
         const folders = Array.isArray(data.folders) ? data.folders : [];
@@ -1391,7 +1391,7 @@ function filterUsers() {
       if(!ok){ return; }
     }
     const res = await fetch('/api/watch_folders/test', {
-      method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json', 'Authorization': __authHeader, 'X-CSRF-Token': getCsrfToken() },
+      method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json', ...getAuthHeaders(), 'X-CSRF-Token': getCsrfToken() },
       body: JSON.stringify({ folder, create: createIfMissing })
     });
     const data = await res.json().catch(()=>({}));
@@ -1411,7 +1411,7 @@ function filterUsers() {
 
   async function openConfigActions(){
     try{
-      const res = await fetch('/api/config_actions', { credentials:'include', headers:{ 'Authorization': __authHeader } });
+      const res = await fetch('/api/config_actions', { credentials:'include', headers: getAuthHeaders() });
       const data = await res.json().catch(()=>[]);
       const body = document.getElementById('config-actions-body');
       if(Array.isArray(data) && data.length){
@@ -1447,7 +1447,7 @@ function filterUsers() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': __authHeader,
+          ...getAuthHeaders(),
           'X-CSRF-Token': getCsrfToken()
         },
         body: JSON.stringify({ folders })
@@ -1538,7 +1538,7 @@ async function runInitialScan(index) {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': __authHeader,
+        ...getAuthHeaders(),
         'X-CSRF-Token': getCsrfToken()
       },
       body: JSON.stringify({ folder })
