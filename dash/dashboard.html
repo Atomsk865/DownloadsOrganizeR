@@ -3,14 +3,11 @@
     <style>
         /* Main dashboard layout with sidebar */
         .dashboard-container {
-            display: grid !important;
-            grid-template-columns: var(--sidebar-width, 20%) 1fr !important;
+            display: block;
             min-height: 100vh;
             position: relative;
+            padding-left: var(--sidebar-width, 20%);
         }
-        /* Ensure explicit grid track placement */
-        #sidebar { grid-column: 1; }
-        #dashboard-grid { grid-column: 2; }
         .sidebar-resizer {
             position: absolute;
             left: calc(var(--sidebar-width, 20%));
@@ -27,10 +24,12 @@
             border-left-color: #0d6efd;
         }
         
-        /* Fixed left sidebar */
+        /* Fixed left sidebar (outside container) */
         #sidebar {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            width: var(--sidebar-width, 20%);
             height: 100vh;
             overflow-y: auto;
             background: var(--bg-secondary);
@@ -363,11 +362,9 @@
         }
     </style>
     
-    <!-- Main Dashboard Container -->
-    <div class="container-fluid p-0" style="max-width: 100%;">
-        <div class="dashboard-container">
-            <!-- Fixed Left Sidebar -->
-            <div id="sidebar">
+    <!-- Main Dashboard Layout: sidebar outside container -->
+    <!-- Fixed Left Sidebar -->
+    <div id="sidebar">
                 <!-- Service Status in Sidebar -->
                 <div class="card mb-3">
                     <div class="card-header">
@@ -415,11 +412,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            
+                </div>
+    </div>
+    <div class="container-fluid p-0" style="max-width: 100%;">
+        <div class="dashboard-container">
             <!-- Draggable resizer between sidebar and content -->
             <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize • Double-click for presets"></div>
-            
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
                     <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="promptLogin()">Login</button>
