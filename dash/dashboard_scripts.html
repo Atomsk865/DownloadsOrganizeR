@@ -668,61 +668,10 @@ function saveTagRoutesColumnPrefs() {
     saveColumnPrefs('tr', ['tag','folder','action']);
 }
 
-function saveColumnPrefs(prefix, cols) {
-    cols.forEach(col => {
-        const slider = document.getElementById(`${prefix}-${col}-width`);
-        if (slider) {
-            const key = `dor_${prefix}_${col}_width_pct`;
-            localStorage.setItem(key, slider.value);
-        }
-    });
-    showNotification('Column widths saved to browser preferences', 'success');
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    initDragAndDrop();
-    loadDashboardLayout();
-    loadCustomWidget();
-    loadHiddenModules();
-    await loadOrganizerConfig();
-    extractPublicIP();
-
-    // Populate client info fields if present
-    try {
-        const platEl = document.getElementById('client-platform');
-        const langEl = document.getElementById('client-lang');
-        if (platEl) {
-            const platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'unknown';
-            platEl.textContent = platform;
-        }
-        if (langEl) {
-            const lang = navigator.language || (navigator.languages && navigator.languages[0]) || 'unknown';
-            langEl.textContent = lang;
-        }
-        // Show environment mismatch warning: client seems Windows but server reports Linux
-        const mismatchEl = document.getElementById('env-mismatch');
-        if (mismatchEl) {
-            const clientLooksWindows = /Win/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '');
-            // Server OS is baked into markup; detect Linux via presence of 'Linux' string in System Information row
-            // Fallback: rely on a global injected flag if available
-            const serverOsTextEl = document.querySelector('.dashboard-module[data-module="system-info"] .row small b + span');
-            const serverOsText = serverOsTextEl ? serverOsTextEl.textContent : '';
-            const serverLooksLinux = /Linux/i.test(serverOsText);
-            if (clientLooksWindows && serverLooksLinux) {
-                mismatchEl.style.display = 'block';
-            }
-        }
-    } catch (e) {
-        // no-op
-    }
 
     // Column width prefs: apply saved widths and hook sliders
     try {
-        applyColumnPrefs('cr', ['ext','folder','action']);
-        applyColumnPrefs('tr', ['tag','folder','action']);
-        hookColumnSliders('cr', ['ext','folder','action']);
-        hookColumnSliders('tr', ['tag','folder','action']);
+        // Sliders removed; columns are resizable via header drag handles.
     } catch (e) {
         console.warn('Column prefs init failed:', e);
     }
