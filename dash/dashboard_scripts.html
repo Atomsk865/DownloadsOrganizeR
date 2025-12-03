@@ -1298,16 +1298,25 @@ function loadTagRoutes(tagRoutes) {
 // Log streaming
 function streamLog(which) {
     const logElement = document.getElementById(`${which}-log`);
+    // Only stream if the log element exists (config page only)
+    if (!logElement) {
+        console.log(`Log element ${which}-log not found, skipping stream`);
+        return;
+    }
+    
     const eventSource = new EventSource(`/stream/${which}`);
     eventSource.onmessage = function(event) {
-        if (event.data) {
+        if (event.data && logElement) {
             logElement.textContent += event.data + '\n';
             logElement.scrollTop = logElement.scrollHeight;
         }
     };
     eventSource.onerror = function() {
         eventSource.close();
-        setTimeout(() => streamLog(which), 5000);
+        // Only retry if element still exists
+        if (document.getElementById(`${which}-log`)) {
+            setTimeout(() => streamLog(which), 5000);
+        }
     };
 }
 
