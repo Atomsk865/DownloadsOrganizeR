@@ -8,6 +8,11 @@ from pathlib import Path
 
 routes_api_recent_files = Blueprint('routes_api_recent_files', __name__)
 
+@routes_api_recent_files.route("/api/recent_files/test")
+def test_route():
+    """Simple test to verify blueprint is loaded"""
+    return jsonify({"message": "Recent files blueprint is working"}), 200
+
 @routes_api_recent_files.route("/api/recent_files")
 @requires_right('view_recent_files')
 def recent_files():
