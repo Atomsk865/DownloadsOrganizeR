@@ -1537,6 +1537,9 @@ async function loadDeveloperMode() {
 let sidebarStatsChart = null;
 
 async function updateSidebarMetrics() {
+    // Only run if sidebar elements exist (not on config page)
+    if (!document.getElementById('sidebar-ram-bar')) return;
+    
     try {
         const response = await fetch('/metrics', {
             credentials: 'include',
@@ -1594,6 +1597,9 @@ async function updateSidebarMetrics() {
 }
 
 async function updateSidebarStats() {
+    // Only run if sidebar elements exist (not on config page)
+    if (!document.getElementById('sidebar-stat-total')) return;
+    
     try {
         const response = await fetch('/api/statistics/overview', {
             credentials: 'include',
@@ -1695,13 +1701,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load developer mode setting
     loadDeveloperMode();
     
-    // Initialize sidebar updates
-    updateSidebarMetrics();
-    updateSidebarStats();
-    
-    // Update sidebar periodically
-    setInterval(updateSidebarMetrics, 5000); // Every 5 seconds
-    setInterval(updateSidebarStats, 30000); // Every 30 seconds
+    // Initialize sidebar updates (only if sidebar exists)
+    if (document.getElementById('sidebar')) {
+        updateSidebarMetrics();
+        updateSidebarStats();
+        
+        // Update sidebar periodically
+        setInterval(updateSidebarMetrics, 5000); // Every 5 seconds
+        setInterval(updateSidebarStats, 30000); // Every 30 seconds
+    }
 
     // Cookie-based auth persistence helpers
     function setCookie(name, value, days) {
