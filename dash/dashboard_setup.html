@@ -16,9 +16,7 @@
               <small><b>Admin Password</b></small>
               <div class="d-flex align-items-center gap-2">
                 <a href="/docs/authentication" target="_blank" class="text-decoration-none"><small><i class="bi bi-book"></i> Docs</small></a>
-                <span class="ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="display:inline-block;width:18px;height:18px;border-radius:50%;background:#6c757d;color:#fff;text-align:center;line-height:18px;font-size:12px;">
-                  i
-                </span>
+                <span class="badge bg-secondary rounded-circle ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">i</span>
               </div>
             </label>
             <div class="input-group input-group-sm">
@@ -459,21 +457,5 @@ function removeSelectedWatchFolder(path){
   renderSelectedWatchFolders();
 }
 </script>
-{% if host_os == 'windows' %}
-<div class="container mt-2" style="max-width: 900px;">
-  <div class="alert alert-secondary">
-    <small>
-      Tip: On Windows, install the service using NSSM via `Install-And-Monitor-OrganizerService.ps1`. Logs default to `C:\\Scripts\\service-logs`. Ensure the selected folders exist and are accessible.
-    </small>
-  </div>
-</div>
-{% elif host_os == 'linux' %}
-<div class="container mt-2" style="max-width: 900px;">
-  <div class="alert alert-secondary">
-    <small>
-      Tip: On Linux, run the dashboard with `python OrganizerDashboard.py` or configure a systemd service for Organizer. Recommended Downloads path: `/home/<user>/Downloads`. Ensure permissions for shared mounts like `/mnt/shared/incoming`.
-    </small>
-  </div>
-</div>
-{% endif %}
+{# Removed OS-specific tips for a cleaner setup footer #}
 {% endblock %}
