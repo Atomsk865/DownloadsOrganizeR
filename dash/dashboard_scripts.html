@@ -1423,18 +1423,18 @@ function displayRecentFiles(files) {
                 </td>
                 <td>${categoryBadge}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
-                        <i class="bi bi-folder2-open"></i> Open
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
-                        <i class="bi bi-folder"></i> Show
-                    </button>
-                    ${(__organizerFeatures.virustotal_enabled && __vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
+                    <div class="d-flex flex-wrap gap-1" style="min-width: fit-content;">
+                        <button class="btn btn-sm btn-outline-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
+                            <i class="bi bi-folder2-open"></i> Open
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
+                            <i class="bi bi-folder"></i> Show
+                        </button>
+                        ${(__organizerFeatures.virustotal_enabled && __vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
+                        <button class="btn btn-sm btn-outline-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
