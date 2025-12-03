@@ -18,6 +18,7 @@
             --card-header-bg: #f8f9fa;
             --progress-bg: #e9ecef;
             --table-header-bg: #f8f9fa;
+            --sidebar-width: 20%;
         }
         [data-theme="dark"] {
             --bg-primary: #1a1d23;
@@ -384,6 +385,7 @@
         /* Sidebar layout and resizer */
         #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width); z-index: 1000; overflow-y: auto; }
         .dashboard-container { padding-left: var(--sidebar-width); }
+        .dashboard-root { padding-left: var(--sidebar-width); }
         .sidebar-resizer { position: fixed; top: 0; bottom: 0; left: calc(var(--sidebar-width)); width: 8px; cursor: col-resize; z-index: 1001; background: transparent; }
         .sidebar-resizer:hover::after {
             content: "Drag to resize • Double-click for presets";
@@ -400,6 +402,12 @@
             .notification-dropdown {
                 width: calc(100vw - 30px);
                 right: 15px;
+            }
+        }
+        @media (max-width: 992px) {
+            .dashboard-container,
+            .dashboard-root {
+                padding-left: 0;
             }
         }
         
@@ -870,7 +878,7 @@
     </div>
 </div>
 
-<div class="container">
+<div class="container dashboard-root">
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
     {% block dashboard_content %}{% endblock %}
 </div>
