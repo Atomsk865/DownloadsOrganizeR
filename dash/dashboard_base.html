@@ -204,6 +204,48 @@
             border-color: var(--border-color);
         }
         
+        /* Global dark mode text defaults for readability */
+        [data-theme="dark"] body,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .card-body,
+        [data-theme="dark"] .card-title,
+        [data-theme="dark"] .list-group-item,
+        [data-theme="dark"] .form-label,
+        [data-theme="dark"] small,
+        [data-theme="dark"] .text-muted {
+            color: var(--text-primary) !important;
+        }
+        
+        /* System Info specifics */
+        [data-theme="dark"] #system-info-card .card-header {
+            background-color: rgba(255,255,255,0.08);
+        }
+        [data-theme="dark"] .badge.bg-info {
+            color: #000 !important;
+        }
+        
+        /* Setup page (config-module) dark mode */
+        [data-theme="dark"] .config-module .card,
+        [data-theme="dark"] .config-module .card-body,
+        [data-theme="dark"] .config-module .card-header {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .config-module .form-control,
+        [data-theme="dark"] .config-module .form-select,
+        [data-theme="dark"] .config-module input,
+        [data-theme="dark"] .config-module textarea {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .config-module .form-control:focus {
+            background-color: #343a40;
+            border-color: #6ea8fe;
+            color: var(--text-primary);
+        }
+        
         /* Notification Center */
         .notification-bell {
             position: fixed;

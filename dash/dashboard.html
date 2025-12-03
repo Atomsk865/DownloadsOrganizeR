@@ -3,11 +3,14 @@
     <style>
         /* Main dashboard layout with sidebar */
         .dashboard-container {
-            display: grid;
-            grid-template-columns: var(--sidebar-width, 20%) 1fr;
+            display: grid !important;
+            grid-template-columns: var(--sidebar-width, 20%) 1fr !important;
             min-height: 100vh;
             position: relative;
         }
+        /* Ensure explicit grid track placement */
+        #sidebar { grid-column: 1; }
+        #dashboard-grid { grid-column: 2; }
         .sidebar-resizer {
             position: absolute;
             left: calc(var(--sidebar-width, 20%));
@@ -414,7 +417,7 @@
             </div>
             
             <!-- Draggable resizer between sidebar and content -->
-            <div class="sidebar-resizer" id="sidebar-resizer"></div>
+            <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize • Double-click for presets"></div>
             
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
@@ -429,7 +432,7 @@
                 </div>
             </div>
             <!-- System Info Card (Top, non-draggable) -->
-            <div class="dashboard-module wide" data-module="system-info" draggable="false">
+            <div class="dashboard-module wide" data-module="system-info" draggable="false" id="system-info-card">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b>System Information</b>
