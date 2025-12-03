@@ -55,11 +55,8 @@ def test_duplicate_detection():
         print(f"  File 2 hash: {hash2[:12]}...")
         print(f"  File 3 hash: {hash3[:12]}...")
         
-        if hash1 == hash2 == hash3:
-            print("  ✅ All hashes match - files are identical")
-        else:
-            print("  ❌ Hashes don't match - test failed")
-            return False
+        assert hash1 == hash2 == hash3, "Hashes should match for identical files"
+        print("  ✅ All hashes match - files are identical")
         
         # Test 2: Create file_hashes.json manually
         print("\n[Test 2] Creating hash database...")
@@ -85,16 +82,13 @@ def test_duplicate_detection():
                 auth=("admin", "change_this_password")
             )
             
-            if response.status_code == 200:
-                data = response.json()
-                print(f"  Status: {response.status_code}")
-                print(f"  Total duplicates: {data['total_duplicates']}")
-                print(f"  Total duplicate files: {data['total_duplicate_files']}")
-                print(f"  Wasted space: {data['wasted_space_human']}")
-                print("  ✅ API endpoint responding correctly")
-            else:
-                print(f"  ❌ API returned status {response.status_code}")
-                return False
+            assert response.status_code == 200, f"API returned status {response.status_code}"
+            data = response.json()
+            print(f"  Status: {response.status_code}")
+            print(f"  Total duplicates: {data['total_duplicates']}")
+            print(f"  Total duplicate files: {data['total_duplicate_files']}")
+            print(f"  Wasted space: {data['wasted_space_human']}")
+            print("  ✅ API endpoint responding correctly")
                 
         except Exception as e:
             print(f"  ⚠️  Could not test API (dashboard may not be running): {e}")
@@ -107,16 +101,13 @@ def test_duplicate_detection():
         hash4 = calculate_hash(file4)
         print(f"  File 4 hash: {hash4[:12]}...")
         
-        if hash4 != hash1:
-            print("  ✅ Different content has different hash")
-        else:
-            print("  ❌ Different content should have different hash")
-            return False
+        assert hash4 != hash1, "Different content should have different hash"
+        print("  ✅ Different content has different hash")
     
     print("\n" + "=" * 60)
     print("All tests passed! ✅")
     print("=" * 60)
-    return True
+    # Pytest expects no return value
 
 
 if __name__ == "__main__":
