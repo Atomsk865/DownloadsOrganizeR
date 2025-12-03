@@ -796,6 +796,10 @@ async function loadOrganizerConfig() {
             reports_enabled: features.reports_enabled !== false
         };
         __vtApiKey = cfg.vt_api_key || cfg.virustotal_api_key || '';
+        // Expose to window for template string evaluation
+        window.__organizerFeatures = __organizerFeatures;
+        window.__vtApiKey = __vtApiKey;
+        console.log('VT Config:', { enabled: __organizerFeatures.virustotal_enabled, hasKey: !!__vtApiKey });
         applyFeatureGating();
     } catch (e) {
         console.warn('Failed to load organizer config:', e);
@@ -1374,6 +1378,9 @@ async function refreshRecentFiles() {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
         }
+        
+        // Ensure VT config is loaded before displaying files
+        await loadOrganizerConfig();
         
         const response = await fetch('/api/recent_files', {
             credentials: 'include',
