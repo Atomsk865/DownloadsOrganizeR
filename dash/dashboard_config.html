@@ -591,7 +591,10 @@ if (typeof showNotification === 'undefined') {
   var showNotification = function(msg, type) { console.warn('showNotification not loaded:', msg); };
 }
 if (typeof getAuthHeaders === 'undefined') {
-  var getAuthHeaders = function() { return __authHeader ? { 'Authorization': __authHeader } : {}; };
+  var getAuthHeaders = function() { 
+    const authHeader = window.__authHeader || (typeof __authHeader !== 'undefined' ? __authHeader : null);
+    return authHeader ? { 'Authorization': authHeader } : {}; 
+  };
 }
 
 let dashboardConfig = null;
@@ -839,12 +842,17 @@ function isValidBase64(s){
 }
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  // Ensure __authHeader is accessible (it's defined in dashboard_scripts.html)
+  if (typeof window.__authHeader === 'undefined') {
+    window.__authHeader = null;
+  }
+  
   // Restore auth from sessionStorage if not already set
-  if (typeof __authHeader === 'undefined' || !__authHeader) {
+  if (!window.__authHeader) {
     try {
       const storedAuth = sessionStorage.getItem('authHeader');
       if (storedAuth) {
-        __authHeader = storedAuth;
+        window.__authHeader = storedAuth;
       }
     } catch (e) {
       console.warn('sessionStorage not available:', e);
@@ -852,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Verify auth and load rights if we have credentials
-  if (__authHeader) {
+  if (window.__authHeader) {
     fetch('/auth_check', {
       credentials: 'include',
       headers: getAuthHeaders()
