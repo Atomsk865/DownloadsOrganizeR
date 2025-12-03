@@ -18,9 +18,9 @@
         </div>
       </div>
       <div class="mb-2 d-flex flex-wrap gap-2">
-        <button id="run-all-tests" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run Endpoint Checks</button>
-        <button id="run-pytests" class="btn btn-outline-primary btn-sm"><i class="bi bi-bug"></i> Run Test Suite (pytest)</button>
-        <button id="clear-log" class="btn btn-outline-secondary btn-sm"><i class="bi bi-trash"></i> Clear Log</button>
+        <button id="run-all-tests" class="btn btn-primary btn-sm" onclick="runAllTests()"><i class="bi bi-play-fill"></i> Run Endpoint Checks</button>
+        <button id="run-pytests" class="btn btn-outline-primary btn-sm" onclick="runPytests()"><i class="bi bi-bug"></i> Run Test Suite (pytest)</button>
+        <button id="clear-log" class="btn btn-outline-secondary btn-sm" onclick="clearLog()"><i class="bi bi-trash"></i> Clear Log</button>
       </div>
       <div class="alert alert-info py-2"><small>This tool makes client-side requests to common endpoints and records: request, expected feedback, and actual feedback. It includes auth headers and cookies when available.</small></div>
       <div id="env-log" class="border rounded p-2" style="min-height: 240px; background: var(--bg-secondary);"></div>

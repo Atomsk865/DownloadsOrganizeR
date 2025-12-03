@@ -386,9 +386,9 @@
                             <span id="service-badge-sidebar" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1" style="font-size: 0.7rem;">{{ service_status }}</span>
                         </div>
                         <div class="d-flex gap-1 flex-wrap">
-                            <button id="btn-start-service" class="btn btn-success btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Start</button>
-                            <button id="btn-stop-service" class="btn btn-danger btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Stop</button>
-                            <button id="btn-restart-service" class="btn btn-warning btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Restart</button>
+                            <button id="btn-start-service" class="btn btn-success btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof startService==='function')startService()">Start</button>
+                            <button id="btn-stop-service" class="btn btn-danger btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof stopService==='function')stopService()">Stop</button>
+                            <button id="btn-restart-service" class="btn btn-warning btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof restartService==='function')restartService()">Restart</button>
                         </div>
                     </div>
                 </div>
@@ -400,12 +400,12 @@
                     </div>
                     <div class="card-body p-2">
                         <div class="d-grid gap-1">
-                            <button id="login-btn-sidebar" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;">Login</button>
-                            <button id="logout-btn-sidebar" class="btn btn-outline-secondary btn-sm d-none" style="font-size: 0.75rem;">Logout</button>
+                            <button id="login-btn-sidebar" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
+                            <button id="logout-btn-sidebar" class="btn btn-outline-secondary btn-sm d-none" style="font-size: 0.75rem;" onclick="if(typeof logout==='function')logout()">Logout</button>
                             <a id="config-link-sidebar" href="/config" class="btn btn-outline-success btn-sm d-none" style="font-size: 0.75rem;"><i class="bi bi-gear-fill"></i> Config</a>
-                            <button id="btn-show-hidden" class="btn btn-outline-info btn-sm" style="font-size: 0.75rem;"><i class="bi bi-eye"></i> Show Hidden</button>
-                            <button id="btn-reset-layout" class="btn btn-outline-warning btn-sm" style="font-size: 0.75rem;"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
-                            <button id="btn-add-widget" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;"><i class="bi bi-plus-circle"></i> Add Widget</button>
+                            <button id="btn-show-hidden" class="btn btn-outline-info btn-sm" style="font-size: 0.75rem;" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
+                            <button id="btn-reset-layout" class="btn btn-outline-warning btn-sm" style="font-size: 0.75rem;" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+                            <button id="btn-add-widget" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;" onclick="if(typeof addCustomWidget==='function')addCustomWidget()"><i class="bi bi-plus-circle"></i> Add Widget</button>
                         </div>
                     </div>
                 </div>
@@ -419,7 +419,7 @@
                         <div class="d-grid gap-1">
                             <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm" style="font-size: 0.75rem;">GitHub</a>
                             <a href="/env-test" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;"><i class="bi bi-bug"></i> Environment Test</a>
-                            <button id="dev-reset-btn-sidebar" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem;"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                            <button id="dev-reset-btn-sidebar" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem;" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
                         </div>
                     </div>
                 </div>
@@ -434,11 +434,11 @@
                     <button id="login-btn" class="btn btn-outline-primary btn-sm" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
                     <button id="logout-btn" class="btn btn-outline-secondary btn-sm d-none" onclick="if(typeof logout==='function')logout()">Logout</button>
                     <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
-                    <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" title="Reset to default layout"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
-                    <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" title="Show hidden modules"><i class="bi bi-eye"></i> Show Hidden</button>
-                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm" title="DEV: Delete all config and force setup wizard"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                    <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" title="Reset to default layout" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+                    <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" title="Show hidden modules" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
+                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm" title="DEV: Delete all config and force setup wizard" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
                     <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
-                    <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none;" title="Click to copy service name">Service: <span id="service-name">...</span></button>
+                    <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none;" title="Click to copy service name" onclick="if(typeof copyServiceName==='function')copyServiceName()">Service: <span id="service-name">...</span></button>
                 </div>
             <!-- System Info Card (Top, non-draggable) -->
             {% include "modules/system_info.html" %}
