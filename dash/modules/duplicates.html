@@ -19,7 +19,7 @@
                     <span class="badge bg-danger" id="wasted-space">0 B wasted</span>
                     <span class="badge bg-info" id="watched-folders-badge" title="Watched folders">watching 0</span>
                 </div>
-                <button id="btn-duplicates-refresh" class="btn btn-sm btn-primary">
+                <button id="btn-duplicates-refresh" class="btn btn-sm btn-primary" onclick="if(typeof loadDuplicates==='function')loadDuplicates()">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                 </button>
             </div>
