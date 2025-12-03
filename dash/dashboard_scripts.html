@@ -1902,10 +1902,10 @@ async function loadDuplicates() {
                     <tr>
                         <td style="width: 30px;"><input type="checkbox" data-group="${index}" data-file="${fileIndex}" data-path="${safePath}"></td>
                         <td style="max-width: 250px; word-wrap: break-word; word-break: break-word;"><i class="bi bi-file-earmark"></i> ${escapeHtml(file.name || 'Unknown')}</td>
-                        <td style="width: 80px; white-space: nowrap;">${sizeLabel || '—'}</td>
-                        <td style="width: 140px; white-space: nowrap;"><small>${modifiedLabel || '—'}</small></td>
-                        <td style="max-width: 300px; word-wrap: break-word; word-break: break-word;"><small class="text-muted">${safePath}</small></td>
-                        <td style="width: 60px;">
+                        <td style="min-width: 70px; white-space: nowrap;">${sizeLabel || '—'}</td>
+                        <td style="min-width: 130px; white-space: nowrap;"><small>${modifiedLabel || '—'}</small></td>
+                        <td style="word-wrap: break-word; word-break: break-word;"><small class="text-muted">${safePath}</small></td>
+                        <td style="min-width: 50px; text-align: center;">
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -1937,15 +1937,15 @@ async function loadDuplicates() {
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0" style="table-layout: auto;">
+                            <table class="table table-sm table-hover mb-0" style="table-layout: auto; width: 100%;">
                                 <thead>
                                     <tr>
                                         <th style="width: 30px;"><input type="checkbox" onchange="toggleGroupSelection(${index}, this.checked)" title="Select all files in group"></th>
-                                        <th style="max-width: 250px;">Name</th>
-                                        <th style="width: 80px;">Size</th>
-                                        <th style="width: 140px;">Modified</th>
-                                        <th style="max-width: 300px;">Path</th>
-                                        <th style="width: 60px;">Actions</th>
+                                        <th style="width: 25%;">Name</th>
+                                        <th style="width: 8%; min-width: 70px;">Size</th>
+                                        <th style="width: 15%; min-width: 130px;">Modified</th>
+                                        <th style="width: auto;">Path</th>
+                                        <th style="width: 50px; min-width: 50px; text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
