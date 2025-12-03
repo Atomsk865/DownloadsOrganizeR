@@ -906,26 +906,26 @@ async function restartService() {
 }
 
 async function serviceAction(action) {
-        try {
-            if (!__authHeader) {
-                showNotification('Please login before performing service actions', 'warning');
-                return;
-            }
-            const response = await fetch(`/${action}`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: getAuthHeaders()
-            });
-            const data = await response.json();
-            if (response.ok) {
-                showNotification(`Service ${action}ed successfully`, 'success');
-                setTimeout(updateServiceStatus, 1000);
-            } else {
-                showNotification(data.message || `Failed to ${action} service`, 'danger');
-            }
-        } catch (error) {
-            showNotification(`Error: ${error.message}`, 'danger');
+    try {
+        if (!__authHeader) {
+            showNotification('Please login before performing service actions', 'warning');
+            return;
         }
+        const response = await fetch(`/${action}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(`Service ${action}ed successfully`, 'success');
+            setTimeout(updateServiceStatus, 1000);
+        } else {
+            showNotification(data.message || `Failed to ${action} service`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
 }
 
 // Update service status
