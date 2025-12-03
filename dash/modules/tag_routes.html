@@ -23,8 +23,8 @@
                     </tbody>
                 </table>
                 <div class="d-flex gap-2 mt-2">
-                    <button id="btn-add-tag-route" class="btn btn-success btn-sm" type="button">Add Tag Route</button>
-                    <button id="btn-save-tag-routes" class="btn btn-primary btn-sm" type="button">Save Configuration</button>
+                    <button id="btn-add-tag-route" class="btn btn-success btn-sm" type="button" onclick="if(typeof addTagRouteRow==='function')addTagRouteRow()">Add Tag Route</button>
+                    <button id="btn-save-tag-routes" class="btn btn-primary btn-sm" type="button" onclick="if(typeof saveConfiguration==='function')saveConfiguration()">Save Configuration</button>
                 </div>
             </form>
             <small class="text-muted">Examples: "invoice" → Invoices folder, "screenshot" → Screenshots</small>

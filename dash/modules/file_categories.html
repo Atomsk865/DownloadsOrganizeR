@@ -152,8 +152,8 @@
                     </tbody>
                 </table>
                 <div class="d-flex gap-2 mt-2">
-                    <button id="btn-add-category" class="btn btn-success btn-sm" type="button">Add Category</button>
-                    <button id="btn-save-config" class="btn btn-primary btn-sm" type="button">Save Configuration</button>
+                    <button id="btn-add-category" class="btn btn-success btn-sm" type="button" onclick="if(typeof addCategoryRow==='function')addCategoryRow()">Add Category</button>
+                    <button id="btn-save-config" class="btn btn-primary btn-sm" type="button" onclick="if(typeof saveConfiguration==='function')saveConfiguration()">Save Configuration</button>
                 </div>
             </form>
         </div>

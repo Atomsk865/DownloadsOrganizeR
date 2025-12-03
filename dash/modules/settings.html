@@ -31,7 +31,7 @@
                 <div class="alert alert-warning alert-sm mt-2 mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
                     <i class="bi bi-exclamation-triangle"></i> <strong>Important:</strong> Changing the watch folder requires restarting the Organizer service.
                 </div>
-                <button id="btn-save-settings" class="btn btn-primary btn-sm mt-2" type="button">Save Settings</button>
+                <button id="btn-save-settings" class="btn btn-primary btn-sm mt-2" type="button" onclick="if(typeof saveSettings==='function')saveSettings()">Save Settings</button>
             </form>
         </div>
     </div>
