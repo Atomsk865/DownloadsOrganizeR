@@ -4,9 +4,23 @@
         /* Main dashboard layout with sidebar */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 20% 80%;
+            grid-template-columns: var(--sidebar-width, 20%) 1fr;
             min-height: 100vh;
             position: relative;
+        }
+        .sidebar-resizer {
+            position: absolute;
+            left: calc(var(--sidebar-width, 20%));
+            top: 0;
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            background: transparent;
+            border-left: 2px solid transparent;
+            z-index: 200;
+        }
+        .sidebar-resizer:hover, .sidebar-resizer.active {
+            border-left-color: #0d6efd;
         }
         
         /* Fixed left sidebar */
@@ -398,6 +412,9 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Draggable resizer between sidebar and content -->
+            <div class="sidebar-resizer" id="sidebar-resizer"></div>
             
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
