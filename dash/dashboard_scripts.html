@@ -1478,31 +1478,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cookie-based auth persistence helpers
     function setCookie(name, value, days) {
-        try {
-            const d = new Date();
-            d.setTime(d.getTime() + (days*24*60*60*1000));
-            const expires = 'expires=' + d.toUTCString();
-            const secure = location.protocol === 'https:' ? '; Secure' : '';
-            document.cookie = name + '=' + encodeURIComponent(value) + '; ' + expires + '; Path=/' + '; SameSite=Lax' + secure;
-        } catch (e) {}
+        const d = new Date();
+        d.setTime(d.getTime() + (days*24*60*60*1000));
+        const expires = 'expires=' + d.toUTCString();
+        const secure = location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = name + '=' + encodeURIComponent(value) + '; ' + expires + '; Path=/' + '; SameSite=Lax' + secure;
     }
     function getCookie(name) {
-        try {
-            const decoded = decodeURIComponent(document.cookie || '');
-            const ca = decoded.split(';');
-            name = name + '=';
-            for (let c of ca) {
-                while (c.charAt(0) === ' ') c = c.substring(1);
-                if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
-            }
-        } catch (e) {}
+        const decoded = decodeURIComponent(document.cookie || '');
+        const ca = decoded.split(';');
+        name = name + '=';
+        for (let c of ca) {
+            while (c.charAt(0) === ' ') c = c.substring(1);
+            if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+        }
         return null;
     }
     function deleteCookie(name) {
-        try {
-            const secure = location.protocol === 'https:' ? '; Secure' : '';
-            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax' + secure;
-        } catch (e) {}
+        const secure = location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; SameSite=Lax' + secure;
     }
 
     // Restore auth from sessionStorage or cookie if available
