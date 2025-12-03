@@ -381,6 +381,20 @@
             font-size: 3rem;
             opacity: 0.3;
         }
+        /* Sidebar resizer helper text for both themes */
+        #sidebar-resizer::after {
+            content: "Drag to resize • Double-click for presets";
+            position: fixed;
+            top: 8px;
+            left: calc(var(--sidebar-width) + 12px);
+            font-size: 11px;
+            color: rgba(0,0,0,0.5);
+            z-index: 1002;
+            pointer-events: none;
+        }
+        [data-theme="dark"] #sidebar-resizer::after {
+            color: rgba(255,255,255,0.6);
+        }
         @media (max-width: 768px) {
             .notification-dropdown {
                 width: calc(100vw - 30px);
