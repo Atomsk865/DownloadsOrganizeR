@@ -576,7 +576,6 @@
   </div>
   
 </div>
-{% include "dashboard_scripts.html" %}
 <script>
 let dashboardConfig = null;
 function fetchConfig() {
@@ -1705,9 +1704,7 @@ async function exportConfig() {
   try {
     const response = await fetch('/api/config/export', {
       method: 'GET',
-      headers: {
-        'Authorization': 'Basic ' + btoa(__authHeader || 'admin:'),
-      }
+      headers: getAuthHeaders()
     });
     
     if (!response.ok) {
