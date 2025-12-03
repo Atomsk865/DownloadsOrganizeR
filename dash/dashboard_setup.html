@@ -289,6 +289,8 @@ function submitSetup(){
       } catch (e) {
         console.error('Response not JSON:', text);
         return {ok: false, j: {error: 'Server returned invalid response: ' + text.substring(0, 200)}};
+      } finally {
+        // no-op: ensure try has companion block
       }
     })
     .then(async ({ok,j})=>{
@@ -378,17 +380,19 @@ document.addEventListener('DOMContentLoaded', function(){
     if(el) el.addEventListener('change', renderSelectedWatchFolders);
   });
   // Auto-select based on server OS recommendations
-  try {
-    const recommended = {{ recommended_watch_folders|tojson }};
+  const recommended = {{ recommended_watch_folders|tojson }} || [];
+  if (Array.isArray(recommended)) {
     recommended.forEach(path => {
-      if(path.startsWith('C:/')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
-      if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
+      if(typeof path === 'string'){
+        if(path.startsWith('C:/')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
+        if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
+      }
     });
-    // Additionally auto-select based on client user agent
-    const ua = (navigator.userAgent || '').toLowerCase();
-    if(ua.includes('windows')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
-    if(ua.includes('linux')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
-  } catch(e) { /* ignore */ }
+  }
+  // Additionally auto-select based on client user agent
+  const ua = (navigator.userAgent || '').toLowerCase();
+  if(ua.includes('windows')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
+  if(ua.includes('linux')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
   renderSelectedWatchFolders();
 });
 

@@ -134,9 +134,9 @@ function logout() {
     // Clear stored credentials
     try {
         sessionStorage.removeItem('authHeader');
-        const secure = location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = 'authHeader=; Max-Age=0; Path=/; SameSite=Lax' + secure;
     } catch (e) {}
+    // Remove cookie
+    document.cookie = 'authHeader=; Max-Age=0; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
     document.getElementById('login-btn').classList.remove('d-none');
     document.getElementById('logout-btn').classList.add('d-none');
     document.getElementById('config-link').classList.add('d-none');
@@ -152,12 +152,11 @@ document.getElementById('login-submit').addEventListener('click', async function
     // Store credentials in sessionStorage and cookie for persistence
     try {
         sessionStorage.setItem('authHeader', __authHeader);
-        // Persist for 14 days
-        const secure = location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = 'authHeader=' + encodeURIComponent(__authHeader) + '; Max-Age=' + (14*24*60*60) + '; Path=/; SameSite=Lax' + secure;
     } catch (e) {
         console.warn('sessionStorage not available:', e);
     }
+    // Persist for 14 days in cookie
+    document.cookie = 'authHeader=' + encodeURIComponent(__authHeader) + '; Max-Age=' + (14*24*60*60) + '; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
     
     try {
         const response = await fetch('/auth_check', {
