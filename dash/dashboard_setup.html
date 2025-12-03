@@ -316,6 +316,14 @@ function submitSetup(){
           showNotification('Error saving setup preferences: ' + e.message, 'warning');
         }
         const dest = '/config';
+        // Optional improvement: set Basic auth header for subsequent API calls
+        try {
+          const u = adminUsername;
+          const p = adminPassword;
+          if (u && p && window.btoa) {
+            window.__authHeader = 'Basic ' + btoa(u + ':' + p);
+          }
+        } catch (e) { /* no-op */ }
         showNotification('Setup complete! Redirecting to configuration…', 'success');
         // Backend attempts auto-login via session cookie; navigate directly to config
         setTimeout(()=>{ window.location.href=dest; },1200);
