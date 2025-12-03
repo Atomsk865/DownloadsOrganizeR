@@ -1964,12 +1964,16 @@ async function loadStatistics() {
         
         if (overviewRes.ok) {
             const overview = await overviewRes.json();
-            document.getElementById('stat-total-files').textContent = overview.total_files || 0;
-            document.getElementById('stat-today').textContent = overview.today_count || 0;
-            document.getElementById('stat-week').textContent = overview.week_count || 0;
-            document.getElementById('stat-month').textContent = overview.month_count || 0;
-            document.getElementById('stat-categories').textContent = overview.total_categories || 0;
-            document.getElementById('stat-avg-day').textContent = overview.avg_per_day || 0;
+            const setTextIfExists = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            setTextIfExists('stat-total-files', overview.total_files || 0);
+            setTextIfExists('stat-today', overview.today_count || 0);
+            setTextIfExists('stat-week', overview.week_count || 0);
+            setTextIfExists('stat-month', overview.month_count || 0);
+            setTextIfExists('stat-categories', overview.total_categories || 0);
+            setTextIfExists('stat-avg-day', overview.avg_per_day || 0);
         }
         
         // Load category chart
