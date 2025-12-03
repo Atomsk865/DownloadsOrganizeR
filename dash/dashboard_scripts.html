@@ -652,6 +652,11 @@ function copyPublicIP(el) {
     }
 }
 
+// Ensure these functions are globally accessible for inline event handlers
+window.revealPublicIP = revealPublicIP;
+window.hidePublicIP = hidePublicIP;
+window.copyPublicIP = copyPublicIP;
+
 // Generic copy to clipboard with visual feedback
 function copyToClipboard(text, el) {
     navigator.clipboard.writeText(text).then(() => {
@@ -667,6 +672,7 @@ function copyToClipboard(text, el) {
         showNotification('Failed to copy', 'danger');
     });
 }
+window.copyToClipboard = copyToClipboard;
 
 // Dev Reset to Setup
 function devResetToSetup() {
