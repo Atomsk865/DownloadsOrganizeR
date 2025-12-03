@@ -1507,6 +1507,32 @@ async function removeRecentFile(index) {
     }
 }
 
+// Developer Mode Management
+async function loadDeveloperMode() {
+    try {
+        const response = await fetch('/api/organizer/config', {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const config = await response.json();
+            const features = config.features || {};
+            const developerMode = features.developer_mode === true;
+            
+            // Apply developer mode class to body
+            if (developerMode) {
+                document.body.classList.add('developer-mode');
+            } else {
+                document.body.classList.remove('developer-mode');
+            }
+        }
+    } catch (error) {
+        console.log('Could not load developer mode setting:', error);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
@@ -1528,6 +1554,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if we should show intro
     checkShowIntro();
+    
+    // Load developer mode setting
+    loadDeveloperMode();
 
     // Cookie-based auth persistence helpers
     function setCookie(name, value, days) {
@@ -2674,7 +2703,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName','copyToClipboard','deleteRow',
         'toggleHideModule','saveSettings','addCategoryRow','saveConfiguration','addCustomRouteRow','addTagRouteRow',
         'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus',
-        'startService','stopService','restartService','serviceAction','showHiddenModules'
+        'startService','stopService','restartService','serviceAction','showHiddenModules','loadDeveloperMode'
     ];
     exportNames.forEach(function(name){
         try {

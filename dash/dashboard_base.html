@@ -324,6 +324,20 @@
                 transform: translateY(0);
             }
         }
+        
+        /* Developer mode toggle */
+        .dev-only-element {
+            display: none !important;
+        }
+        body.developer-mode .dev-only-element {
+            display: inline-block !important;
+        }
+        body.developer-mode a.dev-only-element {
+            display: inline-block !important;
+        }
+        body.developer-mode button.dev-only-element {
+            display: inline-block !important;
+        }
         .notification-header {
             padding: 15px;
             border-bottom: 1px solid var(--border-color);

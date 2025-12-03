@@ -154,7 +154,7 @@
         </ul>
       </div>
     <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
-    <a href="/env-test" class="btn btn-sm btn-outline-primary ms-2"><i class="bi bi-bug"></i> Environment Test</a>
+    <a href="/env-test" class="btn btn-sm btn-outline-primary ms-2 dev-only-element"><i class="bi bi-bug"></i> Environment Test</a>
   </div>
 </div>
 <div id="config-grid">
@@ -186,6 +186,11 @@
               <input class="form-check-input" type="checkbox" id="cfg-feat-reports" checked>
               <label class="form-check-label"><small>Reports & Analytics</small></label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="cfg-feat-developer-mode">
+              <label class="form-check-label"><small>Developer Mode</small></label>
+            </div>
+            <small class="text-muted d-block mt-1">Shows env-test and DEV RESET links</small>
           </div>
         </div>
         <div class="mt-2 d-flex justify-content-end">
@@ -1840,6 +1845,7 @@ async function loadFeaturesConfig(){
       document.getElementById('cfg-feat-virustotal').checked = feats.virustotal_enabled !== false;
       document.getElementById('cfg-feat-duplicates').checked = feats.duplicates_enabled !== false;
       document.getElementById('cfg-feat-reports').checked = feats.reports_enabled !== false;
+      document.getElementById('cfg-feat-developer-mode').checked = feats.developer_mode === true;
     }
   } catch(e){ /* ignore */ }
 }
@@ -1849,7 +1855,8 @@ async function saveFeaturesConfig(){
   const features = {
     virustotal_enabled: document.getElementById('cfg-feat-virustotal').checked,
     duplicates_enabled: document.getElementById('cfg-feat-duplicates').checked,
-    reports_enabled: document.getElementById('cfg-feat-reports').checked
+    reports_enabled: document.getElementById('cfg-feat-reports').checked,
+    developer_mode: document.getElementById('cfg-feat-developer-mode').checked
   };
   try{
     const r = await fetch('/api/update', {
@@ -1857,7 +1864,13 @@ async function saveFeaturesConfig(){
       body: JSON.stringify({ vt_api_key: vtApiKey, features })
     });
     const j = await r.json().catch(()=>({}));
-    if(r.ok){ showNotification('Features saved', 'success'); }
+    if(r.ok){ 
+      showNotification('Features saved', 'success');
+      // Reload developer mode to apply changes immediately
+      if(typeof loadDeveloperMode === 'function') {
+        loadDeveloperMode();
+      }
+    }
     else { showNotification('Failed to save features: ' + (j.message||r.status), 'warning'); }
   } catch(e){ showNotification('Error saving features: ' + e.message, 'danger'); }
 }

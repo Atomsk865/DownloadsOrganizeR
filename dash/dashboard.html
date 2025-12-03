@@ -418,8 +418,8 @@
                     <div class="card-body p-2">
                         <div class="d-grid gap-1">
                             <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm" style="font-size: 0.75rem;">GitHub</a>
-                            <a href="/env-test" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;"><i class="bi bi-bug"></i> Environment Test</a>
-                            <button id="dev-reset-btn-sidebar" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem;" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                            <a href="/env-test" class="btn btn-outline-primary btn-sm dev-only-element" style="font-size: 0.75rem;"><i class="bi bi-bug"></i> Environment Test</a>
+                            <button id="dev-reset-btn-sidebar" class="btn btn-outline-danger btn-sm dev-only-element" style="font-size: 0.75rem;" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
                         </div>
                     </div>
                 </div>
@@ -436,7 +436,7 @@
                     <a id="config-link" href="/config" class="btn btn-outline-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
                     <button id="reset-layout-btn" class="btn btn-outline-warning btn-sm d-none" title="Reset to default layout" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
                     <button id="show-hidden-btn" class="btn btn-outline-info btn-sm d-none" title="Show hidden modules" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
-                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm" title="DEV: Delete all config and force setup wizard" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                    <button id="dev-reset-btn" class="btn btn-outline-danger btn-sm dev-only-element" title="DEV: Delete all config and force setup wizard" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
                     <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-outline-dark btn-sm">GitHub</a>
                     <button id="service-name-btn" class="btn btn-outline-info btn-sm" style="display:none;" title="Click to copy service name" onclick="if(typeof copyServiceName==='function')copyServiceName()">Service: <span id="service-name">...</span></button>
                 </div>
