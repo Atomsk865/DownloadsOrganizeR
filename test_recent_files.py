@@ -13,15 +13,15 @@ from datetime import datetime
 
 def test_file_moves_json():
     """Test that file_moves.json is being created and updated properly."""
-    file_moves_path = Path("C:/Scripts/file_moves.json")
+    # Prefer Windows service path; fallback to repo-local file for dev containers
+    win_path = Path("C:/Scripts/file_moves.json")
+    local_path = Path("file_moves.json")
+    file_moves_path = win_path if win_path.exists() else local_path
     
     print("Testing file_moves.json...")
     print(f"Expected location: {file_moves_path}")
     
-    if not file_moves_path.exists():
-        print("❌ file_moves.json does not exist yet.")
-        print("   Try moving a file to Downloads to trigger creation.")
-        return False
+    assert file_moves_path.exists(), "file_moves.json should exist; move a file to Downloads to trigger creation"
     
     try:
         with open(file_moves_path, 'r', encoding='utf-8') as f:
@@ -39,21 +39,20 @@ def test_file_moves_json():
             print(f"  To: {latest['destination_path']}")
             
             # Check if file still exists
-            if os.path.exists(latest['destination_path']):
-                print(f"  ✅ File exists at destination")
-            else:
-                print(f"  ⚠️  File not found at destination")
+            dest = latest['destination_path']
+            # Skip existence check for Windows paths when running on non-Windows
+            is_windows_path = dest.startswith('C:\\') or ':' in dest[:3]
+            if not is_windows_path:
+                assert os.path.exists(dest), "Destination file should exist"
+            print(f"  ✅ Destination path check completed")
         else:
             print("  No file movements recorded yet")
-        
-        return True
+        # No return value for pytest
         
     except json.JSONDecodeError as e:
-        print(f"❌ Error parsing file_moves.json: {e}")
-        return False
+        raise AssertionError(f"Error parsing file_moves.json: {e}")
     except Exception as e:
-        print(f"❌ Error reading file_moves.json: {e}")
-        return False
+        raise AssertionError(f"Error reading file_moves.json: {e}")
 
 
 def test_api_endpoints():
