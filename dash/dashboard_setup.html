@@ -315,8 +315,10 @@ function submitSetup(){
         } catch(e){
           showNotification('Error saving setup preferences: ' + e.message, 'warning');
         }
-        showNotification('Setup complete! Redirecting to login...', 'success');
-        setTimeout(()=>{ window.location.href='/login'; },1500);
+        const dest = '/config';
+        showNotification('Setup complete! Redirecting to configuration…', 'success');
+        // Backend attempts auto-login via session cookie; navigate directly to config
+        setTimeout(()=>{ window.location.href=dest; },1200);
       } else {
         showNotification(j.error||'Setup failed','danger');
       }
