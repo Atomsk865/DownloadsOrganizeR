@@ -174,10 +174,29 @@
             color: var(--text-secondary) !important;
         }
         
+        /* Custom badge colors for categories */
+        .badge.bg-purple {
+            background-color: #6f42c1;
+        }
+        .badge.bg-indigo {
+            background-color: #6610f2;
+        }
+        .badge.bg-cyan {
+            background-color: #0dcaf0;
+        }
+        
         /* Badges contrast in dark mode */
         [data-theme="dark"] .badge.bg-secondary {
             background-color: #495057 !important;
             color: #ffffff !important;
+        }
+        [data-theme="dark"] .badge.bg-warning {
+            background-color: #ffc107;
+            color: #000 !important;
+        }
+        [data-theme="dark"] .badge.bg-cyan {
+            background-color: #17a2b8;
+            color: #000 !important;
         }
         [data-theme="dark"] .btn-outline-primary:hover {
             background-color: #0d6efd;

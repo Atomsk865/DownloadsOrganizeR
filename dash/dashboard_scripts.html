@@ -1430,7 +1430,7 @@ function displayRecentFiles(files) {
                         <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
                             <i class="bi bi-folder"></i> Show
                         </button>
-                        ${(typeof __organizerFeatures !== 'undefined' && __organizerFeatures.virustotal_enabled && __vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
+                        ${(window.__organizerFeatures?.virustotal_enabled && window.__vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
                         <button class="btn btn-sm btn-outline-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
                             <i class="bi bi-x-lg"></i>
                         </button>
@@ -1442,21 +1442,21 @@ function displayRecentFiles(files) {
 }
 
 function getCategoryBadge(category) {
-    const badges = {
-        'Images': 'bg-success',
-        'Videos': 'bg-primary',
-        'Music': 'bg-info',
-        'Documents': 'bg-warning',
-        'Archives': 'bg-secondary',
-        'Executables': 'bg-danger',
-        'Scripts': 'bg-dark',
-        'Fonts': 'bg-light text-dark',
-        'Shortcuts': 'bg-info',
-        'Logs': 'bg-secondary',
-        'Other': 'bg-secondary'
+    const categories = {
+        'Images': { class: 'bg-success', icon: 'bi-image' },
+        'Videos': { class: 'bg-primary', icon: 'bi-camera-video' },
+        'Music': { class: 'bg-info', icon: 'bi-music-note-beamed' },
+        'Documents': { class: 'bg-warning text-dark', icon: 'bi-file-text' },
+        'Archives': { class: 'bg-secondary', icon: 'bi-file-zip' },
+        'Executables': { class: 'bg-danger', icon: 'bi-file-binary' },
+        'Scripts': { class: 'bg-purple text-light', icon: 'bi-code-slash' },
+        'Fonts': { class: 'bg-indigo text-light', icon: 'bi-fonts' },
+        'Shortcuts': { class: 'bg-cyan text-dark', icon: 'bi-link-45deg' },
+        'Logs': { class: 'bg-dark text-light', icon: 'bi-file-earmark-text' },
+        'Other': { class: 'bg-secondary', icon: 'bi-question-circle' }
     };
-    const badgeClass = badges[category] || 'bg-secondary';
-    return `<span class="badge ${badgeClass}">${escapeHtml(category)}</span>`;
+    const categoryData = categories[category] || { class: 'bg-secondary', icon: 'bi-file' };
+    return `<span class="badge ${categoryData.class}"><i class="bi ${categoryData.icon}"></i> ${escapeHtml(category)}</span>`;
 }
 
 async function openFile(filePath, action = 'open') {
