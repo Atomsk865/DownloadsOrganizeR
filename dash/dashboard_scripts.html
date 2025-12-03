@@ -1464,6 +1464,9 @@ async function removeRecentFile(index) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
+        loadDashboardLayout();
+        initDragAndDrop();
+        loadHiddenModules();
     initResizableTables();
     syncAuthButtons();
     initSidebarResizer();
