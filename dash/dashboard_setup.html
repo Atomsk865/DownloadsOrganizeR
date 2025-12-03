@@ -1,6 +1,10 @@
 {% extends "dashboard_base.html" %}
 {% block dashboard_content %}
-<div class="container mt-3 config-module" style="max-width: 900px;">
+<style>
+  .dashboard-root { padding-left: 0 !important; }
+  #sidebar, .sidebar-resizer { display: none !important; }
+</style>
+<div class="container mt-3 config-module" style="max-width: 900px; margin-left: auto; margin-right: auto;">
   <div class="card">
     <div class="card-header"><b>Initial Dashboard Setup</b></div>
     <div class="card-body p-3">
