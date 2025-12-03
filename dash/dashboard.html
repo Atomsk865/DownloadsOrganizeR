@@ -779,23 +779,23 @@
                         <form id="config-form-settings">
                             <div class="row mb-2">
                                 <div class="col-md-12">
-                                    <label class="form-label" style="font-size: 0.85rem;"><b>Watch Folder</b></label>
-                                    <input class="form-control form-control-sm" type="text" name="watch_folder" value="{{ watch_folder }}" placeholder="e.g., C:\Users\YourName\Downloads">
+                                    <label for="watch_folder" class="form-label" style="font-size: 0.85rem;"><b>Watch Folder</b></label>
+                                    <input id="watch_folder" class="form-control form-control-sm" type="text" name="watch_folder" value="{{ watch_folder }}" placeholder="e.g., C:\Users\YourName\Downloads">
                                     <small class="form-text text-muted">The folder to monitor for new files. Leave empty to use the default Downloads folder.</small>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
-                                    <input class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
+                                    <label for="memory_threshold" class="form-label" style="font-size: 0.85rem;"><b>Memory Threshold (MB)</b></label>
+                                    <input id="memory_threshold" class="form-control form-control-sm" type="number" name="memory_threshold" value="{{ memory_threshold }}">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
-                                    <input class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
+                                    <label for="cpu_threshold" class="form-label" style="font-size: 0.85rem;"><b>CPU Threshold (%)</b></label>
+                                    <input id="cpu_threshold" class="form-control form-control-sm" type="number" name="cpu_threshold" value="{{ cpu_threshold }}">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
-                                    <input class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
+                                    <label for="logs_dir" class="form-label" style="font-size: 0.85rem;"><b>Logs Directory</b></label>
+                                    <input id="logs_dir" class="form-control form-control-sm" type="text" name="logs_dir" value="{{ logs_dir }}">
                                 </div>
                             </div>
                             <div class="alert alert-warning alert-sm mt-2 mb-2 py-1 px-2" role="alert" style="font-size: 0.85rem;">
