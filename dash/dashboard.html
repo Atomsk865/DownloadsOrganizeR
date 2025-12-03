@@ -369,6 +369,20 @@
                 font-size: 0.8rem;
             }
         }
+        
+        /* Sidebar collapsible sections */
+        .sidebar-collapsible .sidebar-collapse-header {
+            transition: background-color 0.2s;
+        }
+        .sidebar-collapsible .sidebar-collapse-header:hover {
+            background-color: var(--card-header-bg);
+        }
+        .sidebar-collapsible .sidebar-collapse-header i.bi-chevron-down {
+            transition: transform 0.3s;
+        }
+        .sidebar-collapsible .collapse:not(.show) ~ .card-header i.bi-chevron-down {
+            transform: rotate(-90deg);
+        }
     </style>
 {% endblock %}
 {% block dashboard_content %}
@@ -406,6 +420,96 @@
                             <button id="btn-show-hidden" class="btn btn-outline-info btn-sm" style="font-size: 0.75rem;" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
                             <button id="btn-reset-layout" class="btn btn-outline-warning btn-sm" style="font-size: 0.75rem;" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
                             <button id="btn-add-widget" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;" onclick="if(typeof addCustomWidget==='function')addCustomWidget()"><i class="bi bi-plus-circle"></i> Add Widget</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resource Monitor -->
+                <div class="card mb-3 sidebar-collapsible">
+                    <div class="card-header sidebar-collapse-header" data-bs-toggle="collapse" data-bs-target="#sidebar-resources" style="cursor: pointer; user-select: none;">
+                        <b><small><i class="bi bi-activity"></i> Resource Monitor</small></b>
+                        <i class="bi bi-chevron-down float-end"></i>
+                    </div>
+                    <div id="sidebar-resources" class="collapse show">
+                        <div class="card-body p-2" style="font-size: 0.7rem;">
+                            <div class="mb-2">
+                                <small><b>Memory:</b></small>
+                                <div class="progress mb-1" style="height:14px;">
+                                    <div id="sidebar-ram-bar" class="progress-bar bg-success" role="progressbar" style="width: {{ ram_percent }}%; font-size:9px;">{{ ram_percent }}%</div>
+                                </div>
+                                <small class="text-muted" id="sidebar-ram-text">{{ total_memory_mb }}/{{ total_memory_gb }}GB</small>
+                            </div>
+                            <div class="mb-2">
+                                <small><b>CPU:</b></small>
+                                <div class="progress mb-1" style="height:14px;">
+                                    <div id="sidebar-cpu-bar" class="progress-bar bg-info" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:9px;">{{ total_cpu_percent }}%</div>
+                                </div>
+                                <small class="text-muted" id="sidebar-cpu-text">System: {{ total_cpu_percent }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="card mb-3 sidebar-collapsible">
+                    <div class="card-header sidebar-collapse-header" data-bs-toggle="collapse" data-bs-target="#sidebar-stats" style="cursor: pointer; user-select: none;">
+                        <b><small><i class="bi bi-graph-up"></i> Statistics</small></b>
+                        <i class="bi bi-chevron-down float-end"></i>
+                    </div>
+                    <div id="sidebar-stats" class="collapse show">
+                        <div class="card-body p-2" style="font-size: 0.7rem;">
+                            <div class="row g-1 mb-2">
+                                <div class="col-6">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body p-1 text-center">
+                                            <h6 class="mb-0" id="sidebar-stat-total">0</h6>
+                                            <small style="font-size: 0.65rem;">Total</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body p-1 text-center">
+                                            <h6 class="mb-0" id="sidebar-stat-today">0</h6>
+                                            <small style="font-size: 0.65rem;">Today</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <canvas id="sidebar-stats-chart" style="max-height: 150px;"></canvas>
+                            <button class="btn btn-sm btn-outline-primary w-100 mt-2" style="font-size: 0.65rem;" onclick="openStatsWindow()">
+                                <i class="bi bi-box-arrow-up-right"></i> Open Full View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Manager -->
+                <div class="card mb-3 sidebar-collapsible">
+                    <div class="card-header sidebar-collapse-header" data-bs-toggle="collapse" data-bs-target="#sidebar-tasks" style="cursor: pointer; user-select: none;">
+                        <b><small><i class="bi bi-list-task"></i> Top Processes</small></b>
+                        <i class="bi bi-chevron-down float-end"></i>
+                    </div>
+                    <div id="sidebar-tasks" class="collapse show">
+                        <div class="card-body p-2">
+                            <table class="table table-sm mb-0" style="font-size: 0.65rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 0.15rem 0.25rem;">Name</th>
+                                        <th style="padding: 0.15rem 0.25rem;">CPU%</th>
+                                        <th style="padding: 0.15rem 0.25rem;">RAM</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sidebar-tasks-body">
+                                    {% for proc in top_processes[:3] %}
+                                    <tr>
+                                        <td style="padding: 0.15rem 0.25rem;">{{ proc.name[:15] }}</td>
+                                        <td style="padding: 0.15rem 0.25rem;">{{ proc.cpu|round(1) }}</td>
+                                        <td style="padding: 0.15rem 0.25rem;">{{ proc.mem }}M</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -1533,6 +1533,143 @@ async function loadDeveloperMode() {
     }
 }
 
+// Sidebar Updates
+let sidebarStatsChart = null;
+
+async function updateSidebarMetrics() {
+    try {
+        const response = await fetch('/metrics', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update RAM
+            const ramBar = document.getElementById('sidebar-ram-bar');
+            const ramText = document.getElementById('sidebar-ram-text');
+            if (ramBar && data.ram_percent !== undefined) {
+                ramBar.style.width = data.ram_percent + '%';
+                ramBar.textContent = data.ram_percent + '%';
+                ramBar.className = 'progress-bar ' + 
+                    (data.ram_percent < 50 ? 'bg-success' : 
+                     data.ram_percent < 80 ? 'bg-warning' : 'bg-danger');
+            }
+            if (ramText && data.total_memory_mb && data.total_memory_gb) {
+                ramText.textContent = `${data.total_memory_mb}/${data.total_memory_gb}GB`;
+            }
+            
+            // Update CPU
+            const cpuBar = document.getElementById('sidebar-cpu-bar');
+            const cpuText = document.getElementById('sidebar-cpu-text');
+            if (cpuBar && data.total_cpu_percent !== undefined) {
+                cpuBar.style.width = data.total_cpu_percent + '%';
+                cpuBar.textContent = data.total_cpu_percent + '%';
+                cpuBar.className = 'progress-bar ' + 
+                    (data.total_cpu_percent < 50 ? 'bg-success' : 
+                     data.total_cpu_percent < 80 ? 'bg-warning' : 'bg-danger');
+            }
+            if (cpuText && data.total_cpu_percent !== undefined) {
+                cpuText.textContent = `System: ${data.total_cpu_percent}%`;
+            }
+            
+            // Update task manager
+            if (data.top_processes && data.top_processes.length > 0) {
+                const tbody = document.getElementById('sidebar-tasks-body');
+                if (tbody) {
+                    tbody.innerHTML = data.top_processes.slice(0, 3).map(proc => `
+                        <tr>
+                            <td style="padding: 0.15rem 0.25rem;">${proc.name.substring(0, 15)}</td>
+                            <td style="padding: 0.15rem 0.25rem;">${proc.cpu.toFixed(1)}</td>
+                            <td style="padding: 0.15rem 0.25rem;">${proc.mem}M</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+    } catch (error) {
+        console.log('Could not update sidebar metrics:', error);
+    }
+}
+
+async function updateSidebarStats() {
+    try {
+        const response = await fetch('/api/statistics/overview', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            const totalEl = document.getElementById('sidebar-stat-total');
+            const todayEl = document.getElementById('sidebar-stat-today');
+            
+            if (totalEl) totalEl.textContent = data.total_files || 0;
+            if (todayEl) todayEl.textContent = data.today_count || 0;
+            
+            // Update mini chart
+            const chartCanvas = document.getElementById('sidebar-stats-chart');
+            if (chartCanvas) {
+                const categoryRes = await fetch('/api/statistics/by-category', {
+                    credentials: 'include',
+                    headers: getAuthHeaders()
+                });
+                
+                if (categoryRes.ok) {
+                    const categoryData = await categoryRes.json();
+                    
+                    if (sidebarStatsChart) {
+                        sidebarStatsChart.destroy();
+                    }
+                    
+                    sidebarStatsChart = new Chart(chartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: categoryData.labels || [],
+                            datasets: [{
+                                data: categoryData.values || [],
+                                backgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                                    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.log('Could not update sidebar stats:', error);
+    }
+}
+
+function openStatsWindow() {
+    // Scroll to statistics module in main content
+    const statsModule = document.querySelector('[data-module="statistics"]');
+    if (statsModule) {
+        statsModule.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Highlight it briefly
+        statsModule.style.transition = 'all 0.3s';
+        statsModule.style.transform = 'scale(1.02)';
+        statsModule.style.boxShadow = '0 8px 24px rgba(13, 110, 253, 0.3)';
+        setTimeout(() => {
+            statsModule.style.transform = '';
+            statsModule.style.boxShadow = '';
+        }, 1000);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
@@ -1557,6 +1694,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load developer mode setting
     loadDeveloperMode();
+    
+    // Initialize sidebar updates
+    updateSidebarMetrics();
+    updateSidebarStats();
+    
+    // Update sidebar periodically
+    setInterval(updateSidebarMetrics, 5000); // Every 5 seconds
+    setInterval(updateSidebarStats, 30000); // Every 30 seconds
 
     // Cookie-based auth persistence helpers
     function setCookie(name, value, days) {
@@ -2703,7 +2848,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName','copyToClipboard','deleteRow',
         'toggleHideModule','saveSettings','addCategoryRow','saveConfiguration','addCustomRouteRow','addTagRouteRow',
         'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus',
-        'startService','stopService','restartService','serviceAction','showHiddenModules','loadDeveloperMode'
+        'startService','stopService','restartService','serviceAction','showHiddenModules','loadDeveloperMode',
+        'updateSidebarMetrics','updateSidebarStats','openStatsWindow'
     ];
     exportNames.forEach(function(name){
         try {
