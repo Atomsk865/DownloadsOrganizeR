@@ -585,7 +585,7 @@
 </div>
 <script>
 // Ensure globals are available
-if (typeof __authHeader === 'undefined') var __authHeader = null;
+// Note: __authHeader is already declared in dashboard_scripts.html, so don't redeclare it
 if (typeof __rights === 'undefined') var __rights = {};
 if (typeof showNotification === 'undefined') {
   var showNotification = function(msg, type) { console.warn('showNotification not loaded:', msg); };
@@ -873,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadConfigLayout();
       loadBranding();
       // Start log streaming
-      if (__rights.view_metrics) {
+      if (__rights.view_metrics && typeof streamLog === 'function') {
         streamLog('stdout');
         streamLog('stderr');
       }
@@ -881,11 +881,15 @@ document.addEventListener('DOMContentLoaded', () => {
       loadWatchFoldersConfig();
     }).catch(err => {
       console.error('Auth check failed:', err);
-      showNotification('Authentication failed. Please login again.', 'danger');
+      if (typeof showNotification === 'function') {
+        showNotification('Authentication failed. Please login again.', 'danger');
+      }
       setTimeout(() => { window.location.href = '/'; }, 2000);
     });
   } else {
-    showNotification('Not logged in. Redirecting...', 'warning');
+    if (typeof showNotification === 'function') {
+      showNotification('Not logged in. Redirecting...', 'warning');
+    }
     setTimeout(() => { window.location.href = '/'; }, 2000);
   }
 });
