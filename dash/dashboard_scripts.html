@@ -1579,28 +1579,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Please login first', 'warning');
                 return;
             }
-            // Navigate with auth by fetching and loading the page
-            fetch('/config', {
-                credentials: 'include',
-                headers: { 'Authorization': __authHeader }
-            }).then(response => {
-                if (response.ok) {
-                    return response.text();
-                } else if (response.status === 401) {
-                    showNotification('Authentication required', 'danger');
-                    throw new Error('Unauthorized');
-                } else {
-                    throw new Error('Failed to load config page');
-                }
-            }).then(html => {
-                // Replace page content with fetched HTML
-                document.open();
-                document.write(html);
-                document.close();
-            }).catch(err => {
-                console.error('Config page load failed:', err);
-                showNotification('Failed to load config page: ' + err.message, 'danger');
-            });
+            // Navigate to config page
+            window.location.href = '/config';
         });
     }
     
