@@ -1,6 +1,3 @@
-# Example: Basic Authentication Configuration
-# Copy this to organizer_config.json for basic username/password authentication
-
 {
     "routes": {
         "Images": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "heic"],
