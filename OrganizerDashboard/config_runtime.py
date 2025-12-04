@@ -2,6 +2,8 @@
 Provides in-memory copies of organizer and dashboard configs and file paths.
 """
 import json
+import os
+from pathlib import Path
 from typing import Dict, Any
 
 _config: Dict[str, Any] = {}
@@ -9,10 +11,38 @@ _dashboard_config: Dict[str, Any] = {}
 _config_path: str = "organizer_config.json"
 _dash_config_path: str = "dashboard_config.json"
 
+def _ensure_writable_path(config_path: str) -> str:
+    """Ensure the config path is writable. Fall back to user appdata if needed."""
+    # Try the original path first
+    try:
+        test_dir = os.path.dirname(config_path) or "."
+        Path(test_dir).mkdir(parents=True, exist_ok=True)
+        # Test write access
+        test_file = Path(config_path).with_suffix('.test')
+        test_file.touch()
+        test_file.unlink()
+        return config_path
+    except (OSError, PermissionError):
+        pass
+    
+    # Fall back to user's local app data
+    try:
+        appdata = os.path.expandvars(r"%LOCALAPPDATA%\DownloadsOrganizeR")
+        Path(appdata).mkdir(parents=True, exist_ok=True)
+        fallback_path = os.path.join(appdata, os.path.basename(config_path))
+        return fallback_path
+    except Exception:
+        pass
+    
+    # Last resort: temp directory
+    import tempfile
+    return os.path.join(tempfile.gettempdir(), os.path.basename(config_path))
+
 def initialize(config_path: str, dash_config_path: str, default_config: Dict[str, Any], default_dash: Dict[str, Any]):
     global _config_path, _dash_config_path, _config, _dashboard_config
-    _config_path = config_path
-    _dash_config_path = dash_config_path
+    # Ensure paths are writable
+    _config_path = _ensure_writable_path(config_path)
+    _dash_config_path = _ensure_writable_path(dash_config_path)
     _config = default_config.copy()
     _dashboard_config = default_dash.copy()
     try:
