@@ -296,6 +296,7 @@ def create_app():
     from OrganizerDashboard.routes.dev_reset import routes_dev_reset
     from OrganizerDashboard.routes.env_test import routes_env
     from OrganizerDashboard.routes.unc_credentials import routes_unc_creds
+    from OrganizerDashboard.routes.batch_organize import batch_organize_bp
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config, url_prefix='/api')
@@ -342,6 +343,7 @@ def create_app():
     app.register_blueprint(routes_dev_reset)
     app.register_blueprint(routes_env)
     app.register_blueprint(routes_unc_creds)
+    app.register_blueprint(batch_organize_bp)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)
@@ -355,6 +357,8 @@ def create_app():
     csrf.exempt(routes_restart_service)
     # Exempt environment test utility endpoints (includes POST to run pytest)
     csrf.exempt(routes_env)
+    # Exempt batch organize endpoints
+    csrf.exempt(batch_organize_bp)
 
     # Initialize authentication manager after all globals are set
     from OrganizerDashboard.auth.auth import initialize_auth_manager
