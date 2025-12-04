@@ -518,32 +518,136 @@
   <div class="config-module full-width" data-module="branding" draggable="true">
     <div class="card" data-right="manage_config">
       <div class="card-header d-flex align-items-center">
-        <b>Custom Branding & Styles</b>
+        <b>Custom Branding & Themes</b>
         <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
       </div>
       <div class="card-body p-2">
-        <div class="row g-2">
-          <div class="col-md-4">
-            <label class="form-label mb-1"><small><b>Dashboard Title</b></small></label>
-            <input id="brand-title" class="form-control form-control-sm" placeholder="DownloadsOrganizeR" title="Custom dashboard title">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label mb-1"><small><b>Logo URL</b></small></label>
-            <input id="brand-logo" class="form-control form-control-sm" placeholder="https://example.com/logo.png" title="URL to custom logo image">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label mb-1"><small><b>Primary Color</b></small></label>
-            <input id="brand-color" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color">
+        <!-- Preset Themes -->
+        <div class="mb-3">
+          <label class="form-label mb-2"><small><b>Preset Themes</b></small></label>
+          <div class="btn-group btn-group-sm w-100" role="group" style="flex-wrap: wrap; gap: 0.5rem;">
+            <button type="button" class="btn btn-outline-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
+              <i class="bi bi-palette"></i> Default
+            </button>
+            <button type="button" class="btn btn-outline-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
+              <i class="bi bi-moon"></i> Dark
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
+              <i class="bi bi-tree"></i> Forest
+            </button>
+            <button type="button" class="btn btn-outline-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
+              <i class="bi bi-sunset"></i> Sunset
+            </button>
+            <button type="button" class="btn btn-outline-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
+              <i class="bi bi-water"></i> Ocean
+            </button>
+            <button type="button" class="btn btn-outline-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
+              <i class="bi bi-leaf"></i> Mint
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
+              <i class="bi bi-lightning"></i> Cyberpunk
+            </button>
           </div>
         </div>
-        <div class="mt-2">
-          <label class="form-label mb-1"><small><b>Custom CSS</b></small></label>
-          <textarea id="brand-css" class="form-control form-control-sm" rows="6" placeholder="/* Add custom CSS here */" title="Custom CSS styles applied to dashboard"></textarea>
-          <small class="text-muted">Advanced: Add custom CSS to override dashboard styles. Use with caution.</small>
-        </div>
-        <div class="mt-2">
-          <button class="btn btn-success btn-sm" onclick="saveBranding()">Save Branding</button>
-          <button class="btn btn-secondary btn-sm" onclick="resetBranding()">Reset to Default</button>
+
+        <hr class="my-2">
+
+        <!-- Theme Creator -->
+        <div class="mb-3">
+          <label class="form-label mb-2"><small><b>Custom Theme Creator</b></small></label>
+          <div class="row g-2 mb-2">
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Dashboard Title</b></small></label>
+              <input id="brand-title" class="form-control form-control-sm" placeholder="DownloadsOrganizeR" title="Custom dashboard title">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Logo URL</b></small></label>
+              <input id="brand-logo" class="form-control form-control-sm" placeholder="https://example.com/logo.png" title="URL to custom logo image">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Theme Name</b></small></label>
+              <input id="brand-theme-name" class="form-control form-control-sm" placeholder="My Custom Theme" title="Name for your custom theme">
+            </div>
+          </div>
+
+          <!-- Color Palette -->
+          <div class="card bg-light p-2 mb-2">
+            <small class="fw-bold mb-2 d-block">Color Palette</small>
+            <div class="row g-2">
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Primary</b></small></label>
+                <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" onchange="previewTheme()">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Secondary</b></small></label>
+                <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" onchange="previewTheme()">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Success</b></small></label>
+                <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" onchange="previewTheme()">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Danger</b></small></label>
+                <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" onchange="previewTheme()">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Warning</b></small></label>
+                <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" onchange="previewTheme()">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label mb-1"><small><b>Info</b></small></label>
+                <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" onchange="previewTheme()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced Options -->
+          <div class="card bg-light p-2 mb-2">
+            <small class="fw-bold mb-2 d-block">Advanced Options</small>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label mb-1"><small><b>Card Border Radius</b></small></label>
+                <select id="brand-border-radius" class="form-select form-select-sm" onchange="previewTheme()">
+                  <option value="0px">Squared (0px)</option>
+                  <option value="4px">Slight (4px)</option>
+                  <option value="8px" selected>Moderate (8px)</option>
+                  <option value="16px">Rounded (16px)</option>
+                  <option value="24px">Very Rounded (24px)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label mb-1"><small><b>Font Size Scale</b></small></label>
+                <select id="brand-font-size" class="form-select form-select-sm" onchange="previewTheme()">
+                  <option value="90%">Small (-10%)</option>
+                  <option value="100%" selected>Normal</option>
+                  <option value="110%">Large (+10%)</option>
+                  <option value="120%">X-Large (+20%)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label mb-1"><small><b>Shadow Intensity</b></small></label>
+                <select id="brand-shadow" class="form-select form-select-sm" onchange="previewTheme()">
+                  <option value="none">None</option>
+                  <option value="light">Light</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="strong">Strong</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-2">
+            <label class="form-label mb-1"><small><b>Custom CSS</b></small></label>
+            <textarea id="brand-css" class="form-control form-control-sm" rows="4" placeholder="/* Add custom CSS here - applied after all theme styles */" title="Custom CSS styles applied to dashboard"></textarea>
+            <small class="text-muted">Advanced: Add custom CSS to override dashboard styles. Applied after all theme styling.</small>
+          </div>
+
+          <div class="mt-2 d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary btn-sm" onclick="saveBranding()"><i class="bi bi-save"></i> Save Theme</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="exportTheme()"><i class="bi bi-download"></i> Export</button>
+            <button class="btn btn-outline-warning btn-sm" onclick="resetBranding()"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+            <button class="btn btn-outline-info btn-sm" onclick="toggleThemePreview()"><i class="bi bi-eye"></i> Preview</button>
+          </div>
         </div>
       </div>
     </div>
@@ -813,63 +917,241 @@ function loadConfigLayout() {
   }
 }
 
-// Custom branding functions
-function saveBranding() {
-  const branding = {
+// Preset themes
+const PRESET_THEMES = {
+  default: {
+    name: 'Default',
+    colors: { primary: '#0d6efd', secondary: '#6c757d', success: '#198754', danger: '#dc3545', warning: '#ffc107', info: '#0dcaf0' },
+    borderRadius: '8px',
+    fontSize: '100%',
+    shadow: 'normal'
+  },
+  dark: {
+    name: 'Dark Mode',
+    colors: { primary: '#212529', secondary: '#495057', success: '#198754', danger: '#dc3545', warning: '#ffc107', info: '#0dcaf0' },
+    borderRadius: '8px',
+    fontSize: '100%',
+    shadow: 'strong',
+    css: ':root{--bs-body-bg:#1a1a1a;--bs-body-color:#e0e0e0}.card{background-color:#2d2d2d!important}.card-header{background-color:#1a1a1a!important;border-color:#444!important}'
+  },
+  forest: {
+    name: 'Forest Green',
+    colors: { primary: '#2d6a4f', secondary: '#40916c', success: '#52b788', danger: '#d62828', warning: '#f77f00', info: '#06d6a0' },
+    borderRadius: '12px',
+    fontSize: '100%',
+    shadow: 'normal'
+  },
+  sunset: {
+    name: 'Sunset Orange',
+    colors: { primary: '#ff6b35', secondary: '#f7931e', success: '#ffc800', danger: '#d62828', warning: '#d62828', info: '#f77f00' },
+    borderRadius: '8px',
+    fontSize: '100%',
+    shadow: 'normal'
+  },
+  ocean: {
+    name: 'Ocean Blue',
+    colors: { primary: '#0077be', secondary: '#00a8e8', success: '#00c9ff', danger: '#ff006e', warning: '#ffbe0b', info: '#00f5ff' },
+    borderRadius: '16px',
+    fontSize: '100%',
+    shadow: 'light'
+  },
+  mint: {
+    name: 'Mint Fresh',
+    colors: { primary: '#1dd1a1', secondary: '#00d2d3', success: '#10ac84', danger: '#ee5a6f', warning: '#ffa502', info: '#54a0ff' },
+    borderRadius: '12px',
+    fontSize: '100%',
+    shadow: 'normal'
+  },
+  cyberpunk: {
+    name: 'Cyberpunk Neon',
+    colors: { primary: '#ff006e', secondary: '#8338ec', success: '#3a86ff', danger: '#fb5607', warning: '#ffbe0b', info: '#ff006e' },
+    borderRadius: '4px',
+    fontSize: '110%',
+    shadow: 'strong',
+    css: '.card{border:2px solid currentColor;background:rgba(0,0,0,0.9)}.btn{text-transform:uppercase;font-weight:bold;letter-spacing:1px}'
+  }
+};
+
+function applyPresetTheme(themeName) {
+  const theme = PRESET_THEMES[themeName];
+  if (!theme) return;
+  
+  document.getElementById('brand-theme-name').value = theme.name;
+  document.getElementById('brand-color-primary').value = theme.colors.primary;
+  document.getElementById('brand-color-secondary').value = theme.colors.secondary;
+  document.getElementById('brand-color-success').value = theme.colors.success;
+  document.getElementById('brand-color-danger').value = theme.colors.danger;
+  document.getElementById('brand-color-warning').value = theme.colors.warning;
+  document.getElementById('brand-color-info').value = theme.colors.info;
+  document.getElementById('brand-border-radius').value = theme.borderRadius;
+  document.getElementById('brand-font-size').value = theme.fontSize;
+  document.getElementById('brand-shadow').value = theme.shadow;
+  document.getElementById('brand-css').value = theme.css || '';
+  
+  previewTheme();
+  showNotification(`Preset theme "${theme.name}" loaded`, 'info');
+}
+
+function previewTheme() {
+  const theme = getThemeObject();
+  applyThemeStyles(theme);
+}
+
+function getThemeObject() {
+  return {
     title: document.getElementById('brand-title').value,
     logo: document.getElementById('brand-logo').value,
-    color: document.getElementById('brand-color').value,
+    themeName: document.getElementById('brand-theme-name').value,
+    colors: {
+      primary: document.getElementById('brand-color-primary').value,
+      secondary: document.getElementById('brand-color-secondary').value,
+      success: document.getElementById('brand-color-success').value,
+      danger: document.getElementById('brand-color-danger').value,
+      warning: document.getElementById('brand-color-warning').value,
+      info: document.getElementById('brand-color-info').value
+    },
+    borderRadius: document.getElementById('brand-border-radius').value,
+    fontSize: document.getElementById('brand-font-size').value,
+    shadow: document.getElementById('brand-shadow').value,
     css: document.getElementById('brand-css').value
   };
+}
+
+function saveBranding() {
+  const theme = getThemeObject();
   
   fetch('/api/dashboard/branding', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', ...getAuthHeaders()},
-    body: JSON.stringify(branding)
+    body: JSON.stringify(theme)
   })
   .then(r => r.json().then(j => ({ok: r.ok, j})))
   .then(({ok, j}) => {
     if (ok) {
-      showNotification('Branding saved successfully', 'success');
-      applyBranding(branding);
+      showNotification(`Theme "${theme.themeName}" saved successfully`, 'success');
+      applyThemeStyles(theme);
     } else {
-      showNotification(j.error || 'Failed to save branding', 'danger');
+      showNotification(j.error || 'Failed to save theme', 'danger');
     }
-  });
+  })
+  .catch(e => showNotification('Error saving theme: ' + e.message, 'danger'));
 }
 
 function resetBranding() {
-  if (confirm('Reset branding to defaults?')) {
+  if (confirm('Reset theme to defaults?')) {
+    applyPresetTheme('default');
     document.getElementById('brand-title').value = 'DownloadsOrganizeR';
     document.getElementById('brand-logo').value = '';
-    document.getElementById('brand-color').value = '#0d6efd';
-    document.getElementById('brand-css').value = '';
-    saveBranding();
+    setTimeout(() => saveBranding(), 100);
+  }
+}
+
+function exportTheme() {
+  const theme = getThemeObject();
+  const json = JSON.stringify(theme, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `theme-${theme.themeName || 'custom'}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showNotification('Theme exported successfully', 'success');
+}
+
+function toggleThemePreview() {
+  const previewId = 'theme-preview-toggle';
+  let badge = document.querySelector(`[data-toggle="${previewId}"]`);
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.setAttribute('data-toggle', previewId);
+    badge.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:8px;background:#0d6efd;color:white;border-radius:4px;z-index:9999;cursor:pointer;font-size:12px;';
+    badge.textContent = 'PREVIEW ON';
+    badge.onclick = toggleThemePreview;
+    document.body.appendChild(badge);
+    previewTheme();
+  } else {
+    badge.remove();
+    loadBranding();
   }
 }
 
 function loadBranding() {
   fetch('/api/dashboard/branding', {headers: getAuthHeaders()})
     .then(r => r.ok ? r.json() : {})
-    .then(branding => {
-      if (branding.title) document.getElementById('brand-title').value = branding.title;
-      if (branding.logo) document.getElementById('brand-logo').value = branding.logo;
-      if (branding.color) document.getElementById('brand-color').value = branding.color;
-      if (branding.css) document.getElementById('brand-css').value = branding.css;
-      applyBranding(branding);
+    .then(theme => {
+      if (theme.title) document.getElementById('brand-title').value = theme.title;
+      if (theme.logo) document.getElementById('brand-logo').value = theme.logo;
+      if (theme.themeName) document.getElementById('brand-theme-name').value = theme.themeName;
+      
+      if (theme.colors) {
+        document.getElementById('brand-color-primary').value = theme.colors.primary || '#0d6efd';
+        document.getElementById('brand-color-secondary').value = theme.colors.secondary || '#6c757d';
+        document.getElementById('brand-color-success').value = theme.colors.success || '#198754';
+        document.getElementById('brand-color-danger').value = theme.colors.danger || '#dc3545';
+        document.getElementById('brand-color-warning').value = theme.colors.warning || '#ffc107';
+        document.getElementById('brand-color-info').value = theme.colors.info || '#0dcaf0';
+      }
+      
+      if (theme.borderRadius) document.getElementById('brand-border-radius').value = theme.borderRadius;
+      if (theme.fontSize) document.getElementById('brand-font-size').value = theme.fontSize;
+      if (theme.shadow) document.getElementById('brand-shadow').value = theme.shadow;
+      if (theme.css) document.getElementById('brand-css').value = theme.css;
+      
+      applyThemeStyles(theme);
     });
 }
 
-function applyBranding(branding) {
-  if (branding.css) {
-    let style = document.getElementById('custom-branding-css');
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'custom-branding-css';
-      document.head.appendChild(style);
-    }
-    style.textContent = branding.css;
+function applyThemeStyles(theme) {
+  let style = document.getElementById('custom-theme-css');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'custom-theme-css';
+    document.head.appendChild(style);
   }
+  
+  const shadowMap = {
+    none: 'none',
+    light: '0 1px 3px rgba(0,0,0,0.1)',
+    normal: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+    strong: '0 10px 40px rgba(0,0,0,0.3)'
+  };
+  
+  let css = `:root {
+    --bs-primary: ${theme.colors.primary};
+    --bs-secondary: ${theme.colors.secondary};
+    --bs-success: ${theme.colors.success};
+    --bs-danger: ${theme.colors.danger};
+    --bs-warning: ${theme.colors.warning};
+    --bs-info: ${theme.colors.info};
+  }
+  .card { border-radius: ${theme.borderRadius}; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal}; }
+  body { font-size: ${theme.fontSize}; }
+  .btn-primary { background-color: ${theme.colors.primary}; border-color: ${theme.colors.primary}; }
+  .btn-primary:hover { background-color: ${adjustColor(theme.colors.primary, -20)}; border-color: ${adjustColor(theme.colors.primary, -20)}; }
+  .btn-success { background-color: ${theme.colors.success}; border-color: ${theme.colors.success}; }
+  .btn-danger { background-color: ${theme.colors.danger}; border-color: ${theme.colors.danger}; }
+  .btn-warning { background-color: ${theme.colors.warning}; border-color: ${theme.colors.warning}; }
+  .btn-info { background-color: ${theme.colors.info}; border-color: ${theme.colors.info}; }
+  .badge-primary { background-color: ${theme.colors.primary}; }
+  .badge-success { background-color: ${theme.colors.success}; }
+  .alert-primary { background-color: ${adjustColor(theme.colors.primary, 90)}; border-color: ${theme.colors.primary}; color: ${adjustColor(theme.colors.primary, -40)}; }
+  `;
+  
+  if (theme.css) {
+    css += '\n' + theme.css;
+  }
+  
+  style.textContent = css;
+}
+
+function adjustColor(hex, percent) {
+  const num = parseInt(hex.replace('#',''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+  const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+  return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
 }
 
 // ---- Validation helpers ----
