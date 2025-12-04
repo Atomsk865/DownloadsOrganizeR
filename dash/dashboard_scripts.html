@@ -1720,8 +1720,8 @@ function showNotification(message, type) {
         alertDiv.remove();
     }, 5000);
 
-    // Persist to Notification Center - ONLY for errors, skip success/info/warning
-    if (type === 'danger') {
+    // Persist to Notification Center - ONLY for errors and warnings, skip success/info
+    if (type === 'danger' || type === 'warning') {
         try {
             fetch('/api/notifications', {
                 method: 'POST',
