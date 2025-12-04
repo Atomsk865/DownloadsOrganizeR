@@ -38,16 +38,7 @@ if (-not $IsAdmin) {
 }
 
 Write-Host "✅ Running with Administrator privileges." -ForegroundColor Green
-
-# -------------------------
-# User Confirmation
-# -------------------------
-$answer = Read-Host "Is your Organizer.py in the same folder as your installer? (Y/N)"
-$answer = $answer.Trim().ToLower()
-if ($answer -eq "n") { Write-Host "Exiting program..."; exit }
-elseif ($answer -ne "y") { Write-Host "Invalid input. Please enter Y or N."; exit }
-
-Write-Host "✅ Continuing setup..." -ForegroundColor Cyan
+Write-Host "⏳ Starting service installation..." -ForegroundColor Cyan
 
 # -------------------------
 # Prepare Environment
