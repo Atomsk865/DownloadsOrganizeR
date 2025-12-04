@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from flask import Blueprint, jsonify, render_template
 from OrganizerDashboard.auth.auth import requires_auth
+from OrganizerDashboard.cache import get_cache
+from OrganizerDashboard.rate_limiting import rate_limit, client_debounce_hint
 import os
 
 routes_statistics = Blueprint('statistics', __name__)
@@ -48,8 +50,18 @@ def parse_timestamp(ts_str):
 
 @routes_statistics.route("/api/statistics/overview", methods=["GET"])
 @requires_auth
+@rate_limit(max_requests=10, window_seconds=60)
+@client_debounce_hint(debounce_ms=500)
 def get_statistics_overview():
     """Get overview statistics for the dashboard."""
+    cache = get_cache()
+    
+    # Try to get from cache
+    if cache:
+        cached_data = cache.get('stats_overview')
+        if cached_data:
+            return jsonify(cached_data)
+    
     moves = load_file_moves()
     
     if not moves:
@@ -93,7 +105,7 @@ def get_statistics_overview():
     days_active = max((now - oldest_date).days, 1)
     avg_per_day = round(len(moves) / days_active, 1)
     
-    return jsonify({
+    result = {
         "total_files": len(moves),
         "total_categories": len(categories),
         "today_count": today_count,
@@ -101,7 +113,13 @@ def get_statistics_overview():
         "month_count": month_count,
         "avg_per_day": avg_per_day,
         "oldest_date": oldest_date.isoformat() if oldest_date != now else now.isoformat()
-    })
+    }
+    
+    # Cache for 10 seconds
+    if cache:
+        cache.set('stats_overview', result, timeout=10)
+    
+    return jsonify(result)
 
 
 @routes_statistics.route("/api/statistics/by-category", methods=["GET"])

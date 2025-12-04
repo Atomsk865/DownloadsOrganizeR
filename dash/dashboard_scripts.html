@@ -48,6 +48,132 @@
 // Global auth header storage
 let __authHeader = null;
 let __rights = {};
+
+// ==================== IMMEDIATE THEME RESTORATION ====================
+// Apply theme IMMEDIATELY before anything else to prevent flicker
+(function() {
+    try {
+        const stored = localStorage.getItem('dashboard_theme_v1');
+        if (!stored) return;
+        
+        const data = JSON.parse(stored);
+        if (!data || !data.theme || !data.theme.colors) return;
+        
+        const theme = data.theme;
+        const colors = theme.colors;
+        
+        // Helper: Calculate if color is light
+        function isLightColor(hex) {
+            if (!hex || typeof hex !== 'string') return false;
+            const cleanHex = hex.replace('#', '').trim();
+            if (!/^[0-9A-Fa-f]{6}$/.test(cleanHex)) return false;
+            const rgb = parseInt(cleanHex, 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >> 8) & 0xff;
+            const b = (rgb >> 0) & 0xff;
+            const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+            return luma > 128;
+        }
+        
+        // Helper: Get contrasting text color
+        function getContrastText(bgColor) {
+            return isLightColor(bgColor) ? '#212529' : '#ffffff';
+        }
+        
+        // Helper: Adjust color brightness
+        function adjustColor(hex, percent) {
+            if (!hex || typeof hex !== 'string') return hex || '#0d6efd';
+            const cleanHex = hex.replace('#', '').trim();
+            if (!/^[0-9A-Fa-f]{6}$/.test(cleanHex)) return hex;
+            const num = parseInt(cleanHex, 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+            const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+            const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
+        }
+        
+        // Extract colors
+        const primary = colors.primary || '#0d6efd';
+        const secondary = colors.secondary || '#6c757d';
+        const success = colors.success || '#198754';
+        const danger = colors.danger || '#dc3545';
+        const warning = colors.warning || '#ffc107';
+        const info = colors.info || '#0dcaf0';
+        
+        // Calculate derived colors
+        const primaryText = getContrastText(primary);
+        const bgLight = adjustColor(primary, 50);  // Lightened but with visible tint
+        const borderRadius = theme.borderRadius || '8px';
+        const fontSize = theme.fontSize || '100%';
+        const shadow = theme.shadow || 'normal';
+        
+        const shadowMap = {
+            none: 'none',
+            light: '0 1px 3px rgba(0,0,0,0.1)',
+            normal: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+            strong: '0 10px 40px rgba(0,0,0,0.3)'
+        };
+        
+        // Inject CSS immediately
+        const style = document.createElement('style');
+        style.id = 'instant-theme-css';
+        style.setAttribute('data-priority', 'critical');
+        style.textContent = `:root {
+            --bs-primary: ${primary} !important;
+            --bs-secondary: ${secondary} !important;
+            --bs-success: ${success} !important;
+            --bs-danger: ${danger} !important;
+            --bs-warning: ${warning} !important;
+            --bs-info: ${info} !important;
+            --bs-light: ${bgLight} !important;
+            --bs-primary-text: ${primaryText} !important;
+        }
+        .card { border-radius: ${borderRadius} !important; box-shadow: ${shadowMap[shadow]} !important; }
+        body { font-size: ${fontSize} !important; }
+        .bg-light { background-color: ${bgLight} !important; color: ${adjustColor(primary, -60)} !important; }
+        .bg-light .text-muted { color: ${adjustColor(primary, -40)} !important; }
+        .bg-light .fw-bold { color: ${adjustColor(primary, -70)} !important; }
+        #org-stats .card.bg-light { 
+          background-color: ${bgLight} !important; 
+          color: ${adjustColor(primary, -70)} !important;
+        }
+        #org-stats .card.bg-light * { color: ${adjustColor(primary, -70)} !important; }
+        #org-stats .card.bg-light small { color: ${adjustColor(primary, -60)} !important; }
+        #org-stats .card.bg-light .text-muted { color: ${adjustColor(primary, -60)} !important; }
+        #org-stats .card.bg-light .display-6 { color: ${adjustColor(primary, -80)} !important; }
+        #org-stats .card.bg-light .fw-bold { color: ${adjustColor(primary, -80)} !important; }
+        .alert-info { background-color: ${adjustColor(info, 85)} !important; border-color: ${info} !important; color: ${adjustColor(info, -70)} !important; }
+        .alert-info * { color: ${adjustColor(info, -70)} !important; }
+        .btn-primary { background-color: ${primary} !important; border-color: ${primary} !important; color: ${primaryText} !important; }
+        .btn-primary:hover { background-color: ${adjustColor(primary, -20)} !important; color: ${primaryText} !important; }
+        .card-header { background-color: ${primary} !important; color: ${primaryText} !important; }
+        a { color: ${primary} !important; }`;
+        
+        document.head.appendChild(style);
+        
+        console.log('[Theme] Applied immediately from localStorage');
+    } catch (e) {
+        console.warn('[Theme] Immediate restoration failed:', e);
+    }
+})();
+
+// Apply theme to statistics cards on page load (after DOM is ready)
+document.addEventListener('DOMContentLoaded', function() {
+    const theme = localStorage.getItem('dashboardTheme');
+    if (theme) {
+        try {
+            const parsedTheme = JSON.parse(theme);
+            // Force inline styles on statistics cards
+            if (typeof forceStatisticsCardsTheme === 'function') {
+                forceStatisticsCardsTheme(parsedTheme);
+            }
+        } catch (e) {
+            console.warn('[Theme] Failed to apply stats card theme on load:', e);
+        }
+    }
+});
+// ==================== END IMMEDIATE THEME RESTORATION ====================
 let __configVersion = 0;
 let __rightsPollIntervalMs = 60000; // 60s polling
 let __csrfToken = null;
@@ -2065,6 +2191,77 @@ function openStatsWindow() {
 }
 
 // Initialize on page load
+// Lazy Loading for Duplicates Module
+let duplicatesModuleLoaded = false;
+
+function initLazyLoadDuplicates() {
+    const duplicatesCard = document.getElementById('card-duplicates');
+    if (!duplicatesCard) {
+        console.warn('Duplicates card not found, skipping lazy load');
+        return;
+    }
+    
+    // Create intersection observer to detect when module becomes visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !duplicatesModuleLoaded) {
+                console.log('Duplicates module now visible, loading...');
+                duplicatesModuleLoaded = true;
+                loadDuplicatesModule();
+                observer.disconnect(); // Stop observing after loading once
+            }
+        });
+    }, {
+        root: null, // viewport
+        rootMargin: '100px', // Start loading 100px before it enters viewport
+        threshold: 0.01 // Trigger when even 1% is visible
+    });
+    
+    observer.observe(duplicatesCard);
+    
+    // Also listen for manual refresh button click (in case module not yet loaded)
+    const refreshBtn = document.getElementById('btn-duplicates-refresh');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            if (!duplicatesModuleLoaded) {
+                loadDuplicatesModule();
+            }
+        });
+    }
+}
+
+async function loadDuplicatesModule() {
+    if (duplicatesModuleLoaded) return; // Already loaded or in progress
+    duplicatesModuleLoaded = true;
+    
+    try {
+        // Dynamically load the duplicates module script
+        const script = document.createElement('script');
+        script.src = `/static/js/duplicates-module.js?v={{ asset_version }}`;
+        script.async = true;
+        
+        // Wait for script to load
+        await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load duplicates module'));
+            document.head.appendChild(script);
+        });
+        
+        // After module loads, initialize it
+        if (typeof window.loadDuplicates === 'function') {
+            console.log('✓ Duplicates module loaded successfully');
+            window.loadDuplicates();
+            window.loadWatchedFolders();
+        } else {
+            console.error('Duplicates module loaded but functions not available');
+        }
+    } catch (error) {
+        console.error('Error loading duplicates module:', error);
+        duplicatesModuleLoaded = false; // Allow retry
+        showNotification('Failed to load duplicates module', 'danger');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
     loadDashboardLayout();
@@ -2200,18 +2397,81 @@ document.addEventListener('DOMContentLoaded', function() {
             if (parent) parent.insertAdjacentHTML('afterbegin', '<div class="alert alert-warning alert-sm py-1 px-2"><small>Reports & Analytics are disabled in Features.</small></div>');
         }
     }
+    
+    // Lazy load duplicates module when visible
     if (__organizerFeatures.duplicates_enabled) {
-        loadDuplicates();
+        initLazyLoadDuplicates();
     } else {
         showNotification('Duplicate Detection is disabled in Features.', 'warning');
     }
-    loadWatchedFolders();
 });
 
 // Statistics Charts
 
 // Duplicate Files Management
+// NOTE: These functions are now lazy-loaded from duplicates-module.js
+// Keeping stub functions for backwards compatibility until module loads
 async function loadDuplicates() {
+    // This will be replaced when duplicates-module.js loads
+    console.log('loadDuplicates stub called - waiting for module to load');
+    if (!duplicatesModuleLoaded) {
+        await loadDuplicatesModule();
+    }
+}
+
+async function loadWatchedFolders() {
+    // This will be replaced when duplicates-module.js loads
+    console.log('loadWatchedFolders stub called - waiting for module to load');
+}
+
+function toggleGroupSelection() {
+    console.log('toggleGroupSelection stub - module not loaded yet');
+}
+
+function keepNewest() {
+    console.log('keepNewest stub - module not loaded yet');
+}
+
+function keepLargest() {
+    console.log('keepLargest stub - module not loaded yet');
+}
+
+function deleteAllDuplicates() {
+    console.log('deleteAllDuplicates stub - module not loaded yet');
+}
+
+function deleteSingleFile() {
+    console.log('deleteSingleFile stub - module not loaded yet');
+}
+
+function deleteSelectedFiles() {
+    console.log('deleteSelectedFiles stub - module not loaded yet');
+}
+
+function resolveDuplicates() {
+    console.log('resolveDuplicates stub - module not loaded yet');
+}
+
+/* ORIGINAL DUPLICATES FUNCTIONS - NOW IN duplicates-module.js
+   All duplicate-related functions have been moved to static/js/duplicates-module.js
+   for lazy loading. This reduces initial page load by ~400 lines of JavaScript.
+   The module is loaded when the duplicates card becomes visible or when the
+   refresh button is clicked.
+   
+   Original functions moved:
+   - loadDuplicates()
+   - loadWatchedFolders()
+   - toggleGroupSelection()
+   - keepNewest()
+   - keepLargest()
+   - deleteAllDuplicates()
+   - deleteSingleFile()
+   - deleteSelectedFiles()
+   - resolveDuplicates()
+   
+   COMMENTED OUT ORIGINAL CODE BELOW:
+   
+async function loadDuplicates_ORIGINAL() {
     const btn = document.getElementById('btn-duplicates-refresh');
     const originalHtml = btn ? btn.innerHTML : '';
     const container = document.getElementById('duplicates-container');
@@ -2489,6 +2749,7 @@ async function resolveDuplicates(filePaths) {
         showNotification('Error: ' + error.message, 'danger');
     }
 }
+END OF COMMENTED OUT DUPLICATES CODE */
 
 async function scanVirusTotal(filePath, fileName) {
     try {
@@ -3462,12 +3723,13 @@ function updateDashboardLogo(theme) {
  * Strategy:
  * 1. Check localStorage first (fastest, works offline)
  * 2. If authenticated, try to load from server (might have updated on another device)
- * 3. If both fail, use defaults
+ * 3. Only apply server theme if it's NEWER than local theme (based on timestamp)
  */
 async function restorePersistedTheme() {
     try {
         // Get theme from localStorage immediately
         const localTheme = getPersistedTheme();
+        const localTimestamp = localTheme ? (localTheme.timestamp || 0) : 0;
         
         if (localTheme) {
             // Apply localStorage theme immediately (no delay)
@@ -3484,10 +3746,21 @@ async function restorePersistedTheme() {
         if (__authHeader) {
             const serverTheme = await loadThemeFromServer();
             if (serverTheme) {
-                // Update UI if server theme is different
-                updateThemeFormFields(serverTheme);
-                if (typeof applyThemeStyles === 'function') {
-                    applyThemeStyles(serverTheme);
+                const serverTimestamp = serverTheme.timestamp || 0;
+                
+                // Only apply server theme if it's NEWER than local theme
+                if (serverTimestamp > localTimestamp) {
+                    console.log('[Theme] Server theme is newer, applying server version');
+                    updateThemeFormFields(serverTheme);
+                    if (typeof applyThemeStyles === 'function') {
+                        applyThemeStyles(serverTheme);
+                    }
+                    // Save server theme to localStorage
+                    persistThemeLocally(serverTheme);
+                } else {
+                    console.log('[Theme] Local theme is up-to-date, keeping local version');
+                    // Update form fields from local theme but don't re-apply styles
+                    updateThemeFormFields(localTheme);
                 }
             }
         }
@@ -3731,8 +4004,8 @@ function applyThemeStyles(theme) {
   const warningText = getContrastText(warning);
   const infoText = getContrastText(info);
   
-  // Calculate light background color (95% lighter version of primary)
-  const bgLight = adjustColor(primary, 85);
+  // Calculate light background color (50% lighter version of primary for visible tint)
+  const bgLight = adjustColor(primary, 50);
   const bgLightText = adjustColor(primary, -60);
   const bgDark = adjustColor(primary, -90);
   
@@ -3756,9 +4029,23 @@ function applyThemeStyles(theme) {
   /* Basic elements */
   .card { border-radius: ${theme.borderRadius} !important; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal} !important; }
   body { font-size: ${theme.fontSize} !important; }
-  .bg-light { background-color: ${bgLight} !important; }
+  .bg-light { background-color: ${bgLight} !important; color: ${bgLightText} !important; }
+  .bg-light .text-muted { color: ${adjustColor(primary, -40)} !important; }
+  .bg-light .fw-bold { color: ${adjustColor(primary, -70)} !important; }
   .bg-light-text { color: ${bgLightText} !important; }
   .text-light { color: ${adjustColor(primary, -80)} !important; }
+  
+  /* Statistics cards - nested cards with bg-light */
+  #org-stats .card.bg-light { 
+    background-color: ${bgLight} !important; 
+    color: ${adjustColor(primary, -70)} !important;
+  }
+  #org-stats .card.bg-light * { color: ${adjustColor(primary, -70)} !important; }
+  #org-stats .card.bg-light small { color: ${adjustColor(primary, -60)} !important; }
+  #org-stats .card.bg-light .text-muted { color: ${adjustColor(primary, -60)} !important; }
+  #org-stats .card.bg-light .display-6 { color: ${adjustColor(primary, -80)} !important; }
+  #org-stats .card.bg-light .fw-bold { color: ${adjustColor(primary, -80)} !important; }
+  #org-stats .card.bg-light .h6 { color: ${adjustColor(primary, -80)} !important; }
   
   /* Primary button and elements */
   .btn-primary { background-color: ${primary} !important; border-color: ${primary} !important; color: ${primaryText} !important; }
@@ -3807,12 +4094,18 @@ function applyThemeStyles(theme) {
   .badge-info { background-color: ${info} !important; color: ${infoText} !important; }
   
   /* Alert colors */
-  .alert-primary { background-color: ${adjustColor(primary, 90)} !important; border-color: ${primary} !important; color: ${adjustColor(primary, -40)} !important; }
-  .alert-secondary { background-color: ${adjustColor(secondary, 85)} !important; border-color: ${secondary} !important; color: ${adjustColor(secondary, -40)} !important; }
-  .alert-success { background-color: ${adjustColor(success, 85)} !important; border-color: ${success} !important; color: ${adjustColor(success, -40)} !important; }
-  .alert-danger { background-color: ${adjustColor(danger, 85)} !important; border-color: ${danger} !important; color: ${adjustColor(danger, -40)} !important; }
-  .alert-warning { background-color: ${adjustColor(warning, 85)} !important; border-color: ${warning} !important; color: ${adjustColor(warning, -40)} !important; }
-  .alert-info { background-color: ${adjustColor(info, 85)} !important; border-color: ${info} !important; color: ${adjustColor(info, -40)} !important; }
+  .alert-primary { background-color: ${adjustColor(primary, 90)} !important; border-color: ${primary} !important; color: ${adjustColor(primary, -70)} !important; }
+  .alert-primary * { color: ${adjustColor(primary, -70)} !important; }
+  .alert-secondary { background-color: ${adjustColor(secondary, 85)} !important; border-color: ${secondary} !important; color: ${adjustColor(secondary, -70)} !important; }
+  .alert-secondary * { color: ${adjustColor(secondary, -70)} !important; }
+  .alert-success { background-color: ${adjustColor(success, 85)} !important; border-color: ${success} !important; color: ${adjustColor(success, -70)} !important; }
+  .alert-success * { color: ${adjustColor(success, -70)} !important; }
+  .alert-danger { background-color: ${adjustColor(danger, 85)} !important; border-color: ${danger} !important; color: ${adjustColor(danger, -70)} !important; }
+  .alert-danger * { color: ${adjustColor(danger, -70)} !important; }
+  .alert-warning { background-color: ${adjustColor(warning, 85)} !important; border-color: ${warning} !important; color: ${adjustColor(warning, -70)} !important; }
+  .alert-warning * { color: ${adjustColor(warning, -70)} !important; }
+  .alert-info { background-color: ${adjustColor(info, 85)} !important; border-color: ${info} !important; color: ${adjustColor(info, -70)} !important; }
+  .alert-info * { color: ${adjustColor(info, -70)} !important; }
   
   /* Card headers */
   .card-header { background-color: ${primary} !important; color: ${primaryText} !important; border-color: ${primary} !important; }
@@ -3908,6 +4201,41 @@ function applyThemeStyles(theme) {
   if (typeof updateDashboardLogo === 'function') {
     updateDashboardLogo(theme);
   }
+  
+  // CRITICAL: Force inline styles on statistics cards (Bootstrap defaults are too strong)
+  forceStatisticsCardsTheme(theme);
+}
+
+/**
+ * Force theme colors onto statistics cards using inline styles
+ * This is necessary because Bootstrap's .bg-light has !important and wins over CSS
+ */
+function forceStatisticsCardsTheme(theme) {
+  // Wait a moment for DOM to be ready
+  setTimeout(() => {
+    const primary = theme.colors?.primary || '#0d6efd';
+    const bgLight = adjustColor(primary, 50);  // Lightened for visible theme tint
+    const labelColor = adjustColor(primary, -60);
+    const numberColor = adjustColor(primary, -80);
+    
+    // Target all cards in the org-stats section
+    const statsCards = document.querySelectorAll('#org-stats .card.bg-light');
+    
+    statsCards.forEach(card => {
+      card.style.backgroundColor = bgLight;
+      card.style.color = labelColor;
+      card.style.borderColor = adjustColor(primary, 70);
+      
+      // Force styles on all nested elements
+      card.querySelectorAll('small, .text-muted').forEach(el => {
+        el.style.color = labelColor;
+      });
+      
+      card.querySelectorAll('.display-6, .fw-bold, .h6').forEach(el => {
+        el.style.color = numberColor;
+      });
+    });
+  }, 50);
 }
 </script>
 

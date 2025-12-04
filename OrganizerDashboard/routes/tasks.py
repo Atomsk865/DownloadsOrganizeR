@@ -1,10 +1,18 @@
 from flask import Blueprint, jsonify
 import psutil
+from OrganizerDashboard.cache import get_cache
 
 routes_tasks = Blueprint('routes_tasks', __name__)
 
 @routes_tasks.route("/tasks")
 def tasks():
+    # Cache task list for 5 seconds
+    cache = get_cache()
+    if cache:
+        cached = cache.get('top_tasks')
+        if cached:
+            return jsonify(cached)
+    
     num_cpus = psutil.cpu_count(logical=True)
     procs = []
     for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_info']):
@@ -20,4 +28,10 @@ def tasks():
         except Exception:
             continue
     procs.sort(key=lambda x: x['cpu'], reverse=True)
-    return jsonify(procs[:5])
+    top_tasks = procs[:5]
+    
+    # Cache for 5 seconds
+    if cache:
+        cache.set('top_tasks', top_tasks, timeout=5)
+    
+    return jsonify(top_tasks)

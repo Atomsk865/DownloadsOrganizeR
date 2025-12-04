@@ -1005,7 +1005,11 @@ function applyPresetTheme(themeName) {
   document.getElementById('brand-css').value = theme.css || '';
   
   previewTheme();
-  showNotification(`Preset theme "${theme.name}" loaded`, 'info');
+  
+  // Auto-save preset theme to server so it persists across pages
+  saveBranding();
+  
+  showNotification(`Preset theme "${theme.name}" applied and saved`, 'success');
 }
 
 /**

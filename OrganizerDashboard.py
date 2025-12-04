@@ -204,9 +204,32 @@ def create_app():
     except KeyError:
         _sys.modules['__main__'] = _sys.modules.get('__main__', sys.modules[__name__])
 
+    from flask_caching import Cache
+    from flask_compress import Compress
+    
     app = Flask(__name__, template_folder='dash')
     # Basic secret key for session cookies; can be overridden via env
     app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', 'downloads_organizer_secret')
+    
+    # Flask-Caching setup (simple in-memory cache)
+    app.config['CACHE_TYPE'] = 'SimpleCache'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 5  # 5 seconds default
+    cache = Cache(app)
+    
+    # Make cache available to blueprints
+    from OrganizerDashboard.cache import init_cache
+    init_cache(cache)
+    
+    # Flask-Compress setup (gzip/brotli compression for responses)
+    app.config['COMPRESS_MIMETYPES'] = [
+        'text/html', 'text/css', 'text/xml', 'text/plain',
+        'application/json', 'application/javascript',
+        'text/javascript', 'application/x-javascript',
+        'image/svg+xml'
+    ]
+    app.config['COMPRESS_LEVEL'] = 6  # Compression level (1-9)
+    app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress > 500 bytes
+    Compress(app)
     
     # CSRF Protection
     csrf = CSRFProtect()
@@ -248,6 +271,15 @@ def create_app():
         except Exception:
             return User(user_id)
 
+    # Asset versioning for cache busting
+    @app.context_processor
+    def inject_asset_version():
+        """Inject asset version into all templates for cache busting"""
+        import time
+        # Use current timestamp for dev, use a fixed version in production
+        version = os.environ.get('ASSET_VERSION', str(int(time.time())))
+        return {'asset_version': version, 'cache': cache}
+
     # Import and register all blueprints from routes
     from OrganizerDashboard.routes.dashboard import routes_dashboard
     from OrganizerDashboard.routes.update_config import routes_update_config
@@ -277,6 +309,7 @@ def create_app():
     from OrganizerDashboard.routes.auth_settings import routes_auth_settings
     from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
     from OrganizerDashboard.routes.auth_session import routes_auth_session
+    from OrganizerDashboard.routes.sse_streams import bp as sse_streams_bp
     from OrganizerDashboard.routes.service_install import routes_service_install
     from OrganizerDashboard.routes.factory_reset import routes_factory_reset
     from OrganizerDashboard.routes.setup import routes_setup
@@ -339,6 +372,7 @@ def create_app():
     app.register_blueprint(routes_config_backup)
     app.register_blueprint(routes_watch_folders)
     app.register_blueprint(routes_docs)
+    app.register_blueprint(sse_streams_bp)
     app.register_blueprint(routes_duplicates)
     app.register_blueprint(routes_dev_reset)
     app.register_blueprint(routes_env)

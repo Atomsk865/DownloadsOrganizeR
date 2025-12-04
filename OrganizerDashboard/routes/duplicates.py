@@ -16,6 +16,7 @@ import logging
 import os
 from datetime import datetime
 from functools import wraps
+from OrganizerDashboard.rate_limiting import rate_limit, deduplicate_request, client_debounce_hint
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,9 @@ def format_file_size(size_bytes):
 
 @routes_duplicates.route('/api/duplicates', methods=['GET'])
 @require_auth
+@rate_limit(max_requests=5, window_seconds=60)
+@deduplicate_request(timeout=2.0)
+@client_debounce_hint(debounce_ms=500)
 def get_duplicates():
     """Get all duplicate files grouped by hash.
     
@@ -219,6 +223,7 @@ def get_duplicates():
 
 @routes_duplicates.route('/api/duplicates/resolve', methods=['POST'])
 @require_auth
+@rate_limit(max_requests=3, window_seconds=60)
 def resolve_duplicates():
     """Resolve duplicates by deleting specified files.
     
