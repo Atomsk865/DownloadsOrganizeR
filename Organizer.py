@@ -54,13 +54,24 @@ if not downloads_path_str:
         downloads_path_str = str(Path.home() / "Downloads")
 
 DOWNLOADS_PATH = Path(downloads_path_str)
-WATCH_FOLDERS = [DOWNLOADS_PATH]
+
+# Build watch folders list from config
+# Priority: watch_folders (plural, explicit list) > watch_folder (singular, legacy) > empty list
+WATCH_FOLDERS = []
 wf = CONFIG.get("watch_folders")
 if isinstance(wf, list) and wf:
     try:
-        WATCH_FOLDERS = [Path(p) for p in wf]
+        WATCH_FOLDERS = [Path(p) for p in wf if p]
     except Exception:
-        WATCH_FOLDERS = [DOWNLOADS_PATH]
+        WATCH_FOLDERS = []
+elif CONFIG.get("watch_folder"):
+    # Fallback to legacy single watch_folder if configured
+    try:
+        wf_str = str(CONFIG.get("watch_folder", "")).strip()
+        if wf_str:
+            WATCH_FOLDERS = [Path(wf_str)]
+    except Exception:
+        WATCH_FOLDERS = []
 DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", SCRIPT_DIR / "config" / "json" / "downloads_dashboard.json"))
 # Organizer log path under ./logs directory
 LOGS_DIR = Path(CONFIG.get("logs_dir", SCRIPT_DIR / "logs"))
@@ -513,6 +524,12 @@ class DownloadsHandler(FileSystemEventHandler):
 # Main entrypoint
 # -----------------------------
 if __name__ == "__main__":
+    # Check if any watch folders are configured
+    if not WATCH_FOLDERS:
+        logger.error("No watch folders configured in organizer_config.json. Please configure watch_folders or watch_folder.")
+        print("ERROR: No watch folders configured. Please update your organizer_config.json with watch_folder or watch_folders.")
+        exit(1)
+    
     # Ensure all watch folders exist
     for folder in WATCH_FOLDERS:
         folder.mkdir(parents=True, exist_ok=True)
