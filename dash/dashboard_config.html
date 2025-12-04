@@ -570,6 +570,22 @@
             </div>
           </div>
 
+          <!-- Auto-generate colors from logo -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="auto-generate-colors" title="Automatically extract colors from the logo to generate matching theme">
+                <label class="form-check-label" for="auto-generate-colors">
+                  <small><b>Auto-generate theme colors from logo</b></small>
+                </label>
+              </div>
+              <button type="button" class="btn btn-sm btn-info mt-2" id="btn-extract-colors" onclick="if(typeof extractColorsFromLogo==='function')extractColorsFromLogo()" title="Extract dominant colors from logo and apply to theme">
+                <i class="bi bi-palette-fill"></i> Extract Colors from Logo
+              </button>
+              <small class="d-block text-muted mt-1">Enable this option to automatically generate a matching theme from your logo colors.</small>
+            </div>
+          </div>
+
           <!-- Color Palette -->
           <div class="card bg-light p-2 mb-2" id="color-palette-card" style="background-color: rgba(13, 110, 253, 0.1) !important;">
             <small class="fw-bold mb-2 d-block">Color Palette</small>
@@ -990,6 +1006,121 @@ function applyPresetTheme(themeName) {
   
   previewTheme();
   showNotification(`Preset theme "${theme.name}" loaded`, 'info');
+}
+
+/**
+ * Extract dominant colors from logo image and generate matching theme
+ */
+function extractColorsFromLogo() {
+  const logoUrl = document.getElementById('brand-logo').value.trim();
+  
+  if (!logoUrl) {
+    showNotification('Please enter a logo URL first', 'warning');
+    return;
+  }
+  
+  showNotification('Extracting colors from logo...', 'info');
+  
+  // Load image and extract dominant colors
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  
+  img.onload = function() {
+    try {
+      const colors = extractDominantColors(img, 6);
+      
+      if (colors.length < 4) {
+        showNotification('Could not extract enough colors from logo', 'warning');
+        return;
+      }
+      
+      // Map extracted colors to theme
+      const themeName = document.getElementById('brand-theme-name').value || 'Logo-Generated Theme';
+      document.getElementById('brand-theme-name').value = themeName;
+      
+      // Set colors (at least 4 colors needed)
+      document.getElementById('brand-color-primary').value = colors[0];
+      document.getElementById('brand-color-secondary').value = colors[1] || colors[0];
+      document.getElementById('brand-color-success').value = colors[2] || '#198754';
+      document.getElementById('brand-color-danger').value = colors[3] || '#dc3545';
+      document.getElementById('brand-color-warning').value = colors[4] || '#ffc107';
+      document.getElementById('brand-color-info').value = colors[5] || '#0dcaf0';
+      
+      // Trigger color swatch updates
+      document.querySelectorAll('input[type="color"]').forEach(input => {
+        if (typeof updateColorSwatchBackground === 'function') {
+          updateColorSwatchBackground(input);
+        }
+      });
+      
+      previewTheme();
+      showNotification(`Theme colors generated from logo! Applied ${colors.length} colors.`, 'success');
+      
+    } catch (e) {
+      console.error('Error extracting colors:', e);
+      showNotification('Error extracting colors: ' + e.message, 'danger');
+    }
+  };
+  
+  img.onerror = function() {
+    showNotification('Could not load logo image. Check the URL and CORS settings.', 'danger');
+  };
+  
+  img.src = logoUrl;
+}
+
+/**
+ * Extract dominant colors from an image using canvas
+ */
+function extractDominantColors(img, count = 6) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, 100, 100);
+  
+  const imageData = ctx.getImageData(0, 0, 100, 100);
+  const data = imageData.data;
+  
+  // Sample pixels (every 4th pixel to speed up processing)
+  const colorMap = {};
+  const pixelCount = data.length / 4;
+  
+  for (let i = 0; i < pixelCount; i += 4) {
+    const r = data[i * 4];
+    const g = data[i * 4 + 1];
+    const b = data[i * 4 + 2];
+    const a = data[i * 4 + 3];
+    
+    // Skip transparent/semi-transparent pixels
+    if (a < 200) continue;
+    
+    // Skip near-white and near-black
+    const brightness = (r + g + b) / 3;
+    if (brightness > 240 || brightness < 15) continue;
+    
+    const hex = rgbToHex(r, g, b);
+    colorMap[hex] = (colorMap[hex] || 0) + 1;
+  }
+  
+  // Sort by frequency and get top colors
+  const sortedColors = Object.entries(colorMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(entry => entry[0]);
+  
+  return sortedColors;
+}
+
+/**
+ * Convert RGB to hex color
+ */
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('').toUpperCase();
 }
 
 function previewTheme() {
