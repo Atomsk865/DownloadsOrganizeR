@@ -249,7 +249,7 @@ Visit: https://github.com/Atomsk865/DownloadsOrganizeR
 """
     
     readme_path = portable_dir / 'README.md'
-    with open(readme_path, 'w') as f:
+    with open(readme_path, 'w', encoding='utf-8') as f:
         f.write(readme_content)
     print_success("Created README.md")
     
