@@ -3644,5 +3644,269 @@ window.addEventListener('storage', function(e) {
         }
     }
 });
+
+// ==================== THEME STYLING FUNCTIONS ====================
+// These functions apply theme colors to all dashboard elements
+
+/**
+ * Calculate if a color is light or dark for text contrast
+ */
+function isLightColor(hex) {
+  if (!hex || typeof hex !== 'string') return true;
+  const cleanHex = hex.replace('#', '').trim();
+  if (!/^[0-9A-Fa-f]{6}$/.test(cleanHex)) return true;
+  
+  const num = parseInt(cleanHex, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  
+  // Calculate luminance using relative luminance formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
+}
+
+/**
+ * Get high contrast text color (white or dark gray) based on background
+ */
+function getContrastText(bgHex) {
+  return isLightColor(bgHex) ? '#1a1a1a' : '#ffffff';
+}
+
+/**
+ * Adjust color brightness
+ */
+function adjustColor(hex, percent) {
+  if (!hex || typeof hex !== 'string') return '#0d6efd';
+  const cleanHex = hex.replace('#', '').trim();
+  if (!/^[0-9A-Fa-f]{6}$/.test(cleanHex)) return hex;
+  
+  const num = parseInt(cleanHex, 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+  return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
+}
+
+/**
+ * Apply theme styles to the entire dashboard
+ */
+function applyThemeStyles(theme) {
+  if (!theme) theme = {};
+  if (!theme.colors) theme.colors = {};
+  if (!theme.borderRadius) theme.borderRadius = '8px';
+  if (!theme.fontSize) theme.fontSize = '100%';
+  if (!theme.shadow) theme.shadow = 'normal';
+  
+  let style = document.getElementById('custom-theme-css');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'custom-theme-css';
+    style.setAttribute('data-priority', 'high');
+    document.head.appendChild(style);
+  }
+  
+  const shadowMap = {
+    none: 'none',
+    light: '0 1px 3px rgba(0,0,0,0.1)',
+    normal: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+    strong: '0 10px 40px rgba(0,0,0,0.3)'
+  };
+  
+  const primary = theme.colors.primary || '#0d6efd';
+  const secondary = theme.colors.secondary || '#6c757d';
+  const success = theme.colors.success || '#198754';
+  const danger = theme.colors.danger || '#dc3545';
+  const warning = theme.colors.warning || '#ffc107';
+  const info = theme.colors.info || '#0dcaf0';
+  
+  // Calculate text colors for high contrast
+  const primaryText = getContrastText(primary);
+  const secondaryText = getContrastText(secondary);
+  const successText = getContrastText(success);
+  const dangerText = getContrastText(danger);
+  const warningText = getContrastText(warning);
+  const infoText = getContrastText(info);
+  
+  // Calculate light background color (95% lighter version of primary)
+  const bgLight = adjustColor(primary, 85);
+  const bgLightText = adjustColor(primary, -60);
+  const bgDark = adjustColor(primary, -90);
+  
+  let css = `:root {
+    --bs-primary: ${primary} !important;
+    --bs-secondary: ${secondary} !important;
+    --bs-success: ${success} !important;
+    --bs-danger: ${danger} !important;
+    --bs-warning: ${warning} !important;
+    --bs-info: ${info} !important;
+    --bs-light: ${bgLight} !important;
+    --bs-dark: ${bgDark} !important;
+    --bs-primary-text: ${primaryText} !important;
+    --bs-secondary-text: ${secondaryText} !important;
+    --bs-success-text: ${successText} !important;
+    --bs-danger-text: ${dangerText} !important;
+    --bs-warning-text: ${warningText} !important;
+    --bs-info-text: ${infoText} !important;
+  }
+  
+  /* Basic elements */
+  .card { border-radius: ${theme.borderRadius} !important; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal} !important; }
+  body { font-size: ${theme.fontSize} !important; }
+  .bg-light { background-color: ${bgLight} !important; }
+  .bg-light-text { color: ${bgLightText} !important; }
+  .text-light { color: ${adjustColor(primary, -80)} !important; }
+  
+  /* Primary button and elements */
+  .btn-primary { background-color: ${primary} !important; border-color: ${primary} !important; color: ${primaryText} !important; }
+  .btn-primary:hover { background-color: ${adjustColor(primary, -20)} !important; border-color: ${adjustColor(primary, -20)} !important; color: ${primaryText} !important; }
+  .btn-primary:focus { color: ${primaryText} !important; }
+  .btn-primary:active { color: ${primaryText} !important; }
+  .btn-outline-primary { color: ${primary} !important; border-color: ${primary} !important; }
+  .btn-outline-primary:hover { background-color: ${primary} !important; color: ${primaryText} !important; border-color: ${primary} !important; }
+  
+  /* Secondary button and elements */
+  .btn-secondary { background-color: ${secondary} !important; border-color: ${secondary} !important; color: ${secondaryText} !important; }
+  .btn-secondary:hover { background-color: ${adjustColor(secondary, -20)} !important; border-color: ${adjustColor(secondary, -20)} !important; color: ${secondaryText} !important; }
+  .btn-outline-secondary { color: ${secondary} !important; border-color: ${secondary} !important; }
+  .btn-outline-secondary:hover { background-color: ${secondary} !important; color: ${secondaryText} !important; border-color: ${secondary} !important; }
+  
+  /* Success button and elements */
+  .btn-success { background-color: ${success} !important; border-color: ${success} !important; color: ${successText} !important; }
+  .btn-success:hover { background-color: ${adjustColor(success, -20)} !important; border-color: ${adjustColor(success, -20)} !important; color: ${successText} !important; }
+  .btn-outline-success { color: ${success} !important; border-color: ${success} !important; }
+  .btn-outline-success:hover { background-color: ${success} !important; color: ${successText} !important; border-color: ${success} !important; }
+  
+  /* Danger button and elements */
+  .btn-danger { background-color: ${danger} !important; border-color: ${danger} !important; color: ${dangerText} !important; }
+  .btn-danger:hover { background-color: ${adjustColor(danger, -20)} !important; border-color: ${adjustColor(danger, -20)} !important; color: ${dangerText} !important; }
+  .btn-outline-danger { color: ${danger} !important; border-color: ${danger} !important; }
+  .btn-outline-danger:hover { background-color: ${danger} !important; color: ${dangerText} !important; border-color: ${danger} !important; }
+  
+  /* Warning button and elements */
+  .btn-warning { background-color: ${warning} !important; border-color: ${warning} !important; color: ${warningText} !important; }
+  .btn-warning:hover { background-color: ${adjustColor(warning, -20)} !important; border-color: ${adjustColor(warning, -20)} !important; color: ${warningText} !important; }
+  .btn-outline-warning { color: ${warning} !important; border-color: ${warning} !important; }
+  .btn-outline-warning:hover { background-color: ${warning} !important; color: ${warningText} !important; border-color: ${warning} !important; }
+  
+  /* Info button and elements */
+  .btn-info { background-color: ${info} !important; border-color: ${info} !important; color: ${infoText} !important; }
+  .btn-info:hover { background-color: ${adjustColor(info, -20)} !important; border-color: ${adjustColor(info, -20)} !important; color: ${infoText} !important; }
+  .btn-outline-info { color: ${info} !important; border-color: ${info} !important; }
+  .btn-outline-info:hover { background-color: ${info} !important; color: ${infoText} !important; border-color: ${info} !important; }
+  
+  /* Badge colors */
+  .badge-primary { background-color: ${primary} !important; color: ${primaryText} !important; }
+  .badge-secondary { background-color: ${secondary} !important; color: ${secondaryText} !important; }
+  .badge-success { background-color: ${success} !important; color: ${successText} !important; }
+  .badge-danger { background-color: ${danger} !important; color: ${dangerText} !important; }
+  .badge-warning { background-color: ${warning} !important; color: ${warningText} !important; }
+  .badge-info { background-color: ${info} !important; color: ${infoText} !important; }
+  
+  /* Alert colors */
+  .alert-primary { background-color: ${adjustColor(primary, 90)} !important; border-color: ${primary} !important; color: ${adjustColor(primary, -40)} !important; }
+  .alert-secondary { background-color: ${adjustColor(secondary, 85)} !important; border-color: ${secondary} !important; color: ${adjustColor(secondary, -40)} !important; }
+  .alert-success { background-color: ${adjustColor(success, 85)} !important; border-color: ${success} !important; color: ${adjustColor(success, -40)} !important; }
+  .alert-danger { background-color: ${adjustColor(danger, 85)} !important; border-color: ${danger} !important; color: ${adjustColor(danger, -40)} !important; }
+  .alert-warning { background-color: ${adjustColor(warning, 85)} !important; border-color: ${warning} !important; color: ${adjustColor(warning, -40)} !important; }
+  .alert-info { background-color: ${adjustColor(info, 85)} !important; border-color: ${info} !important; color: ${adjustColor(info, -40)} !important; }
+  
+  /* Card headers */
+  .card-header { background-color: ${primary} !important; color: ${primaryText} !important; border-color: ${primary} !important; }
+  .card-header .btn { color: ${primaryText} !important; }
+  .card-header a { color: ${primaryText} !important; text-decoration: underline; }
+  
+  /* Links and text */
+  a { color: ${primary} !important; }
+  a:hover { color: ${adjustColor(primary, -20)} !important; }
+  .text-primary { color: ${primary} !important; }
+  .text-secondary { color: ${secondary} !important; }
+  .text-success { color: ${success} !important; }
+  .text-danger { color: ${danger} !important; }
+  .text-warning { color: ${warning} !important; }
+  .text-info { color: ${info} !important; }
+  
+  /* Backgrounds with text */
+  .bg-primary { background-color: ${primary} !important; color: ${primaryText} !important; }
+  .bg-secondary { background-color: ${secondary} !important; color: ${secondaryText} !important; }
+  .bg-success { background-color: ${success} !important; color: ${successText} !important; }
+  .bg-danger { background-color: ${danger} !important; color: ${dangerText} !important; }
+  .bg-warning { background-color: ${warning} !important; color: ${warningText} !important; }
+  .bg-info { background-color: ${info} !important; color: ${infoText} !important; }
+  
+  /* Borders */
+  .border { border-color: ${adjustColor(secondary, -30)} !important; }
+  .border-primary { border-color: ${primary} !important; }
+  .border-secondary { border-color: ${secondary} !important; }
+  .border-success { border-color: ${success} !important; }
+  .border-danger { border-color: ${danger} !important; }
+  .border-warning { border-color: ${warning} !important; }
+  .border-info { border-color: ${info} !important; }
+  
+  /* Progress bars */
+  .progress-bar { background-color: ${primary} !important; }
+  .bg-success .progress-bar { background-color: ${success} !important; }
+  .bg-danger .progress-bar { background-color: ${danger} !important; }
+  .bg-warning .progress-bar { background-color: ${warning} !important; }
+  .bg-info .progress-bar { background-color: ${info} !important; }
+  
+  /* Table elements */
+  .table-primary { background-color: ${adjustColor(primary, 85)} !important; }
+  .table-secondary { background-color: ${adjustColor(secondary, 85)} !important; }
+  .table-success { background-color: ${adjustColor(success, 85)} !important; }
+  .table-danger { background-color: ${adjustColor(danger, 85)} !important; }
+  .table-warning { background-color: ${adjustColor(warning, 85)} !important; }
+  .table-info { background-color: ${adjustColor(info, 85)} !important; }
+  .table-hover tbody tr:hover { background-color: ${adjustColor(primary, 90)} !important; }
+  
+  /* Form elements */
+  .form-control:focus { border-color: ${primary} !important; box-shadow: 0 0 0 0.2rem ${adjustColor(primary, 85)} !important; }
+  .form-control-color { border-color: ${primary} !important; }
+  .form-check-input:checked { background-color: ${primary} !important; border-color: ${primary} !important; }
+  .form-check-input:focus { border-color: ${primary} !important; box-shadow: 0 0 0 0.2rem ${adjustColor(primary, 85)} !important; }
+  
+  /* Status indicators */
+  .status-active { color: ${success} !important; }
+  .status-inactive { color: ${danger} !important; }
+  .status-pending { color: ${warning} !important; }
+  .status-info { color: ${info} !important; }
+  
+  /* List group */
+  .list-group-item-primary { background-color: ${adjustColor(primary, 90)} !important; color: ${primary} !important; }
+  .list-group-item-primary.active { background-color: ${primary} !important; color: ${primaryText} !important; border-color: ${primary} !important; }
+  .list-group-item-success { background-color: ${adjustColor(success, 90)} !important; color: ${success} !important; }
+  .list-group-item-success.active { background-color: ${success} !important; color: ${successText} !important; border-color: ${success} !important; }
+  
+  /* Navbar and tabs */
+  .nav-tabs .nav-link.active { border-color: ${primary} !important; color: ${primary} !important; }
+  .nav-pills .nav-link.active { background-color: ${primary} !important; color: ${primaryText} !important; }
+  
+  /* Breadcrumb */
+  .breadcrumb { background-color: ${bgLight} !important; }
+  .breadcrumb .active { color: ${primary} !important; }
+  
+  /* Pagination */
+  .page-link { color: ${primary} !important; }
+  .page-link:hover { background-color: ${bgLight} !important; }
+  .page-item.active .page-link { background-color: ${primary} !important; border-color: ${primary} !important; color: ${primaryText} !important; }
+  
+  /* Spinners and loaders */
+  .spinner-border { border-color: ${bgLight} !important; border-right-color: ${primary} !important; }
+  .spinner-grow { background-color: ${primary} !important; }
+  `;
+  
+  if (theme.css) {
+    css += '\n' + theme.css;
+  }
+  
+  style.textContent = css;
+  
+  // Update dashboard logo when theme is applied
+  if (typeof updateDashboardLogo === 'function') {
+    updateDashboardLogo(theme);
+  }
+}
 </script>
+
 
