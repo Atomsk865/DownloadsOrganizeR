@@ -202,11 +202,14 @@ document.getElementById('login-submit').addEventListener('click', async function
                 }, 300);
             }
             
-            document.getElementById('login-btn').classList.add('d-none');
-            document.getElementById('logout-btn').classList.remove('d-none');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            if (loginBtn) loginBtn.classList.add('d-none');
+            if (logoutBtn) logoutBtn.classList.remove('d-none');
             // Show config link if user has manage_config or modify_layout rights
             if (__rights.manage_config || __rights.modify_layout) {
-                document.getElementById('config-link').classList.remove('d-none');
+                const cfg = document.getElementById('config-link');
+                if (cfg) cfg.classList.remove('d-none');
             }
             showNotification('Login successful', 'success');
             applyRights();
@@ -227,8 +230,11 @@ document.getElementById('login-submit').addEventListener('click', async function
             __authHeader = null;
         }
     } catch (error) {
-        document.getElementById('login-error').textContent = 'Login failed: ' + error.message;
-        document.getElementById('login-error').style.display = 'block';
+        const le = document.getElementById('login-error');
+        if (le) {
+            le.textContent = 'Login failed: ' + error.message;
+            le.style.display = 'block';
+        }
         __authHeader = null;
     }
 });
@@ -1432,6 +1438,7 @@ async function refreshRecentFiles() {
 
 function displayRecentFiles(files) {
     const tbody = document.getElementById('recent-files-tbody');
+    if (!tbody) return; // not present on this page
     
     if (!files || files.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No recent file movements</td></tr>';
