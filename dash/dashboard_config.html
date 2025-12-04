@@ -571,7 +571,7 @@
           </div>
 
           <!-- Color Palette -->
-          <div class="card bg-light p-2 mb-2" id="color-palette-card">
+          <div class="card bg-light p-2 mb-2" id="color-palette-card" style="background-color: rgba(13, 110, 253, 0.1) !important;">
             <small class="fw-bold mb-2 d-block">Color Palette</small>
             <div class="row g-2">
               <div class="col-md-2">
@@ -602,7 +602,7 @@
           </div>
 
           <!-- Advanced Options -->
-          <div class="card bg-light p-2 mb-2">
+          <div class="card bg-light p-2 mb-2" style="background-color: rgba(13, 110, 253, 0.1) !important;">
             <small class="fw-bold mb-2 d-block">Advanced Options</small>
             <div class="row g-2">
               <div class="col-md-4">
@@ -1189,6 +1189,10 @@ function applyThemeStyles(theme) {
   const warning = theme.colors.warning || '#ffc107';
   const info = theme.colors.info || '#0dcaf0';
   
+  // Calculate light background color (95% lighter version of primary)
+  const bgLight = adjustColor(primary, 85);
+  const bgLightText = adjustColor(primary, -60);
+  
   let css = `:root {
     --bs-primary: ${primary} !important;
     --bs-secondary: ${secondary} !important;
@@ -1196,9 +1200,13 @@ function applyThemeStyles(theme) {
     --bs-danger: ${danger} !important;
     --bs-warning: ${warning} !important;
     --bs-info: ${info} !important;
+    --bs-light: ${bgLight} !important;
   }
   .card { border-radius: ${theme.borderRadius} !important; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal} !important; }
   body { font-size: ${theme.fontSize} !important; }
+  .bg-light { background-color: ${bgLight} !important; }
+  .bg-light-text { color: ${bgLightText} !important; }
+  .text-light { color: ${adjustColor(primary, -80)} !important; }
   .btn-primary { background-color: ${primary} !important; border-color: ${primary} !important; }
   .btn-primary:hover { background-color: ${adjustColor(primary, -20)} !important; border-color: ${adjustColor(primary, -20)} !important; }
   .btn-success { background-color: ${success} !important; border-color: ${success} !important; }
@@ -1208,6 +1216,7 @@ function applyThemeStyles(theme) {
   .badge-primary { background-color: ${primary} !important; }
   .badge-success { background-color: ${success} !important; }
   .alert-primary { background-color: ${adjustColor(primary, 90)} !important; border-color: ${primary} !important; color: ${adjustColor(primary, -40)} !important; }
+  .border { border-color: ${adjustColor(secondary, -30)} !important; }
   `;
   
   if (theme.css) {
