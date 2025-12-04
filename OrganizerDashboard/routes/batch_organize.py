@@ -73,14 +73,24 @@ def batch_organize_downloads():
     }
     """
     try:
-        from OrganizerDashboard.routes.api_recent_files import get_downloads_path
-        from Organizer import organize_file, logger as organizer_logger
+        from pathlib import Path
+        import os
         
         data = request.get_json() or {}
         dry_run = data.get('dry_run', False)
         recursive = data.get('recursive', False)
         
-        downloads_path = Path(get_downloads_path())
+        # Get downloads path the same way Organizer.py does
+        try:
+            username = os.environ.get("USERNAME") or os.getlogin()
+        except Exception:
+            username = ""
+        
+        if username:
+            downloads_path = Path(f"C:\\Users\\{username}\\Downloads")
+        else:
+            downloads_path = Path.home() / "Downloads"
+        
         if not downloads_path.exists():
             return jsonify({"success": False, "error": "Downloads folder not found"}), 400
         
@@ -112,6 +122,7 @@ def batch_organize_downloads():
                     })
                 else:
                     # Actually organize the file
+                    from Organizer import organize_file
                     organize_file(str(file_path), downloads_path)
                     files_processed.append({
                         "file": str(file_path),
@@ -186,14 +197,14 @@ def undo_operation(operation_id):
         
         # Find the operation
         operation = None
-        op_index = None
+        op_index = -1
         for i, op in enumerate(operations):
             if op.get('timestamp') == operation_id:
                 operation = op
                 op_index = i
                 break
         
-        if not operation:
+        if not operation or op_index < 0:
             return jsonify({"success": False, "error": "Operation not found"}), 404
         
         source = Path(operation['source'])
@@ -213,7 +224,8 @@ def undo_operation(operation_id):
         # Update operation status
         operation['status'] = 'undone'
         operation['undo_timestamp'] = datetime.now().isoformat()
-        operations[op_index] = operation
+        if op_index >= 0:
+            operations[op_index] = operation
         history['operations'] = operations
         save_history(history)
         
