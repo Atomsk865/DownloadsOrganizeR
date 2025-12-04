@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template
 from OrganizerDashboard.auth.auth import requires_auth
 import os
 
@@ -227,3 +227,10 @@ def get_hourly_activity():
         "labels": labels,
         "data": hourly_counts
     })
+
+
+@routes_statistics.route("/statistics/full", methods=["GET"])
+@requires_auth
+def statistics_full_view():
+    """Render a standalone full-view statistics page with charts."""
+    return render_template('statistics_full.html')

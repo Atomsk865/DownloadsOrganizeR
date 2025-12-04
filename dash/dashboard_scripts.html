@@ -1700,19 +1700,16 @@ async function updateSidebarStats() {
 }
 
 function openStatsWindow() {
-    // Scroll to statistics module in main content
-    const statsModule = document.querySelector('[data-module="statistics"]');
-    if (statsModule) {
-        statsModule.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Highlight it briefly
-        statsModule.style.transition = 'all 0.3s';
-        statsModule.style.transform = 'scale(1.02)';
-        statsModule.style.boxShadow = '0 8px 24px rgba(13, 110, 253, 0.3)';
-        setTimeout(() => {
-            statsModule.style.transform = '';
-            statsModule.style.boxShadow = '';
-        }, 1000);
+    const featuresEnabled = __organizerFeatures && __organizerFeatures.reports_enabled !== false;
+    if (!featuresEnabled) {
+        showNotification('Reports & Analytics are disabled in Features.', 'warning');
+        return;
     }
+    const w = Math.min(screen.width - 100, 1280);
+    const h = Math.min(screen.height - 100, 900);
+    const left = Math.max(0, (screen.width - w) / 2);
+    const top = Math.max(0, (screen.height - h) / 2);
+    window.open('/statistics/full', 'StatisticsFullView', `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
 }
 
 // Initialize on page load

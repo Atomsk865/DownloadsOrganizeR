@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics • Full View</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    body { background:#f8f9fa; }
+    .card { box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+  <div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0"><i class="bi bi-graph-up"></i> File Organization Statistics — Full View</h5>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.close()"><i class="bi bi-x-circle"></i> Close</button>
+      </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="row mb-3">
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-primary text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-total-files">0</h4>
+            <small>Total Files</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-success text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-today">0</h4>
+            <small>Today</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-info text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-week">0</h4>
+            <small>This Week</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-warning text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-month">0</h4>
+            <small>This Month</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-secondary text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-categories">0</h4>
+            <small>Categories</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-6 text-center">
+        <div class="card bg-dark text-white">
+          <div class="card-body p-2">
+            <h4 class="mb-0" id="stat-avg-day">0</h4>
+            <small>Avg/Day</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+      <div class="col-lg-6 mb-3">
+        <h6>Files by Category</h6>
+        <canvas id="chart-category" height="200"></canvas>
+      </div>
+      <div class="col-lg-6 mb-3">
+        <h6>Top 10 File Extensions</h6>
+        <canvas id="chart-extensions" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 mb-3">
+        <h6>Activity Timeline (Last 30 Days)</h6>
+        <canvas id="chart-timeline" height="80"></canvas>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <h6>Activity by Hour of Day</h6>
+        <canvas id="chart-hourly" height="80"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    let __authHeader = null;
+    function getAuthHeaderFromCookie() {
+      try {
+        const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+        if (match) return decodeURIComponent(match[1]);
+      } catch (e) {}
+      return null;
+    }
+    function getAuthHeaders() {
+      if (!__authHeader) __authHeader = getAuthHeaderFromCookie();
+      const headers = __authHeader ? { 'Authorization': __authHeader } : {};
+      return headers;
+    }
+
+    let chartCategory, chartExtensions, chartTimeline, chartHourly;
+    async function loadStatistics() {
+      try {
+        const overviewRes = await fetch('/api/statistics/overview', { credentials: 'include', headers: getAuthHeaders() });
+        if (overviewRes.ok) {
+          const overview = await overviewRes.json();
+          const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          setText('stat-total-files', overview.total_files || 0);
+          setText('stat-today', overview.today_count || 0);
+          setText('stat-week', overview.week_count || 0);
+          setText('stat-month', overview.month_count || 0);
+          setText('stat-categories', overview.total_categories || 0);
+          setText('stat-avg-day', overview.avg_per_day || 0);
+        }
+        const categoryRes = await fetch('/api/statistics/by-category', { credentials: 'include', headers: getAuthHeaders() });
+        if (categoryRes.ok) {
+          const categoryData = await categoryRes.json();
+          const ctx = document.getElementById('chart-category');
+          if (ctx) {
+            if (chartCategory) chartCategory.destroy();
+            chartCategory = new Chart(ctx, {
+              type: 'doughnut',
+              data: { labels: categoryData.labels || [], datasets: [{ data: categoryData.data || [], backgroundColor: ['#0d6efd','#6610f2','#6f42c1','#d63384','#dc3545','#fd7e14','#ffc107','#198754','#20c997','#0dcaf0'] }] },
+              options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            });
+          }
+        }
+        const extRes = await fetch('/api/statistics/by-extension', { credentials: 'include', headers: getAuthHeaders() });
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          const ctx = document.getElementById('chart-extensions');
+          if (ctx) {
+            if (chartExtensions) chartExtensions.destroy();
+            chartExtensions = new Chart(ctx, {
+              type: 'bar',
+              data: { labels: extData.labels || [], datasets: [{ label: 'Files', data: extData.data || [], backgroundColor: '#0d6efd' }] },
+              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+          }
+        }
+        const timelineRes = await fetch('/api/statistics/timeline', { credentials: 'include', headers: getAuthHeaders() });
+        if (timelineRes.ok) {
+          const timelineData = await timelineRes.json();
+          const ctx = document.getElementById('chart-timeline');
+          if (ctx) {
+            if (chartTimeline) chartTimeline.destroy();
+            chartTimeline = new Chart(ctx, {
+              type: 'line',
+              data: { labels: timelineData.labels || [], datasets: [{ label: 'Files Organized', data: timelineData.data || [], borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', fill: true, tension: 0.4 }] },
+              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+            });
+          }
+        }
+        const hourlyRes = await fetch('/api/statistics/hourly-activity', { credentials: 'include', headers: getAuthHeaders() });
+        if (hourlyRes.ok) {
+          const hourlyData = await hourlyRes.json();
+          const ctx = document.getElementById('chart-hourly');
+          if (ctx) {
+            if (chartHourly) chartHourly.destroy();
+            chartHourly = new Chart(ctx, {
+              type: 'bar',
+              data: { labels: hourlyData.labels || [], datasets: [{ label: 'Files', data: hourlyData.data || [], backgroundColor: '#0dcaf0' }] },
+              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+          }
+        }
+      } catch (e) { console.error('Statistics full view load failed:', e); }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStatistics);
+  </script>
+</body>
+</html>
