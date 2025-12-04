@@ -1256,6 +1256,264 @@ async function saveSettings() {
     }
 }
 
+// UNC Credentials Management Functions
+let __uncCurrentPath = '';
+
+function showUNCCredentialsModal() {
+    const watchFolderInput = document.getElementById('watch_folder');
+    const path = watchFolderInput.value.trim();
+    
+    if (!path) {
+        showNotification('Please enter a watch folder path first', 'warning');
+        return;
+    }
+    
+    __uncCurrentPath = path;
+    
+    // Validate UNC syntax
+    validateUNCSyntax(path);
+}
+
+async function validateUNCSyntax(path) {
+    try {
+        const response = await fetch('/api/unc/validate-syntax', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({ unc_path: path })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.valid) {
+                // Load existing credentials if any
+                loadUNCCredentials(path);
+            } else {
+                clearUNCFields();
+                showUNCError(result.message || 'Invalid UNC path format');
+            }
+        } else {
+            const error = await response.json();
+            showUNCError(error.error || 'Failed to validate UNC path');
+        }
+    } catch (error) {
+        showUNCError(`Validation error: ${error.message}`);
+    }
+}
+
+async function loadUNCCredentials(path) {
+    try {
+        const response = await fetch(`/api/unc/get-credentials/${encodeURIComponent(path)}`, {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const creds = result.credentials || {};
+            
+            document.getElementById('unc-path-display').value = path;
+            document.getElementById('unc-username').value = creds.username || '';
+            document.getElementById('unc-password').value = ''; // Never pre-fill password for security
+            document.getElementById('unc-domain').value = creds.domain || '';
+            document.getElementById('unc-hostname').value = creds.hostname || '';
+            document.getElementById('unc-auth-type').value = creds.auth_type || 'windows';
+            
+            updateUNCAuthFields();
+            clearUNCMessage();
+            
+            const modal = new bootstrap.Modal(document.getElementById('uncCredsModal'));
+            modal.show();
+        } else {
+            // No existing credentials, initialize fresh form
+            document.getElementById('unc-path-display').value = path;
+            document.getElementById('unc-username').value = '';
+            document.getElementById('unc-password').value = '';
+            document.getElementById('unc-domain').value = '';
+            document.getElementById('unc-hostname').value = '';
+            document.getElementById('unc-auth-type').value = 'windows';
+            
+            updateUNCAuthFields();
+            clearUNCMessage();
+            
+            const modal = new bootstrap.Modal(document.getElementById('uncCredsModal'));
+            modal.show();
+        }
+    } catch (error) {
+        showUNCError(`Error loading credentials: ${error.message}`);
+    }
+}
+
+function updateUNCAuthFields() {
+    const authType = document.getElementById('unc-auth-type').value;
+    const windowsFields = document.getElementById('windows-auth-fields');
+    
+    if (authType === 'windows') {
+        windowsFields.style.display = 'block';
+    } else {
+        windowsFields.style.display = 'none';
+    }
+}
+
+async function testUNCCredentials() {
+    const path = document.getElementById('unc-path-display').value;
+    const username = document.getElementById('unc-username').value;
+    const password = document.getElementById('unc-password').value;
+    const domain = document.getElementById('unc-domain').value;
+    const hostname = document.getElementById('unc-hostname').value;
+    const authType = document.getElementById('unc-auth-type').value;
+    
+    if (!path || !username || !password) {
+        showUNCError('Username and password are required');
+        return;
+    }
+    
+    const testBtn = document.getElementById('btn-test-unc');
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Testing...';
+    
+    try {
+        const response = await fetch('/api/unc/test-credentials', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                unc_path: path,
+                username: username,
+                password: password,
+                domain: domain,
+                hostname: hostname,
+                auth_type: authType
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showUNCMessage('✓ Connection successful! You can now save these credentials.', 'success');
+        } else {
+            const error = await response.json();
+            showUNCError(error.error || 'Connection failed');
+        }
+    } catch (error) {
+        showUNCError(`Test error: ${error.message}`);
+    } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<i class="bi bi-plug"></i> Test Connection';
+    }
+}
+
+async function saveUNCCredentials() {
+    const path = document.getElementById('unc-path-display').value;
+    const username = document.getElementById('unc-username').value;
+    const password = document.getElementById('unc-password').value;
+    const domain = document.getElementById('unc-domain').value;
+    const hostname = document.getElementById('unc-hostname').value;
+    const authType = document.getElementById('unc-auth-type').value;
+    
+    if (!path || !username || !password) {
+        showUNCError('Username and password are required');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('btn-save-unc');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    
+    try {
+        const response = await fetch('/api/unc/save-credentials', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                unc_path: path,
+                username: username,
+                password: password,
+                domain: domain || undefined,
+                hostname: hostname || undefined,
+                auth_type: authType
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showUNCMessage('✓ Credentials saved successfully!', 'success');
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('uncCredsModal')).hide();
+                showNotification(`Credentials saved for ${path}`, 'success');
+            }, 1000);
+        } else {
+            const error = await response.json();
+            showUNCError(error.error || 'Failed to save credentials');
+        }
+    } catch (error) {
+        showUNCError(`Save error: ${error.message}`);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save Credentials';
+    }
+}
+
+function clearUNCFields() {
+    document.getElementById('unc-path-display').value = '';
+    document.getElementById('unc-username').value = '';
+    document.getElementById('unc-password').value = '';
+    document.getElementById('unc-domain').value = '';
+    document.getElementById('unc-hostname').value = '';
+    document.getElementById('unc-auth-type').value = 'windows';
+}
+
+function clearUNCMessage() {
+    document.getElementById('unc-message').style.display = 'none';
+    document.getElementById('unc-message').innerHTML = '';
+    document.getElementById('unc-error').style.display = 'none';
+    document.getElementById('unc-error').innerHTML = '';
+}
+
+function showUNCMessage(msg, type) {
+    const msgDiv = document.getElementById('unc-message');
+    msgDiv.className = 'alert alert-sm py-1 px-2 mb-2';
+    msgDiv.className += type === 'success' ? ' alert-success' : ' alert-info';
+    msgDiv.innerHTML = msg;
+    msgDiv.style.display = 'block';
+    document.getElementById('unc-error').style.display = 'none';
+}
+
+function showUNCError(msg) {
+    const errDiv = document.getElementById('unc-error');
+    errDiv.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + msg;
+    errDiv.style.display = 'block';
+    document.getElementById('unc-message').style.display = 'none';
+}
+
+// Detect UNC path in watch folder input and show credentials button
+document.addEventListener('DOMContentLoaded', function() {
+    const watchFolderInput = document.getElementById('watch_folder');
+    if (watchFolderInput) {
+        watchFolderInput.addEventListener('blur', function() {
+            const path = this.value.trim();
+            const uncWarning = document.getElementById('unc-warning');
+            const uncCredsBtn = document.getElementById('btn-unc-creds');
+            
+            if (path && path.startsWith('\\\\')) {
+                uncWarning.style.display = 'block';
+                uncCredsBtn.style.display = 'inline-block';
+            } else {
+                uncWarning.style.display = 'none';
+                uncCredsBtn.style.display = 'none';
+            }
+        });
+    }
+});
+
 function deleteRow(btn) {
     btn.closest('tr').remove();
 }

@@ -295,6 +295,7 @@ def create_app():
     from OrganizerDashboard.routes.docs import routes_docs
     from OrganizerDashboard.routes.dev_reset import routes_dev_reset
     from OrganizerDashboard.routes.env_test import routes_env
+    from OrganizerDashboard.routes.unc_credentials import routes_unc_creds
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config, url_prefix='/api')
@@ -340,6 +341,7 @@ def create_app():
     app.register_blueprint(routes_duplicates)
     app.register_blueprint(routes_dev_reset)
     app.register_blueprint(routes_env)
+    app.register_blueprint(routes_unc_creds)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)
