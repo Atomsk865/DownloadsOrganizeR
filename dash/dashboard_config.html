@@ -586,13 +586,36 @@
 <script>
 // Ensure globals are available
 // Note: __authHeader is already declared in dashboard_scripts.html, so don't redeclare it
-if (typeof __rights === 'undefined') var __rights = {};
+if (typeof __rights === 'undefined') { window.__rights = {}; }
 if (typeof showNotification === 'undefined') {
-  var showNotification = function(msg, type) { console.warn('showNotification not loaded:', msg); };
+  var showNotification = function(msg, type) {
+    // Create a temporary notification container if missing
+    let container = document.getElementById('notification-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'notification-container';
+      container.style.position = 'fixed';
+      container.style.top = '20px';
+      container.style.right = '20px';
+      container.style.zIndex = '9999';
+      document.body.appendChild(container);
+    }
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type || 'info'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `${msg || ''}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    container.appendChild(alertDiv);
+    setTimeout(() => { try { alertDiv.remove(); } catch(e){} }, 5000);
+  };
 }
 if (typeof getAuthHeaders === 'undefined') {
   var getAuthHeaders = function() { 
-    const authHeader = window.__authHeader || (typeof __authHeader !== 'undefined' ? __authHeader : null);
+    let authHeader = window.__authHeader || (typeof __authHeader !== 'undefined' ? __authHeader : null);
+    if (!authHeader) {
+      try {
+        const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+        if (match) authHeader = decodeURIComponent(match[1]);
+      } catch (e) {}
+    }
     return authHeader ? { 'Authorization': authHeader } : {}; 
   };
 }
@@ -632,14 +655,33 @@ function saveUser(){
   const password = document.getElementById('user-new-password').value;
   if(!username || !role){ showNotification('Username and role required', 'warning'); return; }
   fetch('/api/dashboard/users', {method:'POST', headers: {'Content-Type':'application/json', ...getAuthHeaders()}, body: JSON.stringify({username, role, password: password || undefined})})
-    .then(r=>r.json().then(j=>({ok:r.ok, j})))
-    .then(({ok,j})=>{ if(ok){ showNotification('User saved', 'success'); document.getElementById('user-new-password').value=''; fetchConfig(); } else { showNotification(j.error||'Save failed','danger'); } });
+    .then(parseResponse)
+    .then(result => {
+      if (result.ok && result.json && result.json.success) {
+        showNotification('User saved', 'success');
+        document.getElementById('user-new-password').value='';
+        fetchConfig();
+      } else {
+        const msg = (result.json && result.json.error) || result.text || 'Save failed';
+        showNotification(msg, 'danger');
+      }
+    })
+    .catch(err => showNotification('Save error: ' + err.message, 'danger'));
 }
 function deleteUser(username){
   if(!confirm('Delete user ' + username + '?')) return;
   fetch('/api/dashboard/users/' + encodeURIComponent(username), {method:'DELETE', headers: getAuthHeaders()})
-    .then(r=>r.json().then(j=>({ok:r.ok,j})))
-    .then(({ok,j})=>{ if(ok){ showNotification('User deleted', 'success'); fetchConfig(); } else { showNotification(j.error||'Delete failed','danger'); } });
+    .then(parseResponse)
+    .then(result => {
+      if (result.ok && result.json && result.json.success) {
+        showNotification('User deleted', 'success');
+        fetchConfig();
+      } else {
+        const msg = (result.json && result.json.error) || result.text || 'Delete failed';
+        showNotification(msg, 'danger');
+      }
+    })
+    .catch(err => showNotification('Delete error: ' + err.message, 'danger'));
 }
 function renderLayout(layout){
   const list = document.getElementById('sections-list');
@@ -1101,7 +1143,7 @@ async function viewAuthState() {
 function applyConfigRights() {
   if (!__rights.manage_config) {
     // Disable all user management controls (table buttons, input fields, and save button)
-    document.querySelectorAll('#users-table button, #new-username, #new-role, #new-password, button[onclick="saveUser()"]').forEach(el => { 
+    document.querySelectorAll('#users-table button, #new-username, #new-role, #user-new-password, button[onclick="saveUser()"]').forEach(el => { 
       if(el) {
         el.disabled = true;
         if (el.tagName === 'BUTTON') {
@@ -1361,6 +1403,8 @@ function filterUsers() {
       row.style.display = 'none';
     }
   });
+}
+
   function loadWatchFoldersConfig() {
     fetch('/api/watch_folders', { credentials: 'include', headers: getAuthHeaders() })
       .then(r => r.json())
