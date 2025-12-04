@@ -3314,5 +3314,304 @@ document.addEventListener('DOMContentLoaded', function(){
     if(ipFrame && typeof window.extractPublicIP === 'function'){
         ipFrame.addEventListener('load', window.extractPublicIP);
     }
+    
+    // Load persisted theme on page load
+    if (typeof restorePersistedTheme === 'function') {
+        restorePersistedTheme();
+    }
+});
+
+// ==================== THEME PERSISTENCE ====================
+// Theme persistence system using localStorage with server-side backup
+
+const THEME_STORAGE_KEY = 'dashboard_theme_v1';
+const THEME_SYNC_INTERVAL = 30000; // Sync every 30 seconds
+
+/**
+ * Save theme to localStorage immediately
+ * Queue for server sync in background
+ */
+function persistThemeLocally(theme) {
+    if (!theme) return;
+    
+    try {
+        // Save to localStorage for instant availability
+        const themeData = {
+            timestamp: Date.now(),
+            theme: theme,
+            version: 1
+        };
+        localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(themeData));
+        
+        // Queue for server sync
+        scheduleThemeSync(theme);
+    } catch (e) {
+        console.warn('Failed to save theme to localStorage:', e);
+    }
+}
+
+/**
+ * Retrieve theme from localStorage
+ */
+function getPersistedTheme() {
+    try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        if (!stored) return null;
+        
+        const data = JSON.parse(stored);
+        if (data && data.theme) {
+            return data.theme;
+        }
+    } catch (e) {
+        console.warn('Failed to read theme from localStorage:', e);
+    }
+    return null;
+}
+
+/**
+ * Schedule theme sync to server
+ * Batches requests to avoid excessive API calls
+ */
+let themeSyncTimeout = null;
+function scheduleThemeSync(theme) {
+    if (themeSyncTimeout) {
+        clearTimeout(themeSyncTimeout);
+    }
+    
+    themeSyncTimeout = setTimeout(() => {
+        syncThemeToServer(theme);
+    }, 2000); // Wait 2 seconds for additional changes
+}
+
+/**
+ * Sync current theme to server
+ */
+function syncThemeToServer(theme) {
+    if (!theme || !__authHeader) return; // Don't sync if not authenticated
+    
+    fetch('/api/dashboard/branding', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', ...getAuthHeaders()},
+        body: JSON.stringify(theme)
+    })
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => {
+        if (!ok) {
+            console.warn('Failed to sync theme to server:', j.error);
+        }
+    })
+    .catch(e => console.warn('Error syncing theme to server:', e));
+}
+
+/**
+ * Load theme from server (for first-time page load or after login)
+ */
+function loadThemeFromServer() {
+    if (!__authHeader) {
+        // User not authenticated, use localStorage only
+        return;
+    }
+    
+    return fetch('/api/dashboard/branding', {headers: getAuthHeaders()})
+        .then(r => r.ok ? r.json() : null)
+        .then(serverTheme => {
+            if (serverTheme) {
+                // Save server theme to localStorage
+                persistThemeLocally(serverTheme);
+                return serverTheme;
+            }
+            return null;
+        })
+        .catch(e => {
+            console.warn('Error loading theme from server:', e);
+            return null;
+        });
+}
+
+/**
+ * Restore persisted theme on page load
+ * Strategy:
+ * 1. Check localStorage first (fastest, works offline)
+ * 2. If authenticated, try to load from server (might have updated on another device)
+ * 3. If both fail, use defaults
+ */
+async function restorePersistedTheme() {
+    try {
+        // Get theme from localStorage immediately
+        const localTheme = getPersistedTheme();
+        
+        if (localTheme) {
+            // Apply localStorage theme immediately (no delay)
+            if (typeof applyThemeStyles === 'function') {
+                applyThemeStyles(localTheme);
+            }
+        }
+        
+        // If authenticated, try to load server theme in background
+        if (__authHeader) {
+            const serverTheme = await loadThemeFromServer();
+            if (serverTheme) {
+                // Update UI if server theme is different
+                updateThemeFormFields(serverTheme);
+                if (typeof applyThemeStyles === 'function') {
+                    applyThemeStyles(serverTheme);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Error restoring persisted theme:', e);
+    }
+}
+
+/**
+ * Update theme form fields without re-loading from server
+ * (Used when theme is synced from another tab/device)
+ */
+function updateThemeFormFields(theme) {
+    if (!theme) return;
+    
+    try {
+        theme.colors = theme.colors || {};
+        theme.borderRadius = theme.borderRadius || '8px';
+        theme.fontSize = theme.fontSize || '100%';
+        theme.shadow = theme.shadow || 'normal';
+        
+        // Update form fields if they exist (might be on different page)
+        const titleEl = document.getElementById('brand-title');
+        if (titleEl && theme.title) titleEl.value = theme.title;
+        
+        const logoEl = document.getElementById('brand-logo');
+        if (logoEl && theme.logo) logoEl.value = theme.logo;
+        
+        const nameEl = document.getElementById('brand-theme-name');
+        if (nameEl && theme.themeName) nameEl.value = theme.themeName;
+        
+        const primaryEl = document.getElementById('brand-color-primary');
+        if (primaryEl) {
+            primaryEl.value = theme.colors.primary || '#0d6efd';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(primaryEl);
+            }
+        }
+        
+        const secondaryEl = document.getElementById('brand-color-secondary');
+        if (secondaryEl) {
+            secondaryEl.value = theme.colors.secondary || '#6c757d';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(secondaryEl);
+            }
+        }
+        
+        const successEl = document.getElementById('brand-color-success');
+        if (successEl) {
+            successEl.value = theme.colors.success || '#198754';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(successEl);
+            }
+        }
+        
+        const dangerEl = document.getElementById('brand-color-danger');
+        if (dangerEl) {
+            dangerEl.value = theme.colors.danger || '#dc3545';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(dangerEl);
+            }
+        }
+        
+        const warningEl = document.getElementById('brand-color-warning');
+        if (warningEl) {
+            warningEl.value = theme.colors.warning || '#ffc107';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(warningEl);
+            }
+        }
+        
+        const infoEl = document.getElementById('brand-color-info');
+        if (infoEl) {
+            infoEl.value = theme.colors.info || '#0dcaf0';
+            if (typeof updateColorSwatchBackground === 'function') {
+                updateColorSwatchBackground(infoEl);
+            }
+        }
+        
+        const radiusEl = document.getElementById('brand-border-radius');
+        if (radiusEl) radiusEl.value = theme.borderRadius;
+        
+        const fontEl = document.getElementById('brand-font-size');
+        if (fontEl) fontEl.value = theme.fontSize;
+        
+        const shadowEl = document.getElementById('brand-shadow');
+        if (shadowEl) shadowEl.value = theme.shadow;
+        
+        const cssEl = document.getElementById('brand-css');
+        if (cssEl && theme.css) cssEl.value = theme.css;
+    } catch (e) {
+        console.warn('Error updating theme form fields:', e);
+    }
+}
+
+/**
+ * Override saveBranding to also persist locally
+ * (This extends the existing saveBranding function)
+ */
+const originalSaveBranding = window.saveBranding;
+if (typeof originalSaveBranding === 'function') {
+    window.saveBranding = function() {
+        // Call original save
+        originalSaveBranding.call(this);
+        
+        // Also persist to localStorage after a brief delay
+        setTimeout(() => {
+            const theme = getThemeObject ? getThemeObject() : null;
+            if (theme) {
+                persistThemeLocally(theme);
+            }
+        }, 500);
+    };
+}
+
+/**
+ * Clear persisted theme
+ */
+function clearPersistedTheme() {
+    try {
+        localStorage.removeItem(THEME_STORAGE_KEY);
+    } catch (e) {
+        console.warn('Failed to clear persisted theme:', e);
+    }
+}
+
+/**
+ * Export current persisted theme data
+ */
+function exportPersistedTheme() {
+    const theme = getPersistedTheme();
+    if (!theme) {
+        console.warn('No persisted theme found');
+        return null;
+    }
+    return theme;
+}
+
+/**
+ * Sync theme across browser tabs
+ * Listens for localStorage changes from other tabs
+ */
+window.addEventListener('storage', function(e) {
+    if (e.key === THEME_STORAGE_KEY && e.newValue) {
+        try {
+            const data = JSON.parse(e.newValue);
+            if (data && data.theme) {
+                console.log('Theme updated from another tab');
+                updateThemeFormFields(data.theme);
+                if (typeof applyThemeStyles === 'function') {
+                    applyThemeStyles(data.theme);
+                }
+            }
+        } catch (err) {
+            console.warn('Error syncing theme from another tab:', err);
+        }
+    }
 });
 </script>
+

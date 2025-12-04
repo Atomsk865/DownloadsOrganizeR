@@ -995,6 +995,11 @@ function applyPresetTheme(themeName) {
 function previewTheme() {
   const theme = getThemeObject();
   applyThemeStyles(theme);
+  
+  // Persist preview to localStorage in real-time
+  if (typeof persistThemeLocally === 'function') {
+    persistThemeLocally(theme);
+  }
 }
 
 function getThemeObject() {
@@ -1030,6 +1035,11 @@ function saveBranding() {
     if (ok) {
       showNotification(`Theme "${theme.themeName}" saved successfully`, 'success');
       applyThemeStyles(theme);
+      
+      // Persist theme locally for cross-page/cross-session access
+      if (typeof persistThemeLocally === 'function') {
+        persistThemeLocally(theme);
+      }
     } else {
       showNotification(j.error || 'Failed to save theme', 'danger');
     }
