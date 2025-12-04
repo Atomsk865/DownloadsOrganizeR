@@ -19,6 +19,10 @@
                     <label for="login-password" class="form-label">Password</label>
                     <input id="login-password" class="form-control" type="password">
                 </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="login-remember" checked>
+                    <label class="form-check-label" for="login-remember">Remember me</label>
+                </div>
                 <div id="change-password-section" style="display:none;">
                     <hr>
                     <div class="mb-2">
@@ -146,6 +150,7 @@ function logout() {
 document.getElementById('login-submit').addEventListener('click', async function() {
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
+    const remember = document.getElementById('login-remember').checked;
     const credentials = btoa(username + ':' + password);
     __authHeader = 'Basic ' + credentials;
     
@@ -159,6 +164,15 @@ document.getElementById('login-submit').addEventListener('click', async function
     document.cookie = 'authHeader=' + encodeURIComponent(__authHeader) + '; Max-Age=' + (14*24*60*60) + '; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
     
     try {
+        // Also establish server-side session with remember cookie
+        try {
+            await fetch('/login', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ username, password, remember: remember ? 'on' : '' })
+            });
+        } catch (e) {}
         const response = await fetch('/auth_check', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
