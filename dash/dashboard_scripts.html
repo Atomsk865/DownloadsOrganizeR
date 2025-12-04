@@ -3418,6 +3418,8 @@ function loadThemeFromServer() {
             if (serverTheme) {
                 // Save server theme to localStorage
                 persistThemeLocally(serverTheme);
+                // Load the logo from the theme
+                loadDashboardLogo(serverTheme);
                 return serverTheme;
             }
             return null;
@@ -3426,6 +3428,31 @@ function loadThemeFromServer() {
             console.warn('Error loading theme from server:', e);
             return null;
         });
+}
+
+/**
+ * Load custom branding logo from theme configuration
+ */
+function loadDashboardLogo(theme) {
+    const logoImg = document.getElementById('dashboard-logo');
+    if (!logoImg) return;
+    
+    if (theme && theme.logo) {
+        // Use custom logo from theme
+        logoImg.src = theme.logo;
+        logoImg.alt = theme.title || 'Dashboard Logo';
+        logoImg.style.opacity = '1';
+    } else {
+        // Use default placeholder icon
+        logoImg.style.opacity = '0.5';
+    }
+}
+
+/**
+ * Update dashboard logo when theme is changed (called from theme update functions)
+ */
+function updateDashboardLogo(theme) {
+    loadDashboardLogo(theme);
 }
 
 /**
@@ -3444,6 +3471,10 @@ async function restorePersistedTheme() {
             // Apply localStorage theme immediately (no delay)
             if (typeof applyThemeStyles === 'function') {
                 applyThemeStyles(localTheme);
+            }
+            // Load logo from local theme
+            if (typeof loadDashboardLogo === 'function') {
+                loadDashboardLogo(localTheme);
             }
         }
         

@@ -1234,6 +1234,11 @@ function applyThemeStyles(theme) {
   }
   
   style.textContent = css;
+  
+  // Update dashboard logo when theme is applied
+  if (typeof updateDashboardLogo === 'function') {
+    updateDashboardLogo(theme);
+  }
 }
 
 function adjustColor(hex, percent) {
