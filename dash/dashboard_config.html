@@ -1523,7 +1523,7 @@ function filterUsers() {
       if(!ok){ return; }
     }
     const res = await fetch('/api/watch_folders/test', {
-      method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json', ...getAuthHeaders(), 'X-CSRF-Token': getCsrfToken() },
+      method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ folder, create: createIfMissing })
     });
     const data = await res.json().catch(()=>({}));
@@ -1579,8 +1579,7 @@ function filterUsers() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-          'X-CSRF-Token': getCsrfToken()
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ folders })
       });
@@ -1656,8 +1655,7 @@ async function runInitialScan(index) {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeaders(),
-        'X-CSRF-Token': getCsrfToken()
+        ...getAuthHeaders()
       },
       body: JSON.stringify({ folder })
     });
