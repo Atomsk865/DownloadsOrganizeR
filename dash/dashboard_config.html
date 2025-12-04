@@ -980,6 +980,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Detect Windows environment and disable service controls on non-Windows
+(async function initServiceEnvironment(){
+  try{
+    const r = await fetch('/api/service/installation-config', { credentials:'include', headers: getAuthHeaders() });
+    const j = await r.json().catch(()=>({}));
+    const isWin = !!j.is_windows;
+    if(!isWin){
+      document.querySelectorAll('button[onclick^="installService"], button[onclick^="reinstallService"], button[onclick^="uninstallService"]').forEach(el => {
+        if(el){ el.disabled = true; el.title = 'Windows-only: service management disabled'; }
+      });
+      const card = document.querySelector('[data-module="service-install"] .card-body');
+      if(card){
+        const note = document.createElement('div');
+        note.className = 'alert alert-info mt-2';
+        note.innerHTML = '<i class="bi bi-windows"></i> Service management is only available on Windows. NSSM is required for uninstall.';
+        card.appendChild(note);
+      }
+    }
+  } catch(e){ /* ignore */ }
+})();
+
 // Helper function to safely parse JSON responses
 async function parseResponse(response) {
   const contentType = response.headers.get('content-type');
