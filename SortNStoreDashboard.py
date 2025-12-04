@@ -393,6 +393,9 @@ def create_app():
     csrf.exempt(routes_env)
     # Exempt batch organize endpoints
     csrf.exempt(batch_organize_bp)
+    # Exempt recent files API (VirusTotal, etc.) - protected by @requires_right
+    if routes_api_recent_files:
+        csrf.exempt(routes_api_recent_files)
 
     # Initialize authentication manager after all globals are set
     from SortNStoreDashboard.auth.auth import initialize_auth_manager
