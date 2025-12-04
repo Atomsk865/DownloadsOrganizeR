@@ -1462,24 +1462,22 @@ function showNotification(message, type) {
         alertDiv.remove();
     }, 5000);
 
-    // Persist to Notification Center (only errors and warnings, not success/info)
+    // Persist to Notification Center
     try {
-        if (type === 'danger' || type === 'warning') {
-            fetch('/api/notifications', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 
-                    ...getAuthHeaders(),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message, type })
-            }).then(() => {
-                // Refresh notification badge/count
-                if (typeof loadNotificationCenter === 'function') {
-                    loadNotificationCenter();
-                }
-            }).catch(() => {});
-        }
+        fetch('/api/notifications', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message, type })
+        }).then(() => {
+            // Refresh notification badge/count
+            if (typeof loadNotificationCenter === 'function') {
+                loadNotificationCenter();
+            }
+        }).catch(() => {});
     } catch(e) {}
 }
 
