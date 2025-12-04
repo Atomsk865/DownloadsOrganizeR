@@ -57,7 +57,7 @@ binaries = []
 
 # --- Analysis ---
 a = Analysis(
-    [str(project_root / 'OrganizerDashboard.py')],
+    [str(project_root / 'SortNStoreDashboard.py')],
     pathex=[str(project_root)],
     binaries=binaries,
     datas=datas,

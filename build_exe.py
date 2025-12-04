@@ -172,8 +172,8 @@ def optimize_build():
 def package_portable():
     print_header("Creating Portable Package")
     
-    dist_exe_dir = DIST_DIR / 'DownloadsOrganizeR'
-    portable_dir = DIST_DIR / f'DownloadsOrganizeR-Portable'
+    dist_exe_dir = DIST_DIR / 'SortNStore'
+    portable_dir = DIST_DIR / f'SortNStore-Portable'
     
     if not dist_exe_dir.exists():
         print_error(f"Build directory not found: {dist_exe_dir}")
@@ -187,11 +187,11 @@ def package_portable():
     shutil.copytree(dist_exe_dir, portable_dir)
     
     # Create README
-    readme_content = """# DownloadsOrganizeR - Portable Edition
+    readme_content = """# SortNStore - Portable Edition
 
 ## Quick Start
 
-1. Run `DownloadsOrganizeR.exe`
+1. Run `SortNStore.exe`
 2. Dashboard opens at http://localhost:5000
 3. Default credentials: admin / test123
 

@@ -7,7 +7,7 @@ import sys
 # over the package directory of the same name, breaking imports.
 # This shim ensures the package directory is treated as a proper package.
 _script_dir = os.path.dirname(os.path.abspath(__file__))
-_pkg_name = 'OrganizerDashboard'
+_pkg_name = 'SortNStoreDashboard'
 _pkg_dir = os.path.join(_script_dir, _pkg_name)
 
 # Ensure script directory is in sys.path
@@ -77,7 +77,7 @@ DEFAULT_CONFIG = {
     "custom_routes": {}
 }
 
-from OrganizerDashboard.config_runtime import initialize as rt_init, get_config, get_dashboard_config
+from SortNStoreDashboard.config_runtime import initialize as rt_init, get_config, get_dashboard_config
 rt_init(CONFIG_FILE, DASHBOARD_CONFIG_FILE, DEFAULT_CONFIG, {})
 config = get_config()
 
@@ -169,7 +169,7 @@ DASHBOARD_CONFIG_DEFAULT = {
     }
 }
 
-from OrganizerDashboard.config_runtime import save_dashboard_config
+from SortNStoreDashboard.config_runtime import save_dashboard_config
 dashboard_config = get_dashboard_config()
 if not os.path.exists(DASHBOARD_CONFIG_FILE):
     try:
@@ -395,7 +395,7 @@ def create_app():
     csrf.exempt(batch_organize_bp)
 
     # Initialize authentication manager after all globals are set
-    from OrganizerDashboard.auth.auth import initialize_auth_manager
+    from SortNStoreDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
 
     # Debug: List all registered routes
