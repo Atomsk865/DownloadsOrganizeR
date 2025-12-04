@@ -1026,7 +1026,8 @@ async function serviceAction(action) {
         });
         const data = await response.json();
         if (response.ok) {
-            showNotification(`Service ${action}ed successfully`, 'success');
+            const pastTense = { 'start': 'started', 'stop': 'stopped', 'restart': 'restarted' }[action] || `${action}ed`;
+            showNotification(`Service ${pastTense} successfully`, 'success');
             setTimeout(updateServiceStatus, 1000);
         } else {
             showNotification(data.message || `Failed to ${action} service`, 'danger');
