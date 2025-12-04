@@ -1,6 +1,6 @@
 import pytest
-from OrganizerDashboard import __init__ as pkg
-import OrganizerDashboard as od_main
+from SortNStoreDashboard import __init__ as pkg
+import SortNStoreDashboard as od_main
 
 
 @pytest.fixture(scope="module")
