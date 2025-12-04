@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-DownloadsOrganizeR - Standalone EXE Builder
+SortNStore - Standalone EXE Builder
 
-This script compiles OrganizerDashboard.py into a standalone Windows EXE
+This script compiles SortNStoreDashboard.py into a standalone Windows EXE
 using PyInstaller. No Python installation required on target machine.
 
 Usage:
@@ -31,7 +31,7 @@ from datetime import datetime
 PROJECT_ROOT = Path(__file__).parent
 BUILD_DIR = PROJECT_ROOT / 'build'
 DIST_DIR = PROJECT_ROOT / 'dist'
-SPEC_FILE = PROJECT_ROOT / 'DownloadsOrganizeR.spec'
+SPEC_FILE = PROJECT_ROOT / 'SortNStore.spec'
 VERSION_FILE = PROJECT_ROOT / 'version.json'
 
 # Get version from file or use current date
@@ -41,7 +41,7 @@ try:
 except:
     version = f"1.0.0-{datetime.now().strftime('%Y%m%d')}"
 
-EXE_NAME = f'DownloadsOrganizeR-v{version}.exe'
+EXE_NAME = f'SortNStore-v{version}.exe'
 OUTPUT_EXE = DIST_DIR / 'DownloadsOrganizeR' / EXE_NAME
 
 # --- Colors for output ---

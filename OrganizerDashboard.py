@@ -28,16 +28,16 @@ from flask_login import LoginManager, UserMixin
 from flask_wtf.csrf import CSRFProtect
 import json
 
-"""OrganizerDashboard
+"""SortNStore Dashboard
 
-Flask-based dashboard to monitor and control the DownloadsOrganizer service.
+Flask-based dashboard to monitor and control the SortNStore service.
 This module exposes JSON endpoints used by the UI (AJAX) and renders a
 single-page dashboard with controls, logs, and configuration.
 """
 
 # --- Service and Config ---
-SERVICE_NAME = "DownloadsOrganizer"
-CONFIG_FILE = "organizer_config.json"
+SERVICE_NAME = "SortNStore"
+CONFIG_FILE = "sortnstore_config.json"
 DASHBOARD_CONFIG_FILE = "dashboard_config.json"
 
 DEFAULT_CONFIG = {
