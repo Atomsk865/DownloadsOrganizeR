@@ -571,32 +571,32 @@
           </div>
 
           <!-- Color Palette -->
-          <div class="card bg-light p-2 mb-2">
+          <div class="card bg-light p-2 mb-2" id="color-palette-card">
             <small class="fw-bold mb-2 d-block">Color Palette</small>
             <div class="row g-2">
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Primary</b></small></label>
-                <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" onchange="previewTheme()">
+                <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Secondary</b></small></label>
-                <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" onchange="previewTheme()">
+                <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Success</b></small></label>
-                <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" onchange="previewTheme()">
+                <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Danger</b></small></label>
-                <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" onchange="previewTheme()">
+                <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Warning</b></small></label>
-                <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" onchange="previewTheme()">
+                <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Info</b></small></label>
-                <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" onchange="previewTheme()">
+                <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" oninput="previewTheme(); updateColorSwatchBackground(this);">
               </div>
             </div>
           </div>
@@ -1080,33 +1080,88 @@ function loadBranding() {
   fetch('/api/dashboard/branding', {headers: getAuthHeaders()})
     .then(r => r.ok ? r.json() : {})
     .then(theme => {
-      if (theme.title) document.getElementById('brand-title').value = theme.title;
-      if (theme.logo) document.getElementById('brand-logo').value = theme.logo;
-      if (theme.themeName) document.getElementById('brand-theme-name').value = theme.themeName;
+      // Ensure theme has default structure
+      theme = theme || {};
+      theme.colors = theme.colors || {};
+      theme.borderRadius = theme.borderRadius || '8px';
+      theme.fontSize = theme.fontSize || '100%';
+      theme.shadow = theme.shadow || 'normal';
       
-      if (theme.colors) {
-        document.getElementById('brand-color-primary').value = theme.colors.primary || '#0d6efd';
-        document.getElementById('brand-color-secondary').value = theme.colors.secondary || '#6c757d';
-        document.getElementById('brand-color-success').value = theme.colors.success || '#198754';
-        document.getElementById('brand-color-danger').value = theme.colors.danger || '#dc3545';
-        document.getElementById('brand-color-warning').value = theme.colors.warning || '#ffc107';
-        document.getElementById('brand-color-info').value = theme.colors.info || '#0dcaf0';
+      const titleEl = document.getElementById('brand-title');
+      if (titleEl && theme.title) titleEl.value = theme.title;
+      
+      const logoEl = document.getElementById('brand-logo');
+      if (logoEl && theme.logo) logoEl.value = theme.logo;
+      
+      const nameEl = document.getElementById('brand-theme-name');
+      if (nameEl && theme.themeName) nameEl.value = theme.themeName;
+      
+      const primaryEl = document.getElementById('brand-color-primary');
+      if (primaryEl) {
+        primaryEl.value = theme.colors.primary || '#0d6efd';
+        updateColorSwatchBackground(primaryEl);
+      }
+      const secondaryEl = document.getElementById('brand-color-secondary');
+      if (secondaryEl) {
+        secondaryEl.value = theme.colors.secondary || '#6c757d';
+        updateColorSwatchBackground(secondaryEl);
+      }
+      const successEl = document.getElementById('brand-color-success');
+      if (successEl) {
+        successEl.value = theme.colors.success || '#198754';
+        updateColorSwatchBackground(successEl);
+      }
+      const dangerEl = document.getElementById('brand-color-danger');
+      if (dangerEl) {
+        dangerEl.value = theme.colors.danger || '#dc3545';
+        updateColorSwatchBackground(dangerEl);
+      }
+      const warningEl = document.getElementById('brand-color-warning');
+      if (warningEl) {
+        warningEl.value = theme.colors.warning || '#ffc107';
+        updateColorSwatchBackground(warningEl);
+      }
+      const infoEl = document.getElementById('brand-color-info');
+      if (infoEl) {
+        infoEl.value = theme.colors.info || '#0dcaf0';
+        updateColorSwatchBackground(infoEl);
       }
       
-      if (theme.borderRadius) document.getElementById('brand-border-radius').value = theme.borderRadius;
-      if (theme.fontSize) document.getElementById('brand-font-size').value = theme.fontSize;
-      if (theme.shadow) document.getElementById('brand-shadow').value = theme.shadow;
-      if (theme.css) document.getElementById('brand-css').value = theme.css;
+      const radiusEl = document.getElementById('brand-border-radius');
+      if (radiusEl) radiusEl.value = theme.borderRadius;
+      
+      const fontEl = document.getElementById('brand-font-size');
+      if (fontEl) fontEl.value = theme.fontSize;
+      
+      const shadowEl = document.getElementById('brand-shadow');
+      if (shadowEl) shadowEl.value = theme.shadow;
+      
+      const cssEl = document.getElementById('brand-css');
+      if (cssEl && theme.css) cssEl.value = theme.css;
       
       applyThemeStyles(theme);
-    });
+    })
+    .catch(e => console.error('Error loading branding:', e));
+}
+
+function updateColorSwatchBackground(inputEl) {
+  if (!inputEl) return;
+  inputEl.style.backgroundColor = inputEl.value;
+  inputEl.style.boxShadow = '0 0 8px rgba(0,0,0,0.2) inset';
 }
 
 function applyThemeStyles(theme) {
+  if (!theme) theme = {};
+  if (!theme.colors) theme.colors = {};
+  if (!theme.borderRadius) theme.borderRadius = '8px';
+  if (!theme.fontSize) theme.fontSize = '100%';
+  if (!theme.shadow) theme.shadow = 'normal';
+  
   let style = document.getElementById('custom-theme-css');
   if (!style) {
     style = document.createElement('style');
     style.id = 'custom-theme-css';
+    style.setAttribute('data-priority', 'high');
     document.head.appendChild(style);
   }
   
@@ -1117,25 +1172,32 @@ function applyThemeStyles(theme) {
     strong: '0 10px 40px rgba(0,0,0,0.3)'
   };
   
+  const primary = theme.colors.primary || '#0d6efd';
+  const secondary = theme.colors.secondary || '#6c757d';
+  const success = theme.colors.success || '#198754';
+  const danger = theme.colors.danger || '#dc3545';
+  const warning = theme.colors.warning || '#ffc107';
+  const info = theme.colors.info || '#0dcaf0';
+  
   let css = `:root {
-    --bs-primary: ${theme.colors.primary};
-    --bs-secondary: ${theme.colors.secondary};
-    --bs-success: ${theme.colors.success};
-    --bs-danger: ${theme.colors.danger};
-    --bs-warning: ${theme.colors.warning};
-    --bs-info: ${theme.colors.info};
+    --bs-primary: ${primary} !important;
+    --bs-secondary: ${secondary} !important;
+    --bs-success: ${success} !important;
+    --bs-danger: ${danger} !important;
+    --bs-warning: ${warning} !important;
+    --bs-info: ${info} !important;
   }
-  .card { border-radius: ${theme.borderRadius}; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal}; }
-  body { font-size: ${theme.fontSize}; }
-  .btn-primary { background-color: ${theme.colors.primary}; border-color: ${theme.colors.primary}; }
-  .btn-primary:hover { background-color: ${adjustColor(theme.colors.primary, -20)}; border-color: ${adjustColor(theme.colors.primary, -20)}; }
-  .btn-success { background-color: ${theme.colors.success}; border-color: ${theme.colors.success}; }
-  .btn-danger { background-color: ${theme.colors.danger}; border-color: ${theme.colors.danger}; }
-  .btn-warning { background-color: ${theme.colors.warning}; border-color: ${theme.colors.warning}; }
-  .btn-info { background-color: ${theme.colors.info}; border-color: ${theme.colors.info}; }
-  .badge-primary { background-color: ${theme.colors.primary}; }
-  .badge-success { background-color: ${theme.colors.success}; }
-  .alert-primary { background-color: ${adjustColor(theme.colors.primary, 90)}; border-color: ${theme.colors.primary}; color: ${adjustColor(theme.colors.primary, -40)}; }
+  .card { border-radius: ${theme.borderRadius} !important; box-shadow: ${shadowMap[theme.shadow] || shadowMap.normal} !important; }
+  body { font-size: ${theme.fontSize} !important; }
+  .btn-primary { background-color: ${primary} !important; border-color: ${primary} !important; }
+  .btn-primary:hover { background-color: ${adjustColor(primary, -20)} !important; border-color: ${adjustColor(primary, -20)} !important; }
+  .btn-success { background-color: ${success} !important; border-color: ${success} !important; }
+  .btn-danger { background-color: ${danger} !important; border-color: ${danger} !important; }
+  .btn-warning { background-color: ${warning} !important; border-color: ${warning} !important; }
+  .btn-info { background-color: ${info} !important; border-color: ${info} !important; }
+  .badge-primary { background-color: ${primary} !important; }
+  .badge-success { background-color: ${success} !important; }
+  .alert-primary { background-color: ${adjustColor(primary, 90)} !important; border-color: ${primary} !important; color: ${adjustColor(primary, -40)} !important; }
   `;
   
   if (theme.css) {
@@ -1146,10 +1208,14 @@ function applyThemeStyles(theme) {
 }
 
 function adjustColor(hex, percent) {
-  const num = parseInt(hex.replace('#',''), 16);
+  if (!hex || typeof hex !== 'string') return '#0d6efd';
+  const cleanHex = hex.replace('#', '').trim();
+  if (!/^[0-9A-Fa-f]{6}$/.test(cleanHex)) return hex;
+  
+  const num = parseInt(cleanHex, 16);
   const amt = Math.round(2.55 * percent);
   const R = Math.max(0, Math.min(255, (num >> 16) + amt));
-  const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
   const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
   return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
 }
@@ -1158,8 +1224,9 @@ function adjustColor(hex, percent) {
 function setInvalid(id, msg){
   const el = document.getElementById(id);
   if(!el) return false;
+  if(!el.classList) return false;
   el.classList.add('is-invalid');
-  const fb = el.parentElement.querySelector('.invalid-feedback');
+  const fb = el.parentElement ? el.parentElement.querySelector('.invalid-feedback') : null;
   if(fb && msg) fb.textContent = msg;
   return false;
 }
