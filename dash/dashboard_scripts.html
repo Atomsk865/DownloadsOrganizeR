@@ -1473,6 +1473,11 @@ function showNotification(message, type) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ message, type })
+            }).then(() => {
+                // Refresh notification badge/count
+                if (typeof loadNotificationCenter === 'function') {
+                    loadNotificationCenter();
+                }
             }).catch(() => {});
         }
     } catch(e) {}
