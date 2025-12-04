@@ -115,6 +115,7 @@ def update_layout():
         data = request.get_json() or {}
         sections_order = data.get('sections_order')
         hidden_sections = data.get('hidden_sections')
+        custom_widgets = data.get('custom_widgets')
         if not isinstance(sections_order, list) or not isinstance(hidden_sections, list):
             return jsonify({'error': 'sections_order and hidden_sections must be lists'}), 400
         main = sys.modules['__main__']
@@ -122,6 +123,8 @@ def update_layout():
         dash_cfg.setdefault('layout', {})
         dash_cfg['layout']['sections_order'] = sections_order
         dash_cfg['layout']['hidden_sections'] = hidden_sections
+        if isinstance(custom_widgets, list):
+            dash_cfg['layout']['custom_widgets'] = custom_widgets
         _persist_dashboard_config(dash_cfg, main)
         return jsonify({'success': True})
     return _inner()

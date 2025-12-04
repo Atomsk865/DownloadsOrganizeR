@@ -353,27 +353,64 @@ function handleDragEnd(e) {
     });
 }
 
-function saveDashboardLayout() {
+async function saveDashboardLayout() {
     const grid = document.getElementById('dashboard-grid');
     const layout = Array.from(grid.children).map(el => el.dataset.module).filter(m => m);
     localStorage.setItem('dashboardLayout_' + (__authHeader || 'default'), JSON.stringify(layout));
+    // Also persist to server
+    try {
+        await fetch('/api/dashboard/layout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sections_order: layout,
+                hidden_sections: getHiddenModulesList(),
+                custom_widgets: getCustomWidgetsList()
+            })
+        });
+    } catch (e) { console.warn('Failed to persist layout to server:', e); }
 }
 
-function loadDashboardLayout() {
-    const savedLayout = localStorage.getItem('dashboardLayout_' + (__authHeader || 'default'));
-    if (!savedLayout) return;
-    
+async function loadDashboardLayout() {
+    // Try to load from server first
+    let layout = null, hidden = null, widgets = null;
     try {
-        const layout = JSON.parse(savedLayout);
-        const grid = document.getElementById('dashboard-grid');
-        if (!grid) return;
-        
+        const resp = await fetch('/api/dashboard/config', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.layout) {
+                layout = data.layout.sections_order || null;
+                hidden = data.layout.hidden_sections || null;
+                widgets = data.layout.custom_widgets || null;
+            }
+        }
+    } catch (e) { console.warn('Failed to load layout from server:', e); }
+    // Fallback to localStorage if missing
+    if (!layout) {
+        const savedLayout = localStorage.getItem('dashboardLayout_' + (__authHeader || 'default'));
+        if (savedLayout) layout = JSON.parse(savedLayout);
+    }
+    const grid = document.getElementById('dashboard-grid');
+    if (layout && grid) {
         layout.forEach(moduleId => {
             const module = grid.querySelector(`[data-module="${moduleId}"]`);
             if (module) grid.appendChild(module);
         });
-    } catch (e) {
-        console.error('Error loading dashboard layout:', e);
+    }
+    // Restore hidden modules
+    if (hidden) {
+        hidden.forEach(moduleId => {
+            const module = document.querySelector(`[data-module="${moduleId}"]`);
+            if (module) module.classList.add('hidden');
+        });
+    }
+    // Restore custom widgets
+    if (widgets) {
+        restoreCustomWidgets(widgets);
     }
 }
 
@@ -442,64 +479,93 @@ function removeCustomWidget(widgetId) {
     }
 }
 
-function saveCustomWidgets() {
+async function saveCustomWidgets() {
     const container = document.getElementById('custom-widgets-container');
     if (!container) return;
-    
+    const widgets = getCustomWidgetsList();
+    localStorage.setItem('customWidgets_' + (__authHeader || 'default'), JSON.stringify(widgets));
+    // Also persist to server
+    try {
+        await fetch('/api/dashboard/layout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                custom_widgets: widgets
+            })
+        });
+    } catch (e) { console.warn('Failed to persist widgets to server:', e); }
+}
+
+async function loadCustomWidgets() {
+    // Try to load from server first
+    let widgets = null;
+    try {
+        const resp = await fetch('/api/dashboard/config', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.layout && data.layout.custom_widgets) {
+                widgets = data.layout.custom_widgets;
+            }
+        }
+    } catch (e) { console.warn('Failed to load widgets from server:', e); }
+    // Fallback to localStorage if missing
+    if (!widgets) {
+        const saved = localStorage.getItem('customWidgets_' + (__authHeader || 'default'));
+        if (saved) widgets = JSON.parse(saved);
+    }
+    restoreCustomWidgets(widgets);
+}
+
+function restoreCustomWidgets(widgets) {
+    if (!widgets) return;
+    const container = document.getElementById('custom-widgets-container');
+    if (!container) return;
+    container.innerHTML = '';
+    widgets.forEach(widget => {
+        const widgetNum = widget.id.replace('custom-widget-', '');
+        customWidgetCounter = Math.max(customWidgetCounter, parseInt(widgetNum) || 0);
+        const widgetHtml = `
+            <div class="dashboard-module" data-module="${widget.id}" draggable="true">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <b>Custom Widget ${widgetNum}</b>
+                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widget.id}')">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <span class="hide-toggle" onclick="removeCustomWidget('${widget.id}')" title="Remove widget"><i class="bi bi-trash"></i></span>
+                        <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+                    </div>
+                    <div class="card-body p-3 custom-widget-content" id="${widget.id}-content">
+                        ${widget.html}
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', widgetHtml);
+    });
+    initDragAndDrop();
+}
+
+function getCustomWidgetsList() {
+    const container = document.getElementById('custom-widgets-container');
+    if (!container) return [];
     const widgets = [];
     container.querySelectorAll('.dashboard-module').forEach(widget => {
         const id = widget.dataset.module;
         const content = document.getElementById(id + '-content');
         if (content) {
-            widgets.push({
-                id: id,
-                html: content.innerHTML
-            });
+            widgets.push({ id, html: content.innerHTML });
         }
     });
-    
-    localStorage.setItem('customWidgets_' + (__authHeader || 'default'), JSON.stringify(widgets));
+    return widgets;
 }
 
-function loadCustomWidgets() {
-    const saved = localStorage.getItem('customWidgets_' + (__authHeader || 'default'));
-    if (!saved) return;
-    
-    try {
-        const widgets = JSON.parse(saved);
-        const container = document.getElementById('custom-widgets-container');
-        if (!container) return;
-        
-        container.innerHTML = ''; // Clear existing
-        
-        widgets.forEach(widget => {
-            const widgetNum = widget.id.replace('custom-widget-', '');
-            customWidgetCounter = Math.max(customWidgetCounter, parseInt(widgetNum) || 0);
-            
-            const widgetHtml = `
-                <div class="dashboard-module" data-module="${widget.id}" draggable="true">
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <b>Custom Widget ${widgetNum}</b>
-                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widget.id}')">
-                                <i class="bi bi-pencil"></i> Edit
-                            </button>
-                            <span class="hide-toggle" onclick="removeCustomWidget('${widget.id}')" title="Remove widget"><i class="bi bi-trash"></i></span>
-                            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
-                        </div>
-                        <div class="card-body p-3 custom-widget-content" id="${widget.id}-content">
-                            ${widget.html}
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', widgetHtml);
-        });
-        
-        initDragAndDrop(); // Re-init drag for loaded widgets
-    } catch (e) {
-        console.error('Error loading custom widgets:', e);
-    }
+function getHiddenModulesList() {
+    return Array.from(document.querySelectorAll('.dashboard-module.hidden')).map(el => el.dataset.module).filter(m => m);
 }
 // Resizable Table Columns
 function makeTableResizable(table) {
