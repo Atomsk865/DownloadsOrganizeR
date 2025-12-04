@@ -13,6 +13,24 @@ def test_route():
     """Simple test to verify blueprint is loaded"""
     return jsonify({"message": "Recent files blueprint is working"}), 200
 
+@routes_api_recent_files.route("/api/recent_files/status")
+def api_status():
+    """Check VirusTotal integration status"""
+    cfg = _load_organizer_config()
+    feats = cfg.get('features') or {}
+    api_key = cfg.get('vt_api_key') or cfg.get('virustotal_api_key')
+    return jsonify({
+        "blueprint": "routes_api_recent_files",
+        "virustotal_enabled": feats.get('virustotal_enabled', False),
+        "virustotal_configured": bool(api_key),
+        "endpoints": {
+            "/api/recent_files": "GET - List recent file moves",
+            "/api/recent_files/virustotal": "POST - Scan with VirusTotal",
+            "/api/recent_files/<int:index>": "DELETE - Remove recent file entry",
+            "/api/recent_files/status": "GET - Check integration status"
+        }
+    }), 200
+
 @routes_api_recent_files.route("/api/recent_files")
 @requires_right('view_recent_files')
 def recent_files():
