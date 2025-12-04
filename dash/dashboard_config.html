@@ -626,18 +626,19 @@ function fetchConfig() {
     .then(r => { if(!r.ok) throw new Error('Failed'); return r.json(); })
     .then(data => {
       dashboardConfig = data;
-      renderUsers(data.users);
-      renderRolesFromSources(data);
-      renderLayout(data.layout);
-      renderNetworkTargets(data.network_targets || {});
-      renderCredentials(data.credentials || {});
-      renderSmtp(data.smtp || {});
+      try { renderUsers(data.users || []); } catch(e) { console.warn('renderUsers failed', e); }
+      try { renderRolesFromSources(data); } catch(e) { console.warn('renderRoles failed', e); }
+      try { renderLayout(data.layout || {}); } catch(e) { console.warn('renderLayout failed', e); }
+      try { renderNetworkTargets(data.network_targets || {}); } catch(e) { console.warn('renderNetworkTargets failed', e); }
+      try { renderCredentials(data.credentials || {}); } catch(e) { console.warn('renderCredentials failed', e); }
+      try { renderSmtp(data.smtp || {}); } catch(e) { console.warn('renderSmtp failed', e); }
     })
     .catch(err => showNotification('Load failed: ' + err.message, 'danger'));
 }
 function renderUsers(users){
   const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = users.map(u => {
+  if(!tbody) throw new Error('users-tbody not found');
+  tbody.innerHTML = (users||[]).map(u => {
     return `<tr><td><small>${u.username}</small></td><td><small>${u.role}</small></td><td><button class='btn btn-sm btn-danger' onclick="deleteUser('${u.username}')">Del</button></td></tr>`;
   }).join('');
   // Reapply rights after rendering dynamic content
@@ -702,6 +703,7 @@ function deleteUser(username){
 }
 function renderLayout(layout){
   const list = document.getElementById('sections-list');
+  if(!list) return;
   const order = layout.sections_order || [];
   const hidden = new Set(layout.hidden_sections || []);
   list.innerHTML = order.map(sec => {
@@ -1191,6 +1193,7 @@ function applyConfigRights() {
 
 function renderNetworkTargets(targets){
   const tbody = document.getElementById('network-targets-tbody');
+  if(!tbody) throw new Error('network-targets-tbody not found');
   const rows = Object.entries(targets).map(([name, cfg]) => {
     const path = (cfg && cfg.path) || '';
     const credential_key = (cfg && cfg.credential_key) || '';
@@ -1230,6 +1233,7 @@ function saveNetworkConfig(){
 
 function renderCredentials(creds){
   const tbody = document.getElementById('credentials-tbody');
+  if(!tbody) throw new Error('credentials-tbody not found');
   const rows = Object.entries(creds).map(([key, c]) => {
     return `<tr>
       <td><small>${key}</small></td>
