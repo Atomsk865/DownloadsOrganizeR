@@ -18,12 +18,21 @@ This guide covers installing the Windows service, running locally for developmen
    ```
 
 3. The installer will:
+
 - Install NSSM (Non-Sucking Service Manager)
 - Copy `Organizer.py` to `C:\Scripts`
 - Create a Windows service named `DownloadsOrganizer`
 - Configure logs in `C:\Scripts\service-logs\`
 
 4. The service starts automatically and organizes Downloads in real time.
+
+### One-Click Installer (Batch)
+
+Prefer a guided setup? Run `Setup-Installer.bat` from the repository root. It provides a menu to:
+
+- Install the Windows service (calls the PowerShell installer)
+- Start the dashboard locally with prompts for credentials
+- Uninstall the service via NSSM
 
 ## Local Development (No Service)
 
@@ -48,6 +57,7 @@ python OrganizerDashboard.py
 Access `http://localhost:5000`.
 
 Default credentials:
+
 - Username: `admin`
 - Password: `change_this_password`
 
