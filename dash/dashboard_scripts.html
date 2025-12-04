@@ -1720,23 +1720,25 @@ function showNotification(message, type) {
         alertDiv.remove();
     }, 5000);
 
-    // Persist to Notification Center
-    try {
-        fetch('/api/notifications', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 
-                ...getAuthHeaders(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message, type })
-        }).then(() => {
-            // Refresh notification badge/count
-            if (typeof loadNotificationCenter === 'function') {
-                loadNotificationCenter();
-            }
-        }).catch(() => {});
-    } catch(e) {}
+    // Persist to Notification Center - ONLY for errors, skip success/info/warning
+    if (type === 'danger') {
+        try {
+            fetch('/api/notifications', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message, type })
+            }).then(() => {
+                // Refresh notification badge/count
+                if (typeof loadNotificationCenter === 'function') {
+                    loadNotificationCenter();
+                }
+            }).catch(() => {});
+        } catch(e) {}
+    }
 }
 
 // Recent Files Functions
