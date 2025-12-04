@@ -16,7 +16,7 @@ def test_route():
 @routes_api_recent_files.route("/api/recent_files")
 @requires_right('view_recent_files')
 def recent_files():
-    import OrganizerDashboard
+    import SortNStoreDashboard
     # Prefer organizer_config.json setting; default to repo-local config/json
     base = Path(__file__).resolve().parents[2]
     default_moves = base / 'config' / 'json' / 'file_moves.json'
@@ -135,7 +135,7 @@ def virustotal_scan():
 @routes_api_recent_files.route("/api/recent_files/<int:index>", methods=["DELETE"])
 @requires_right('view_recent_files')
 def remove_recent_file(index):
-    import OrganizerDashboard
+    import SortNStoreDashboard
     base = Path(__file__).resolve().parents[2]
     default_moves = base / 'config' / 'json' / 'file_moves.json'
     file_moves_path = OrganizerDashboard.config.get("file_moves_json", str(default_moves))

@@ -53,12 +53,12 @@ def app_client(tmp_path, monkeypatch):
     app = OD.create_app()
     client = app.test_client()
     # Ensure runtime dashboard setup flag is false
-    from OrganizerDashboard.config_runtime import get_dashboard_config, save_dashboard_config
+    from SortNStoreDashboard.config_runtime import get_dashboard_config, save_dashboard_config
     dash_rt = get_dashboard_config()
     dash_rt['setup_completed'] = False
     save_dashboard_config()
     # Ensure admin credentials are recognized by auth manager
-    from OrganizerDashboard.config_runtime import get_config, save_config
+    from SortNStoreDashboard.config_runtime import get_config, save_config
     import bcrypt as _bcrypt
     cfg = get_config()
     pw = 'AdminPass123!@#'
@@ -67,7 +67,7 @@ def app_client(tmp_path, monkeypatch):
     if 'dashboard_pass' in cfg:
         cfg.pop('dashboard_pass')
     save_config()
-    from OrganizerDashboard.auth.auth import initialize_auth_manager
+    from SortNStoreDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
     return OD, client
 

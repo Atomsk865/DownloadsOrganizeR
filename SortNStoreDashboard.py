@@ -217,7 +217,7 @@ def create_app():
     cache = Cache(app)
     
     # Make cache available to blueprints
-    from OrganizerDashboard.cache import init_cache
+    from SortNStoreDashboard.cache import init_cache
     init_cache(cache)
     
     # Flask-Compress setup (gzip/brotli compression for responses)
@@ -260,7 +260,7 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            from OrganizerDashboard.config_runtime import get_dashboard_config
+            from SortNStoreDashboard.config_runtime import get_dashboard_config
             dash_cfg = get_dashboard_config()
             role = 'viewer'
             for u in dash_cfg.get('users', []):
@@ -281,55 +281,55 @@ def create_app():
         return {'asset_version': version, 'cache': cache}
 
     # Import and register all blueprints from routes
-    from OrganizerDashboard.routes.dashboard import routes_dashboard
-    from OrganizerDashboard.routes.update_config import routes_update_config
-    from OrganizerDashboard.routes.metrics import routes_metrics
-    from OrganizerDashboard.routes.service_name import routes_service_name
-    from OrganizerDashboard.routes.auth_check import routes_auth_check
-    from OrganizerDashboard.routes.restart_service import routes_restart_service
-    from OrganizerDashboard.routes.stop_service import routes_stop_service
-    from OrganizerDashboard.routes.start_service import routes_start_service
-    from OrganizerDashboard.routes.tail import routes_tail
-    from OrganizerDashboard.routes.stream import routes_stream
-    from OrganizerDashboard.routes.clear_log import routes_clear_log
-    from OrganizerDashboard.routes.change_password import routes_change_password
-    from OrganizerDashboard.routes.drives import routes_drives
-    from OrganizerDashboard.routes.network import routes_network
-    from OrganizerDashboard.routes.tasks import routes_tasks
-    from OrganizerDashboard.routes.hardware import routes_hardware
+    from SortNStoreDashboard.routes.dashboard import routes_dashboard
+    from SortNStoreDashboard.routes.update_config import routes_update_config
+    from SortNStoreDashboard.routes.metrics import routes_metrics
+    from SortNStoreDashboard.routes.service_name import routes_service_name
+    from SortNStoreDashboard.routes.auth_check import routes_auth_check
+    from SortNStoreDashboard.routes.restart_service import routes_restart_service
+    from SortNStoreDashboard.routes.stop_service import routes_stop_service
+    from SortNStoreDashboard.routes.start_service import routes_start_service
+    from SortNStoreDashboard.routes.tail import routes_tail
+    from SortNStoreDashboard.routes.stream import routes_stream
+    from SortNStoreDashboard.routes.clear_log import routes_clear_log
+    from SortNStoreDashboard.routes.change_password import routes_change_password
+    from SortNStoreDashboard.routes.drives import routes_drives
+    from SortNStoreDashboard.routes.network import routes_network
+    from SortNStoreDashboard.routes.tasks import routes_tasks
+    from SortNStoreDashboard.routes.hardware import routes_hardware
     try:
-        from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
+        from SortNStoreDashboard.routes.api_recent_files import routes_api_recent_files
         print("✓ api_recent_files imported successfully")
     except Exception as e:
         print(f"✗ Failed to import api_recent_files: {e}")
         import traceback
         traceback.print_exc()
         routes_api_recent_files = None
-    from OrganizerDashboard.routes.api_open_file import routes_api_open_file
-    from OrganizerDashboard.routes.auth_settings import routes_auth_settings
-    from OrganizerDashboard.routes.dashboard_config import routes_dashboard_config
-    from OrganizerDashboard.routes.auth_session import routes_auth_session
-    from OrganizerDashboard.routes.sse_streams import bp as sse_streams_bp
-    from OrganizerDashboard.routes.service_install import routes_service_install
-    from OrganizerDashboard.routes.factory_reset import routes_factory_reset
-    from OrganizerDashboard.routes.setup import routes_setup
-    from OrganizerDashboard.routes.admin_tools import routes_admin_tools
-    from OrganizerDashboard.routes.login import routes_login
-    from OrganizerDashboard.routes.csrf_token import routes_csrf
-    from OrganizerDashboard.routes.user_links import routes_user_links
-    from OrganizerDashboard.routes.reports import reports_bp
-    from OrganizerDashboard.routes.branding import routes_branding
-    from OrganizerDashboard.routes.statistics import routes_statistics
-    from OrganizerDashboard.routes.notifications import routes_notifications
-    from OrganizerDashboard.routes.changelog import routes_changelog
-    from OrganizerDashboard.routes.config_backup import routes_config_backup
-    from OrganizerDashboard.routes.watch_folders import routes_watch_folders
-    from OrganizerDashboard.routes.duplicates import routes_duplicates
-    from OrganizerDashboard.routes.docs import routes_docs
-    from OrganizerDashboard.routes.dev_reset import routes_dev_reset
-    from OrganizerDashboard.routes.env_test import routes_env
-    from OrganizerDashboard.routes.unc_credentials import routes_unc_creds
-    from OrganizerDashboard.routes.batch_organize import batch_organize_bp
+    from SortNStoreDashboard.routes.api_open_file import routes_api_open_file
+    from SortNStoreDashboard.routes.auth_settings import routes_auth_settings
+    from SortNStoreDashboard.routes.dashboard_config import routes_dashboard_config
+    from SortNStoreDashboard.routes.auth_session import routes_auth_session
+    from SortNStoreDashboard.routes.sse_streams import bp as sse_streams_bp
+    from SortNStoreDashboard.routes.service_install import routes_service_install
+    from SortNStoreDashboard.routes.factory_reset import routes_factory_reset
+    from SortNStoreDashboard.routes.setup import routes_setup
+    from SortNStoreDashboard.routes.admin_tools import routes_admin_tools
+    from SortNStoreDashboard.routes.login import routes_login
+    from SortNStoreDashboard.routes.csrf_token import routes_csrf
+    from SortNStoreDashboard.routes.user_links import routes_user_links
+    from SortNStoreDashboard.routes.reports import reports_bp
+    from SortNStoreDashboard.routes.branding import routes_branding
+    from SortNStoreDashboard.routes.statistics import routes_statistics
+    from SortNStoreDashboard.routes.notifications import routes_notifications
+    from SortNStoreDashboard.routes.changelog import routes_changelog
+    from SortNStoreDashboard.routes.config_backup import routes_config_backup
+    from SortNStoreDashboard.routes.watch_folders import routes_watch_folders
+    from SortNStoreDashboard.routes.duplicates import routes_duplicates
+    from SortNStoreDashboard.routes.docs import routes_docs
+    from SortNStoreDashboard.routes.dev_reset import routes_dev_reset
+    from SortNStoreDashboard.routes.env_test import routes_env
+    from SortNStoreDashboard.routes.unc_credentials import routes_unc_creds
+    from SortNStoreDashboard.routes.batch_organize import batch_organize_bp
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config, url_prefix='/api')

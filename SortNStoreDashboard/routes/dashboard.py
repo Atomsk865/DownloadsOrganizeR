@@ -82,7 +82,7 @@ def dashboard():
         pass
     
     # Load config for settings display
-    import OrganizerDashboard
+    import SortNStoreDashboard
     config = OrganizerDashboard.config
     
     # Get GPU info
@@ -135,7 +135,7 @@ def dashboard():
 @requires_auth
 def get_organizer_config():
     """Return organizer configuration including routes and custom_routes."""
-    import OrganizerDashboard
+    import SortNStoreDashboard
     config = OrganizerDashboard.config
     
     return jsonify({

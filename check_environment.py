@@ -60,7 +60,7 @@ print("Testing api_recent_files import...")
 print("=" * 60)
 
 try:
-    from OrganizerDashboard.routes.api_recent_files import routes_api_recent_files
+    from SortNStoreDashboard.routes.api_recent_files import routes_api_recent_files
     print("✓ api_recent_files imported successfully")
     print(f"  Blueprint name: {routes_api_recent_files.name}")
     print(f"  Number of routes: {len(routes_api_recent_files.deferred_functions)}")

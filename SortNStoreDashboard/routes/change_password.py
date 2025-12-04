@@ -10,9 +10,9 @@ CONFIG_FILE = "organizer_config.json"
 @routes_change_password.route("/change_password", methods=["POST"])
 @requires_auth
 def change_password():
-    import OrganizerDashboard
-    ADMIN_USER = OrganizerDashboard.ADMIN_USER
-    config = OrganizerDashboard.config
+    import SortNStoreDashboard
+    ADMIN_USER = SortNStoreDashboard.ADMIN_USER
+    config = SortNStoreDashboard.config
     
     # Only works for basic auth
     if config.get('auth_method', 'basic') != 'basic':

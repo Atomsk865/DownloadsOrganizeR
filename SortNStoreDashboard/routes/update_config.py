@@ -12,7 +12,7 @@ CONFIG_FILES = ["organizer_config.json", "C:/Scripts/organizer_config.json"]
 @requires_right('manage_config')
 def update_config():
     from SortNStoreDashboard.helpers.helpers import update_log_paths
-    import OrganizerDashboard
+    import SortNStoreDashboard
     config = OrganizerDashboard.config
 
     if request.is_json:

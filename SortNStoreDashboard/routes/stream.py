@@ -8,7 +8,7 @@ routes_stream = Blueprint('routes_stream', __name__)
 def stream(which):
     if which not in ("stdout", "stderr"):
         return "Invalid log type", 400
-    import OrganizerDashboard
+    import SortNStoreDashboard
     STDOUT_LOG = OrganizerDashboard.STDOUT_LOG
     STDERR_LOG = OrganizerDashboard.STDERR_LOG
     path = STDOUT_LOG if which == "stdout" else STDERR_LOG
