@@ -7,10 +7,12 @@ Generate with: pyinstaller DownloadsOrganizeR.spec
 """
 
 import sys
+import os
 from pathlib import Path
 
 block_cipher = None
-project_root = Path(__file__).parent
+# Get project root from environment or current directory
+project_root = Path(os.getcwd())
 
 # --- Data Files to Bundle ---
 datas = [
