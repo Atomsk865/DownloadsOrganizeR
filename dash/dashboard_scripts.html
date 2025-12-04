@@ -220,6 +220,15 @@ document.getElementById('login-submit').addEventListener('click', async function
 });
 
 function getAuthHeaders() {
+    // Fallback: restore authHeader from cookie if missing
+    if (!__authHeader) {
+        try {
+            const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+            if (match) {
+                __authHeader = decodeURIComponent(match[1]);
+            }
+        } catch (e) {}
+    }
     const headers = __authHeader ? { 'Authorization': __authHeader } : {};
     if (__csrfToken) {
         headers['X-CSRFToken'] = __csrfToken;

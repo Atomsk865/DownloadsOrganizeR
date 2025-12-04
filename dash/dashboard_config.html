@@ -858,6 +858,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('sessionStorage not available:', e);
     }
   }
+  // Fallback: restore from cookie if still missing
+  if (!window.__authHeader) {
+    try {
+      const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+      if (match) {
+        window.__authHeader = decodeURIComponent(match[1]);
+      }
+    } catch (e) {
+      // ignore cookie parse errors
+    }
+  }
   
   // Verify auth and load rights if we have credentials
   if (window.__authHeader) {
@@ -868,7 +879,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         return response.json();
       } else {
-        throw new Error('Auth check failed');
+        // Do not immediately throw; attempt a session-based check
+        return fetch('/auth/session', { credentials: 'include', headers: getAuthHeaders() })
+          .then(r => r.ok ? r.json() : Promise.reject(new Error('Auth check failed')));
       }
     }).then(data => {
       __rights = data.rights || {};
@@ -892,7 +905,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof showNotification === 'function') {
         showNotification('Authentication failed. Please login again.', 'danger');
       }
-      setTimeout(() => { window.location.href = '/'; }, 2000);
+      // Avoid aggressive redirect; allow user to re-open login modal
+      const loginBtn = document.getElementById('login-btn');
+      if (loginBtn) loginBtn.click();
+      // If login modal not available, fallback to soft redirect after 10s
+      setTimeout(() => { if (!window.__authHeader) window.location.href = '/'; }, 10000);
     });
   } else {
     if (typeof showNotification === 'function') {
