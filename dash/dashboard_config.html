@@ -1615,21 +1615,7 @@ function filterUsers() {
     const isLinuxAbs = replaced.startsWith('/');
     return isUNC || isWinAbs || isLinuxAbs;
   }
-  
-  // Show message if no results
-  if (rows.length > 0 && visibleCount === 0) {
-    const tbody = document.getElementById('users-tbody');
-    const existingMsg = tbody.querySelector('.no-results-message');
-    if (!existingMsg) {
-      const noResultsRow = document.createElement('tr');
-      noResultsRow.className = 'no-results-message';
-      noResultsRow.innerHTML = '<td colspan="3" class="text-center text-muted"><i class="bi bi-search"></i> No users found</td>';
-      tbody.appendChild(noResultsRow);
-    }
-  } else {
-    document.querySelector('#users-tbody .no-results-message')?.remove();
-  }
-}
+
 
 async function runInitialScan(index) {
   try {
@@ -1985,5 +1971,25 @@ async function saveFeaturesConfig(){
 }
 
 document.addEventListener('DOMContentLoaded', loadFeaturesConfig);
+
+// Expose functions to global scope for inline onclick handlers
+window.saveUser = window.saveUser || saveUser;
+window.repairAuth = window.repairAuth || repairAuth;
+window.viewAuthState = window.viewAuthState || viewAuthState;
+window.deleteUser = window.deleteUser || deleteUser;
+window.addNetworkTarget = window.addNetworkTarget || addNetworkTarget;
+window.deleteNetworkTarget = window.deleteNetworkTarget || deleteNetworkTarget;
+window.saveNetworkConfig = window.saveNetworkConfig || saveNetworkConfig;
+window.saveSmtpAndCredentials = window.saveSmtpAndCredentials || saveSmtpAndCredentials;
+window.testSMTP = window.testSMTP || testSMTP;
+window.testNAS = window.testNAS || testNAS;
+window.applyNASTemplate = window.applyNASTemplate || applyNASTemplate;
+window.applySMTPTemplate = window.applySMTPTemplate || applySMTPTemplate;
+window.filterUsers = window.filterUsers || filterUsers;
+window.clearUserSearch = window.clearUserSearch || clearUserSearch;
+window.filterRoles = window.filterRoles || filterRoles;
+window.clearRoleSearch = window.clearRoleSearch || clearRoleSearch;
+window.filterNetworkTargets = window.filterNetworkTargets || filterNetworkTargets;
+window.clearNetworkTargetSearch = window.clearNetworkTargetSearch || clearNetworkTargetSearch;
 </script>
 {% endblock %}
