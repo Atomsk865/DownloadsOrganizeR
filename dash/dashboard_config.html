@@ -627,7 +627,7 @@ function fetchConfig() {
     .then(data => {
       dashboardConfig = data;
       renderUsers(data.users);
-      renderRoles(Object.keys(data.roles));
+      renderRolesFromSources(data);
       renderLayout(data.layout);
       renderNetworkTargets(data.network_targets || {});
       renderCredentials(data.credentials || {});
@@ -645,8 +645,25 @@ function renderUsers(users){
     applyConfigRights();
   }
 }
-function renderRoles(roleNames){
+function renderRolesFromSources(cfg){
   const sel = document.getElementById('new-role');
+  if (!sel) return;
+  let roleNames = [];
+  try {
+    if (cfg && cfg.roles) {
+      roleNames = Object.keys(cfg.roles || {});
+    }
+    if (!roleNames || roleNames.length === 0) {
+      if (window.__rights && Array.isArray(window.__rights.available_roles)) {
+        roleNames = window.__rights.available_roles;
+      } else if (window.__rights && window.__rights.roles) {
+        roleNames = Object.keys(window.__rights.roles || {});
+      }
+    }
+  } catch(e) {}
+  if (!roleNames || roleNames.length === 0) {
+    roleNames = ['admin','user','viewer'];
+  }
   sel.innerHTML = roleNames.map(r => `<option value='${r}'>${r}</option>`).join('');
 }
 function saveUser(){
