@@ -20,6 +20,7 @@
       <div class="mb-2 d-flex flex-wrap gap-2">
         <button id="run-all-tests" class="btn btn-primary btn-sm" onclick="runAllTests()"><i class="bi bi-play-fill"></i> Run Endpoint Checks</button>
         <button id="run-pytests" class="btn btn-outline-primary btn-sm" onclick="runPytests()"><i class="bi bi-bug"></i> Run Test Suite (pytest)</button>
+        <button id="run-self-test" class="btn btn-success btn-sm" onclick="runSmartSelfTest()"><i class="bi bi-stethoscope"></i> Smart Self-Test</button>
         <button id="clear-log" class="btn btn-outline-secondary btn-sm" onclick="clearLog()"><i class="bi bi-trash"></i> Clear Log</button>
       </div>
       <div class="alert alert-info py-2"><small>This tool makes client-side requests to common endpoints and records: request, expected feedback, and actual feedback. It includes auth headers and cookies when available.</small></div>
@@ -110,8 +111,184 @@ async function runPytests(){
 
 document.getElementById('run-pytests').addEventListener('click', runPytests);
 
+async function runSmartSelfTest(){
+  document.getElementById('env-log').innerHTML = '';
+  
+  const results = {
+    passed: [],
+    warnings: [],
+    errors: [],
+    info: []
+  };
+  
+  function addResult(type, title, details = '') {
+    const msg = details ? `${title}: ${details}` : title;
+    results[type].push(msg);
+    const badge = {
+      passed: '<span class="badge bg-success">✓ PASS</span>',
+      warnings: '<span class="badge bg-warning">⚠ WARN</span>',
+      errors: '<span class="badge bg-danger">✗ FAIL</span>',
+      info: '<span class="badge bg-info">ℹ INFO</span>'
+    }[type];
+    
+    const container = document.getElementById('env-log');
+    const el = document.createElement('div');
+    el.className = 'mb-2 p-2 rounded';
+    el.innerHTML = `<div><b>${title}</b> ${badge}</div>${details ? `<div><small>${details}</small></div>` : ''}`;
+    container.appendChild(el);
+  }
+  
+  // Test 1: Authentication
+  try {
+    addResult('info', 'Testing Authentication...');
+    const resp = await fetch('/api/env/ping', { credentials: 'include', headers: authHeaders() });
+    if (resp.ok) {
+      addResult('passed', 'Authentication', 'API accessible with current auth headers');
+    } else if (resp.status === 401) {
+      addResult('warnings', 'Authentication', 'Not authenticated (401) - some features may be limited');
+    } else {
+      addResult('errors', 'Authentication', `Unexpected status: ${resp.status}`);
+    }
+  } catch (e) {
+    addResult('errors', 'Authentication', e.message);
+  }
+  
+  // Test 2: API Health
+  const apiEndpoints = [
+    { name: 'Ping', url: '/api/env/ping' },
+    { name: 'Config', url: '/api/organizer/config' },
+    { name: 'Recent Files', url: '/api/recent_files' },
+    { name: 'Duplicates', url: '/api/duplicates' }
+  ];
+  
+  let apiHealthy = 0;
+  for (const endpoint of apiEndpoints) {
+    try {
+      const resp = await fetch(endpoint.url, { credentials: 'include', headers: authHeaders() });
+      if (resp.ok || resp.status === 400 || resp.status === 403) {
+        apiHealthy++;
+      }
+    } catch (e) {}
+  }
+  
+  if (apiHealthy === apiEndpoints.length) {
+    addResult('passed', 'API Health', `All ${apiHealthy} endpoints responding`);
+  } else if (apiHealthy > 0) {
+    addResult('warnings', 'API Health', `Only ${apiHealthy}/${apiEndpoints.length} endpoints responding`);
+  } else {
+    addResult('errors', 'API Health', 'No API endpoints responding');
+  }
+  
+  // Test 3: Dashboard Features
+  try {
+    addResult('info', 'Checking Dashboard Features...');
+    const features = {
+      'Theme System': typeof applyThemeStyles === 'function',
+      'Notifications': typeof showNotification === 'function',
+      'Auth System': typeof promptLogin === 'function',
+      'Command Palette': typeof openCommandPalette === 'function',
+      'Recent Files': typeof refreshRecentFiles === 'function',
+      'Duplicates': typeof loadDuplicates === 'function'
+    };
+    
+    const featureStatus = Object.entries(features);
+    const enabledCount = featureStatus.filter(([_, status]) => status).length;
+    
+    featureStatus.forEach(([feature, status]) => {
+      if (status) {
+        addResult('passed', `Feature: ${feature}`, 'Loaded');
+      } else {
+        addResult('warnings', `Feature: ${feature}`, 'Not available');
+      }
+    });
+    
+    if (enabledCount === featureStatus.length) {
+      addResult('passed', 'Dashboard Features', `All ${enabledCount} core features available`);
+    }
+  } catch (e) {
+    addResult('errors', 'Dashboard Features', e.message);
+  }
+  
+  // Test 4: Browser Storage
+  try {
+    addResult('info', 'Testing Browser Storage...');
+    const testKey = '__env_test_' + Date.now();
+    localStorage.setItem(testKey, 'test');
+    const retrieved = localStorage.getItem(testKey);
+    localStorage.removeItem(testKey);
+    
+    if (retrieved === 'test') {
+      addResult('passed', 'Browser Storage', 'localStorage working');
+    } else {
+      addResult('errors', 'Browser Storage', 'localStorage not working properly');
+    }
+  } catch (e) {
+    addResult('warnings', 'Browser Storage', 'localStorage disabled or blocked');
+  }
+  
+  // Test 5: Session/Cookie Support
+  try {
+    const resp = await fetch('/api/env/ping', { credentials: 'include' });
+    if (resp.ok) {
+      addResult('passed', 'Cookies/Sessions', 'Credentials mode working');
+    }
+  } catch (e) {
+    addResult('warnings', 'Cookies/Sessions', 'May have CORS issues');
+  }
+  
+  // Test 6: Network Connectivity
+  try {
+    const start = performance.now();
+    const resp = await fetch('/api/env/ping', { credentials: 'include' });
+    const latency = Math.round(performance.now() - start);
+    if (latency < 100) {
+      addResult('passed', 'Network Latency', `${latency}ms (excellent)`);
+    } else if (latency < 500) {
+      addResult('passed', 'Network Latency', `${latency}ms (good)`);
+    } else {
+      addResult('warnings', 'Network Latency', `${latency}ms (high latency)`);
+    }
+  } catch (e) {
+    addResult('errors', 'Network Latency', 'Could not measure');
+  }
+  
+  // Summary
+  setTimeout(() => {
+    const container = document.getElementById('env-log');
+    const summary = document.createElement('div');
+    summary.className = 'mt-3 p-3 rounded alert';
+    
+    const totalTests = results.passed.length + results.warnings.length + results.errors.length;
+    const passRate = Math.round((results.passed.length / totalTests) * 100);
+    
+    let summaryClass = 'alert-success';
+    let summaryTitle = '✓ System Healthy';
+    
+    if (results.errors.length > 0) {
+      summaryClass = 'alert-danger';
+      summaryTitle = '✗ Critical Issues Found';
+    } else if (results.warnings.length > 0) {
+      summaryClass = 'alert-warning';
+      summaryTitle = '⚠ Issues Found';
+    }
+    
+    summary.className = `alert ${summaryClass} p-3`;
+    summary.innerHTML = `
+      <div><b>${summaryTitle}</b></div>
+      <div class="small mt-2">
+        <div>✓ Passed: ${results.passed.length}/${totalTests} (${passRate}%)</div>
+        ${results.warnings.length > 0 ? `<div>⚠ Warnings: ${results.warnings.length}</div>` : ''}
+        ${results.errors.length > 0 ? `<div>✗ Errors: ${results.errors.length}</div>` : ''}
+      </div>
+      ${results.errors.length > 0 ? `<div class="mt-2 small text-danger"><b>Recommendations:</b><ul class="mb-0"><li>Check API server status</li><li>Verify network connectivity</li><li>Clear browser cache and reload</li><li>Check console for JS errors (F12)</li></ul></div>` : ''}
+    `;
+    container.insertBefore(summary, container.firstChild);
+  }, 500);
+}
+
 if (window.attachStartOrganizerButton) {
   window.attachStartOrganizerButton('btn-start-organizer-env', 'start-organizer-status-env');
 }
+
 </script>
 {% endblock %}
