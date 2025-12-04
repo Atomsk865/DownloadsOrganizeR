@@ -216,7 +216,9 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
-    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+    # Session persistence: allow long-lived sessions with remember cookies
+    app.config['SESSION_PERMANENT'] = True
+    app.config['PERMANENT_SESSION_LIFETIME'] = 14 * 24 * 60 * 60  # 14 days
     app.config['WTF_CSRF_TIME_LIMIT'] = None  # No token expiry for long sessions
 
     # Flask-Login setup

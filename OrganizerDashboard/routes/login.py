@@ -41,7 +41,14 @@ def login_post():
     if check_auth(username, password):
         role = _resolve_role(username)
         user = User(username, role)
-        login_user(user)
+        # Remember login with persistent cookie
+        remember = True
+        try:
+            # Accept optional 'remember' flag from form
+            remember = request.form.get('remember', 'on').lower() in ('on', 'true', '1')
+        except Exception:
+            pass
+        login_user(user, remember=remember)
         return redirect(url_for('routes_dashboard.dashboard'))
     return render_template('login.html', error='Invalid credentials'), 401
 

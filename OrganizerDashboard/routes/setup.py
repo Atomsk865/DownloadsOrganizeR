@@ -333,7 +333,8 @@ def setup_initialize():
             def __init__(self, username, role='admin'):
                 self.id = username
                 self.role = role
-        login_user(_SetupUser(admin_username, role='admin'))
+        # Remember setup auto-login for convenience
+        login_user(_SetupUser(admin_username, role='admin'), remember=True)
         return jsonify({'success': True, 'message': 'Setup completed. Logged in as admin.', 'auto_logged_in': True})
     except Exception:
         return jsonify({'success': True, 'message': 'Setup completed. Redirecting to login...', 'auto_logged_in': False})
