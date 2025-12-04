@@ -75,13 +75,13 @@ def add_notification():
     
     notifications = load_notifications()
     
-    # Add new notification
+    # Add new notification (auto-read success/info to prevent notification center spam)
     notification = {
         "id": f"notif_{int(datetime.now().timestamp() * 1000)}",
         "message": message,
         "type": notification_type,
         "timestamp": datetime.now().isoformat(),
-        "read": False
+        "read": notification_type in ("success", "info")
     }
     
     notifications.insert(0, notification)
