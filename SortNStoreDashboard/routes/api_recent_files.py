@@ -20,7 +20,7 @@ def recent_files():
     # Prefer organizer_config.json setting; default to repo-local config/json
     base = Path(__file__).resolve().parents[2]
     default_moves = base / 'config' / 'json' / 'file_moves.json'
-    file_moves_path = OrganizerDashboard.config.get("file_moves_json", str(default_moves))
+    file_moves_path = SortNStoreDashboard.config.get("file_moves_json", str(default_moves))
     try:
         if not os.path.exists(file_moves_path):
             return jsonify([])
@@ -138,7 +138,7 @@ def remove_recent_file(index):
     import SortNStoreDashboard
     base = Path(__file__).resolve().parents[2]
     default_moves = base / 'config' / 'json' / 'file_moves.json'
-    file_moves_path = OrganizerDashboard.config.get("file_moves_json", str(default_moves))
+    file_moves_path = SortNStoreDashboard.config.get("file_moves_json", str(default_moves))
     try:
         if not os.path.exists(file_moves_path):
             return jsonify({"error": "File moves log not found"}), 404

@@ -36,7 +36,7 @@ def change_password():
             del config['dashboard_pass']
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=4)
-        OrganizerDashboard.ADMIN_PASS_HASH = hashed.encode('utf-8')
+        SortNStoreDashboard.ADMIN_PASS_HASH = hashed.encode('utf-8')
         
         # Reinitialize auth manager with new password
         from SortNStoreDashboard.auth.auth import initialize_auth_manager
