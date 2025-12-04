@@ -2610,24 +2610,9 @@ async function deleteNotification(notificationId) {
 // Enhanced showNotification with notification center integration
 // (Note: original showNotification is defined earlier in the script)
 function showNotificationWithHistory(message, type) {
-    // Show toast notification using original function
+    // Base showNotification already persists to Notification Center.
+    // Call it directly to avoid duplicate entries or toasts.
     showNotification(message, type);
-    
-    // Save to notification center
-    fetch('/api/notifications', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 
-            'Authorization': __authHeader,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message, type })
-    }).then(() => {
-        // Update badge count
-        loadNotificationCenter();
-    }).catch(err => {
-        console.error('Failed to save notification:', err);
-    });
 }
 
 // Keyboard Shortcuts and Command Palette
