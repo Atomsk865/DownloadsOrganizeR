@@ -1,0 +1,395 @@
+<!-- File Organization Controls & History Module -->
+<div class="card mb-3" id="file-org-module">
+  <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this, 'file-org-module')">
+    <b><i class="bi bi-folder-check"></i> File Organization</b>
+    <span class="ms-auto">
+      <small class="text-muted me-2">Batch organize Downloads & view history</small>
+      <i class="bi bi-chevron-down toggle-icon"></i>
+    </span>
+  </div>
+  <div class="card-body p-3">
+    <!-- Batch Organization Controls -->
+    <div class="mb-3">
+      <div class="row g-2 mb-2">
+        <div class="col-md-6">
+          <button id="btn-organize-now" class="btn btn-success btn-sm w-100" onclick="organizeNow()">
+            <i class="bi bi-lightning-charge"></i> Organize Downloads Now
+          </button>
+          <small class="text-muted d-block mt-1">Immediately organize all files in Downloads folder</small>
+        </div>
+        <div class="col-md-6">
+          <button id="btn-dry-run" class="btn btn-outline-info btn-sm w-100" onclick="dryRunOrganize()">
+            <i class="bi bi-binoculars"></i> Preview (Dry-Run)
+          </button>
+          <small class="text-muted d-block mt-1">See what would be organized without moving files</small>
+        </div>
+      </div>
+      <div id="org-status" style="display: none;" class="alert alert-info p-2 mb-2">
+        <small><b id="org-status-text"></b></small>
+      </div>
+    </div>
+
+    <!-- Organization Statistics -->
+    <div class="row g-2 mb-3" id="org-stats" style="display: none;">
+      <div class="col-md-3">
+        <div class="card bg-light p-2 text-center">
+          <small class="text-muted">Today's Operations</small>
+          <div class="display-6 fw-bold" id="stat-today">0</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light p-2 text-center">
+          <small class="text-muted">Total Organized</small>
+          <div class="display-6 fw-bold" id="stat-total">0</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light p-2 text-center">
+          <small class="text-muted">Most Used</small>
+          <div class="h6 fw-bold" id="stat-category">—</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-light p-2 text-center">
+          <small class="text-muted">Undone</small>
+          <div class="display-6 fw-bold" id="stat-undone">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Organization History Table -->
+    <div class="mb-2">
+      <div class="d-flex align-items-center mb-2">
+        <b><small>Recent Organization History</small></b>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="refreshOrgHistory()" title="Refresh history">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th><small>Timestamp</small></th>
+              <th><small>File</small></th>
+              <th><small>Category</small></th>
+              <th><small>Status</small></th>
+              <th><small>Action</small></th>
+            </tr>
+          </thead>
+          <tbody id="org-history-tbody">
+            <tr>
+              <td colspan="5" class="text-center text-muted py-3">
+                <small>Loading history...</small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="History pagination" id="org-pagination" style="display: none;">
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        <li class="page-item" id="org-prev-btn">
+          <a class="page-link" href="#" onclick="return prevOrgPage()">Previous</a>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link" id="org-page-info">Page 1</span>
+        </li>
+        <li class="page-item" id="org-next-btn">
+          <a class="page-link" href="#" onclick="return nextOrgPage()">Next</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+// File Organization state
+let orgHistoryData = [];
+let orgCurrentPage = 0;
+let orgPageSize = 10;
+let orgBatchInProgress = false;
+
+/**
+ * Organize all files in Downloads folder
+ */
+async function organizeNow() {
+  if (orgBatchInProgress) {
+    showNotification('Organization already in progress', 'warning');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-organize-now');
+  const statusDiv = document.getElementById('org-status');
+  const statusText = document.getElementById('org-status-text');
+  
+  orgBatchInProgress = true;
+  btn.disabled = true;
+  statusDiv.style.display = 'block';
+  statusText.textContent = 'Organizing files...';
+  
+  try {
+    const response = await fetch('/api/batch-organize', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ dry_run: false })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      statusText.textContent = `✓ Successfully organized ${data.files_processed} files!`;
+      statusDiv.classList.remove('alert-info');
+      statusDiv.classList.add('alert-success');
+      
+      showNotification(`Organized ${data.files_processed} files`, 'success');
+      
+      // Refresh history and stats
+      await refreshOrgHistory();
+      await loadOrgStats();
+    } else {
+      statusText.textContent = `✗ Error: ${data.error}`;
+      statusDiv.classList.remove('alert-info');
+      statusDiv.classList.add('alert-danger');
+      showNotification(`Organization failed: ${data.error}`, 'danger');
+    }
+  } catch (e) {
+    statusText.textContent = `✗ Error: ${e.message}`;
+    statusDiv.classList.remove('alert-info');
+    statusDiv.classList.add('alert-danger');
+    showNotification(`Organization error: ${e.message}`, 'danger');
+  } finally {
+    orgBatchInProgress = false;
+    btn.disabled = false;
+    setTimeout(() => {
+      statusDiv.style.display = 'none';
+      statusDiv.classList.remove('alert-success', 'alert-danger');
+      statusDiv.classList.add('alert-info');
+    }, 5000);
+  }
+}
+
+/**
+ * Preview what would be organized (dry-run)
+ */
+async function dryRunOrganize() {
+  const btn = document.getElementById('btn-dry-run');
+  const statusDiv = document.getElementById('org-status');
+  const statusText = document.getElementById('org-status-text');
+  
+  btn.disabled = true;
+  statusDiv.style.display = 'block';
+  statusText.textContent = 'Scanning files...';
+  
+  try {
+    const response = await fetch('/api/batch-organize', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ dry_run: true })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const opCount = data.files_processed;
+      statusText.textContent = `✓ Found ${opCount} files ready to organize (no changes made)`;
+      statusDiv.classList.remove('alert-info');
+      statusDiv.classList.add('alert-info');
+      
+      // Show summary
+      const categories = {};
+      data.operations.forEach(op => {
+        categories[op.category] = (categories[op.category] || 0) + 1;
+      });
+      
+      const categoryList = Object.entries(categories)
+        .map(([cat, count]) => `${count} to ${cat}`)
+        .join(', ');
+      
+      statusText.innerHTML += `<br><small>${categoryList}</small>`;
+      
+      showNotification(`Dry-run: Would organize ${opCount} files`, 'info');
+    } else {
+      showNotification(`Dry-run failed: ${data.error}`, 'warning');
+    }
+  } catch (e) {
+    showNotification(`Dry-run error: ${e.message}`, 'danger');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/**
+ * Load organization history
+ */
+async function refreshOrgHistory() {
+  try {
+    const limit = orgPageSize * 5; // Load more, paginate locally
+    const response = await fetch(`/api/file-history?limit=${limit}`, {
+      credentials: 'include',
+      headers: getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      orgHistoryData = data.operations;
+      orgCurrentPage = 0;
+      renderOrgHistory();
+    }
+  } catch (e) {
+    console.warn('Error loading history:', e);
+  }
+}
+
+/**
+ * Render organization history table
+ */
+function renderOrgHistory() {
+  const tbody = document.getElementById('org-history-tbody');
+  const start = orgCurrentPage * orgPageSize;
+  const end = start + orgPageSize;
+  const pageData = orgHistoryData.slice(start, end);
+  
+  if (pageData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3"><small>No history yet</small></td></tr>`;
+    document.getElementById('org-pagination').style.display = 'none';
+    return;
+  }
+  
+  tbody.innerHTML = pageData.map(op => {
+    const date = new Date(op.timestamp);
+    const time = date.toLocaleTimeString();
+    const file = op.source.split('\\').pop() || op.source.split('/').pop();
+    const statusBadge = op.status === 'undone' 
+      ? '<span class="badge bg-warning">Undone</span>'
+      : '<span class="badge bg-success">Organized</span>';
+    
+    return `
+      <tr>
+        <td><small>${time}</small></td>
+        <td><small title="${op.source}">${file}</small></td>
+        <td><small><span class="badge bg-light text-dark">${op.category}</span></small></td>
+        <td>${statusBadge}</td>
+        <td>
+          ${op.status === 'completed' ? `
+            <button class="btn btn-sm btn-link p-0" onclick="undoOrgOperation('${op.timestamp}')" title="Undo this move">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          ` : '<small class="text-muted">—</small>'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  // Update pagination
+  const totalPages = Math.ceil(orgHistoryData.length / orgPageSize);
+  const paginationDiv = document.getElementById('org-pagination');
+  
+  if (totalPages > 1) {
+    paginationDiv.style.display = 'block';
+    document.getElementById('org-page-info').textContent = `Page ${orgCurrentPage + 1} of ${totalPages}`;
+    document.getElementById('org-prev-btn').classList.toggle('disabled', orgCurrentPage === 0);
+    document.getElementById('org-next-btn').classList.toggle('disabled', orgCurrentPage === totalPages - 1);
+  } else {
+    paginationDiv.style.display = 'none';
+  }
+}
+
+/**
+ * Undo an organization operation
+ */
+async function undoOrgOperation(timestamp) {
+  if (!confirm('Move file back to Downloads folder?')) return;
+  
+  try {
+    const response = await fetch(`/api/file-history/undo/${timestamp}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      showNotification('File moved back to Downloads', 'success');
+      await refreshOrgHistory();
+      await loadOrgStats();
+    } else {
+      showNotification(`Undo failed: ${data.error}`, 'danger');
+    }
+  } catch (e) {
+    showNotification(`Undo error: ${e.message}`, 'danger');
+  }
+}
+
+/**
+ * Load organization statistics
+ */
+async function loadOrgStats() {
+  try {
+    const response = await fetch('/api/file-history/stats', {
+      credentials: 'include',
+      headers: getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById('stat-today').textContent = data.today;
+      document.getElementById('stat-total').textContent = data.completed;
+      
+      // Find most used category
+      const categories = Object.entries(data.by_category || {});
+      if (categories.length > 0) {
+        const mostUsed = categories.reduce((a, b) => b[1] > a[1] ? b : a);
+        document.getElementById('stat-category').textContent = mostUsed[0];
+      } else {
+        document.getElementById('stat-category').textContent = '—';
+      }
+      
+      const undone = data.total_operations - data.completed;
+      document.getElementById('stat-undone').textContent = undone;
+      
+      document.getElementById('org-stats').style.display = 'grid';
+    }
+  } catch (e) {
+    console.warn('Error loading stats:', e);
+  }
+}
+
+function prevOrgPage() {
+  if (orgCurrentPage > 0) {
+    orgCurrentPage--;
+    renderOrgHistory();
+    document.querySelector('#file-org-module .table-responsive').scrollIntoView({ behavior: 'smooth' });
+  }
+  return false;
+}
+
+function nextOrgPage() {
+  const totalPages = Math.ceil(orgHistoryData.length / orgPageSize);
+  if (orgCurrentPage < totalPages - 1) {
+    orgCurrentPage++;
+    renderOrgHistory();
+    document.querySelector('#file-org-module .table-responsive').scrollIntoView({ behavior: 'smooth' });
+  }
+  return false;
+}
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', function() {
+  refreshOrgHistory();
+  loadOrgStats();
+  
+  // Refresh every 30 seconds
+  setInterval(refreshOrgHistory, 30000);
+  setInterval(loadOrgStats, 30000);
+});
+</script>
