@@ -298,8 +298,12 @@ def create_app():
     from SortNStoreDashboard.routes.tasks import routes_tasks
     from SortNStoreDashboard.routes.hardware import routes_hardware
     try:
+        # Force reload to avoid cached module issues
+        import importlib
+        import SortNStoreDashboard.routes.api_recent_files
+        importlib.reload(SortNStoreDashboard.routes.api_recent_files)
         from SortNStoreDashboard.routes.api_recent_files import routes_api_recent_files
-        print("✓ api_recent_files imported successfully")
+        print("✓ api_recent_files imported successfully (reloaded)")
     except Exception as e:
         print(f"✗ Failed to import api_recent_files: {e}")
         import traceback
