@@ -996,6 +996,11 @@ function previewTheme() {
   const theme = getThemeObject();
   applyThemeStyles(theme);
   
+  // Enable custom theme override for preview
+  if (typeof enableCustomTheme === 'function') {
+    enableCustomTheme();
+  }
+  
   // Persist preview to localStorage in real-time
   if (typeof persistThemeLocally === 'function') {
     persistThemeLocally(theme);
@@ -1035,6 +1040,11 @@ function saveBranding() {
     if (ok) {
       showNotification(`Theme "${theme.themeName}" saved successfully`, 'success');
       applyThemeStyles(theme);
+      
+      // Enable custom theme override
+      if (typeof enableCustomTheme === 'function') {
+        enableCustomTheme();
+      }
       
       // Persist theme locally for cross-page/cross-session access
       if (typeof persistThemeLocally === 'function') {
