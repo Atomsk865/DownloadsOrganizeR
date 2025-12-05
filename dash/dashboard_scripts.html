@@ -4691,13 +4691,14 @@ async function updateResourceSummary() {
                 memTotal.textContent = total;
             }
             
-            // Update disk display - use psutil to get disk info (requires backend support)
+            // Update disk display - now included in /metrics response
             const diskUsed = document.getElementById('disk-used');
             const diskTotal = document.getElementById('disk-total');
             if (diskUsed && diskTotal) {
-                // For now, just show N/A until backend adds disk info to /metrics
-                diskUsed.textContent = 'N/A';
-                diskTotal.textContent = 'N/A';
+                const used = data.disk_used_gb ? data.disk_used_gb.toFixed(2) : 'N/A';
+                const total = data.disk_total_gb ? data.disk_total_gb.toFixed(2) : 'N/A';
+                diskUsed.textContent = used;
+                diskTotal.textContent = total;
             }
             
             // Update timestamp

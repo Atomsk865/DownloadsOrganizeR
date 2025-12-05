@@ -21,6 +21,18 @@ def metrics():
     cpu_pct = 0.0
     ram = psutil.virtual_memory()
     ram_pct = ram.percent
+    
+    # Get disk usage for root/C: drive
+    try:
+        disk = psutil.disk_usage('/')
+        disk_used_gb = disk.used / (1024 ** 3)
+        disk_total_gb = disk.total / (1024 ** 3)
+        disk_percent = disk.percent
+    except Exception:
+        disk_used_gb = 0
+        disk_total_gb = 0
+        disk_percent = 0
+    
     proc = find_organizer_proc()
     if proc:
         try:
@@ -36,6 +48,11 @@ def metrics():
         "service_cpu_percent": cpu_pct,
         "total_cpu_percent": psutil.cpu_percent(interval=0.1),
         "ram_percent": ram_pct,
+        "disk_used_gb": disk_used_gb,
+        "disk_total_gb": disk_total_gb,
+        "disk_percent": disk_percent,
+        "memory_percent": ram_pct,
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
         "cached": False
     }
     _METRICS_CACHE["data"] = payload
