@@ -566,7 +566,7 @@ function addCustomWidget() {
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <b>Custom Widget ${customWidgetCounter}</b>
-                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widgetId}')">
+                    <button class="btn btn-sm btn-primary ms-2" onclick="editCustomWidget('${widgetId}')">
                         <i class="bi bi-pencil"></i> Edit
                     </button>
                     <span class="hide-toggle" onclick="removeCustomWidget('${widgetId}')" title="Remove widget"><i class="bi bi-trash"></i></span>
@@ -660,7 +660,7 @@ function restoreCustomWidgets(widgets) {
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
                         <b>Custom Widget ${widgetNum}</b>
-                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="editCustomWidget('${widget.id}')">
+                        <button class="btn btn-sm btn-primary ms-2" onclick="editCustomWidget('${widget.id}')">
                             <i class="bi bi-pencil"></i> Edit
                         </button>
                         <span class="hide-toggle" onclick="removeCustomWidget('${widget.id}')" title="Remove widget"><i class="bi bi-trash"></i></span>
@@ -1933,14 +1933,14 @@ function displayRecentFiles(files) {
                 <td>${categoryBadge}</td>
                 <td>
                     <div class="d-flex flex-wrap gap-1" style="min-width: fit-content;">
-                        <button class="btn btn-sm btn-outline-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
+                        <button class="btn btn-sm btn-primary" onclick='openFile(${JSON.stringify(file.destination_path)}, "open")' title="Open file">
                             <i class="bi bi-folder2-open"></i> Open
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
+                        <button class="btn btn-sm btn-secondary" onclick='openFile(${JSON.stringify(file.destination_path)}, "reveal")' title="Show in folder">
                             <i class="bi bi-folder"></i> Show
                         </button>
-                        ${(window.__organizerFeatures?.virustotal_enabled && window.__vtApiKey) ? `<button class="btn btn-sm btn-outline-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
-                        <button class="btn btn-sm btn-outline-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
+                        ${(window.__organizerFeatures?.virustotal_enabled && window.__vtApiKey) ? `<button class="btn btn-sm btn-info" onclick='scanVirusTotal(${JSON.stringify(file.destination_path)}, ${JSON.stringify(file.filename)})' title="Scan with VirusTotal"><i class="bi bi-shield-check"></i> VT</button>` : ''}
+                        <button class="btn btn-sm btn-danger" onclick='removeRecentFile(${fileIndex})' title="Remove from recent">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
@@ -2546,7 +2546,7 @@ async function loadDuplicates_ORIGINAL() {
                         <td style="min-width: 130px; white-space: nowrap;"><small>${modifiedLabel || '—'}</small></td>
                         <td style="word-wrap: break-word; word-break: break-word;"><small class="text-muted">${safePath}</small></td>
                         <td style="min-width: 80px; text-align: center;">
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
+                            <button class="btn btn-sm btn-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -2563,13 +2563,13 @@ async function loadDuplicates_ORIGINAL() {
                                 <small class="text-muted">(Hash: ${hashDisplay})</small>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})" title="Keep newest file, delete older duplicates">
+                                <button class="btn btn-sm btn-primary" onclick="keepNewest(${index})" title="Keep newest file, delete older duplicates">
                                     <i class="bi bi-clock"></i> Keep Newest
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})" title="Keep largest file, delete smaller duplicates">
+                                <button class="btn btn-sm btn-success" onclick="keepLargest(${index})" title="Keep largest file, delete smaller duplicates">
                                     <i class="bi bi-file-earmark"></i> Keep Largest
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAllDuplicates(${index})" title="Delete all files in this group">
+                                <button class="btn btn-sm btn-danger" onclick="deleteAllDuplicates(${index})" title="Delete all files in this group">
                                     <i class="bi bi-trash"></i> Delete All
                                 </button>
                             </div>
