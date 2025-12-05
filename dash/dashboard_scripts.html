@@ -2,6 +2,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- GridStack.js for drag-drop grid layouts -->
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.all.js"></script>
 <script>console.log('[Dashboard Scripts] Version: 2025-12-04-VT-FIX');</script>
 <!-- Login / Change-password Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true" role="dialog">
@@ -384,106 +386,83 @@ function getAuthHeaders() {
 }
 
 // Drag & Drop for Dashboard Modules with Visual Indicators
-let draggedElement = null;
+// GridStack.js integration for drag-drop dashboard layout
+let gridStack = null;
 
 function initDragAndDrop() {
-    const modules = document.querySelectorAll('.dashboard-module[draggable="true"]');
-    modules.forEach(module => {
-        if (module.dataset.dragInit === 'true') return;
-        module.dataset.dragInit = 'true';
-        module.dataset.dragHandleActive = 'false';
-
-        module.addEventListener('mousedown', function(e) {
-            this.dataset.dragHandleActive = e.target.closest('.drag-handle') ? 'true' : 'false';
-        });
-        module.addEventListener('mouseup', function() {
-            this.dataset.dragHandleActive = 'false';
-        });
-        module.addEventListener('mouseleave', function() {
-            this.dataset.dragHandleActive = 'false';
-        });
-
-        module.addEventListener('dragstart', handleDragStart);
-        module.addEventListener('dragover', handleDragOver);
-        module.addEventListener('dragenter', handleDragEnter);
-        module.addEventListener('dragleave', handleDragLeave);
-        module.addEventListener('drop', handleDrop);
-        module.addEventListener('dragend', handleDragEnd);
-    });
-}
-
-function handleDragStart(e) {
-    if (this.dataset.dragHandleActive !== 'true') {
-        draggedElement = null;
-        e.preventDefault();
-        return false;
+    // Initialize GridStack only if not already initialized
+    if (gridStack) return;
+    
+    const gridContainer = document.getElementById('dashboard-grid');
+    if (!gridContainer || typeof GridStack === 'undefined') {
+        console.warn('GridStack not available, falling back to basic layout');
+        return;
     }
-    draggedElement = this;
-    this.classList.add('dragging');
-    this.dataset.dragHandleActive = 'false';
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
     
-    // Add visual feedback to other modules
-    setTimeout(() => {
-        document.querySelectorAll('.dashboard-module:not(.dragging)').forEach(m => {
-            m.style.opacity = '0.7';
-        });
-    }, 0);
-}
-
-function handleDragOver(e) {
-    if (e.preventDefault) e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-}
-
-function handleDragEnter(e) {
-    if (this === draggedElement) return;
-    this.classList.add('drag-over');
-}
-
-function handleDragLeave(e) {
-    if (this === draggedElement) return;
-    this.classList.remove('drag-over');
-}
-
-function handleDrop(e) {
-    if (e.stopPropagation) e.stopPropagation();
-    this.classList.remove('drag-over');
+    // Initialize GridStack
+    gridStack = GridStack.init({
+        cellHeight: 'auto',
+        column: 12,
+        float: false,
+        animate: true,
+        alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        resizable: {
+            handles: 'e, se, s, sw, w'
+        },
+        handle: '.card-header',
+        draggable: {
+            scroll: true,
+            appendTo: 'body',
+            cancel: '.no-drag'
+        }
+    }, gridContainer);
     
-    if (draggedElement && draggedElement !== this) {
-        const grid = document.getElementById('dashboard-grid');
-        const allModules = Array.from(grid.children).filter(el => el.classList.contains('dashboard-module'));
-        const draggedIndex = allModules.indexOf(draggedElement);
-        const targetIndex = allModules.indexOf(this);
-        
-        if (draggedIndex < targetIndex) {
-            this.parentNode.insertBefore(draggedElement, this.nextSibling);
-        } else {
-            this.parentNode.insertBefore(draggedElement, this);
+    // Convert existing modules to GridStack items
+    const modules = gridContainer.querySelectorAll('.dashboard-module');
+    modules.forEach((module, index) => {
+        // Determine width based on module class
+        let width = 6; // Default: half width
+        if (module.classList.contains('wide')) {
+            width = 12; // Full width
+        } else if (module.classList.contains('narrow')) {
+            width = 3; // Quarter width
         }
         
-        saveDashboardLayout();
-    }
-    return false;
-}
-
-function handleDragEnd(e) {
-    this.classList.remove('dragging');
-    this.dataset.dragHandleActive = 'false';
-    
-    // Remove visual feedback
-    document.querySelectorAll('.dashboard-module').forEach(m => {
-        m.style.opacity = '1';
-        m.classList.remove('drag-over');
+        // Add GridStack attributes
+        module.setAttribute('gs-w', width);
+        module.setAttribute('gs-h', '1');
+        module.setAttribute('gs-auto-position', 'true');
+        
+        // Make the module a grid item
+        gridStack.makeWidget(module);
     });
+    
+    // Save layout on change
+    gridStack.on('change', function(event, items) {
+        saveDashboardLayout();
+    });
+    
+    console.log('GridStack initialized with', modules.length, 'modules');
 }
 
 async function saveDashboardLayout() {
-    const grid = document.getElementById('dashboard-grid');
-    const layout = Array.from(grid.children).map(el => el.dataset.module).filter(m => m);
+    if (!gridStack) {
+        console.debug('GridStack not initialized, skipping save');
+        return;
+    }
+    
+    // Get all grid items with their positions
+    const items = gridStack.save(false);  // false = don't include content
+    const layout = items.map(item => ({
+        module: item.el.dataset.module,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h
+    })).filter(item => item.module);
+    
     localStorage.setItem('dashboardLayout_' + (__authHeader || 'default'), JSON.stringify(layout));
+    
     // Also persist to server
     try {
         await fetch('/api/dashboard/layout', {
@@ -491,12 +470,12 @@ async function saveDashboardLayout() {
             credentials: 'include',
             headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sections_order: layout,
+                grid_layout: layout,
                 hidden_sections: getHiddenModulesList(),
                 custom_widgets: getCustomWidgetsList()
             })
         });
-    } catch (e) { console.warn('Failed to persist layout to server:', e); }
+    } catch (e) { console.debug('Failed to persist layout to server:', e); }
 }
 
 async function loadDashboardLayout() {
@@ -510,24 +489,40 @@ async function loadDashboardLayout() {
         if (resp.ok) {
             const data = await resp.json();
             if (data.layout) {
-                layout = data.layout.sections_order || null;
+                layout = data.layout.grid_layout || null;
                 hidden = data.layout.hidden_sections || null;
                 widgets = data.layout.custom_widgets || null;
             }
         }
-    } catch (e) { console.warn('Failed to load layout from server:', e); }
+    } catch (e) { console.debug('Failed to load layout from server:', e); }
+    
     // Fallback to localStorage if missing
     if (!layout) {
         const savedLayout = localStorage.getItem('dashboardLayout_' + (__authHeader || 'default'));
-        if (savedLayout) layout = JSON.parse(savedLayout);
+        if (savedLayout) {
+            try {
+                layout = JSON.parse(savedLayout);
+            } catch (e) {
+                console.warn('Failed to parse saved layout:', e);
+            }
+        }
     }
-    const grid = document.getElementById('dashboard-grid');
-    if (layout && grid) {
-        layout.forEach(moduleId => {
-            const module = grid.querySelector(`[data-module="${moduleId}"]`);
-            if (module) grid.appendChild(module);
+    
+    // Apply layout to GridStack
+    if (layout && gridStack) {
+        layout.forEach(item => {
+            const module = document.querySelector(`[data-module="${item.module}"]`);
+            if (module) {
+                gridStack.update(module, {
+                    x: item.x,
+                    y: item.y,
+                    w: item.w,
+                    h: item.h
+                });
+            }
         });
     }
+    
     // Restore hidden modules
     if (hidden) {
         hidden.forEach(moduleId => {
@@ -535,6 +530,7 @@ async function loadDashboardLayout() {
             if (module) module.classList.add('hidden');
         });
     }
+    
     // Restore custom widgets
     if (widgets) {
         restoreCustomWidgets(widgets);
@@ -546,6 +542,20 @@ function resetDashboardLayout() {
         localStorage.removeItem('dashboardLayout_' + (__authHeader || 'default'));
         localStorage.removeItem('hiddenModules_' + (__authHeader || 'default'));
         localStorage.removeItem('customWidget_' + (__authHeader || 'default'));
+        
+        // Reset GridStack to default positions
+        if (gridStack) {
+            const modules = document.querySelectorAll('.dashboard-module');
+            modules.forEach((module, index) => {
+                const width = module.classList.contains('wide') ? 12 : 6;
+                gridStack.update(module, {
+                    x: (index % 2) * 6,
+                    y: Math.floor(index / 2),
+                    w: width,
+                    h: 1
+                });
+            });
+        }
         location.reload();
     }
 }
@@ -2265,8 +2275,8 @@ async function loadDuplicatesModule() {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
-    loadDashboardLayout();
-    initDragAndDrop();
+    initDragAndDrop(); // Initialize GridStack first
+    loadDashboardLayout(); // Then load saved layout
     loadHiddenModules();
     initResizableTables();
     syncAuthButtons();

@@ -50,16 +50,50 @@
             border-radius: 3px;
         }
         
-        /* Main content area */
+        /* Main content area with GridStack */
         #dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            grid-auto-flow: dense;
-            gap: 1rem;
             max-width: 100%;
             width: 100%;
             padding: 1.25rem;
-            align-content: start;
+        }
+        
+        /* GridStack overrides for dashboard theme */
+        .grid-stack {
+            background: transparent;
+        }
+        
+        .grid-stack-item {
+            background: transparent;
+        }
+        
+        .grid-stack-item-content {
+            background: transparent;
+            overflow: visible !important;
+            inset: 0 !important;
+        }
+        
+        .grid-stack > .grid-stack-item > .grid-stack-item-content {
+            background: transparent;
+        }
+        
+        /* Dark theme adjustments */
+        [data-theme="dark"] .grid-stack .grid-stack-placeholder > .placeholder-content {
+            background: rgba(13, 110, 253, 0.2);
+            border: 2px dashed rgba(13, 110, 253, 0.5);
+        }
+        
+        /* Resize handles */
+        .ui-resizable-handle {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .grid-stack-item:hover .ui-resizable-handle {
+            opacity: 0.5;
+        }
+        
+        .ui-resizable-handle:hover {
+            opacity: 1 !important;
         }
         
         /* Module sizing */
