@@ -922,7 +922,7 @@
 </div>
 
 <!-- Welcome/Intro Modal -->
-<div class="intro-modal-overlay" id="intro-modal-overlay">
+<div class="intro-modal-overlay" id="intro-modal-overlay" x-data="{ show: !localStorage.getItem('dontShowIntro'), dontShow: false }" x-show="show" x-transition @click.outside="show = false">
     <div class="intro-modal">
         <div class="intro-modal-header">
             <h2>🎉 Welcome to DownloadsOrganizeR!</h2>
@@ -952,9 +952,12 @@
         </div>
         <div class="intro-modal-footer">
             <label for="dont-show-intro">
-                <input type="checkbox" id="dont-show-intro" checked> Don't show this again
+                <input type="checkbox" id="dont-show-intro" x-model="dontShow"> Don't show this again
             </label>
-            <button class="btn btn-primary" onclick="closeIntroModal()">
+            <button class="btn btn-primary" @click="
+                if (dontShow) localStorage.setItem('dontShowIntro', 'true');
+                show = false;
+            ">
                 <i class="bi bi-check-lg"></i> Got it!
             </button>
         </div>

@@ -856,70 +856,33 @@ function syncAuthButtons() {
     syncAuthButtons();
 
 // Hide/Show Module Functions
+// ⚠️ DEPRECATED: Module hide/show is now managed by Alpine.js
+// Module visibility state is stored in Alpine reactive data (x-data) and localStorage
+// See: dash/dashboard.html - dashboard-grid Alpine.js setup
+
+// LEGACY: Replaced by Alpine.js x-show directive and @click handlers
 function toggleHideModule(moduleId) {
-    const module = document.querySelector(`[data-module="${moduleId}"]`);
-    if (!module) return;
-    
-    module.classList.add('hidden');
-    saveHiddenModules();
-    updateShowHiddenButton();
+    console.warn('toggleHideModule() is deprecated - Alpine.js manages module visibility');
 }
 
+// LEGACY: Replaced by Alpine.js reactivity
 function saveHiddenModules() {
-    const hiddenModules = Array.from(document.querySelectorAll('.dashboard-module.hidden'))
-        .map(el => el.dataset.module)
-        .filter(m => m);
-    localStorage.setItem('hiddenModules_' + (__authHeader || 'default'), JSON.stringify(hiddenModules));
+    console.warn('saveHiddenModules() is deprecated - Alpine.js handles persistence automatically');
 }
 
+// LEGACY: Replaced by Alpine.js on init
 function loadHiddenModules() {
-    const saved = localStorage.getItem('hiddenModules_' + (__authHeader || 'default'));
-    if (!saved) return;
-    
-    try {
-        const hiddenModules = JSON.parse(saved);
-        hiddenModules.forEach(moduleId => {
-            const module = document.querySelector(`[data-module="${moduleId}"]`);
-            if (module) module.classList.add('hidden');
-        });
-        updateShowHiddenButton();
-    } catch (e) {
-        console.error('Error loading hidden modules:', e);
-    }
+    console.warn('loadHiddenModules() is deprecated - Alpine.js loads state from localStorage automatically');
 }
 
+// LEGACY: Replaced by Alpine.js button with x-show
 function showHiddenModules() {
-    const hiddenModules = document.querySelectorAll('.dashboard-module.hidden');
-    if (hiddenModules.length === 0) {
-        alert('No hidden modules to show.');
-        return;
-    }
-    
-    const moduleNames = Array.from(hiddenModules).map(el => {
-        const title = el.querySelector('.card-header b');
-        return title ? title.textContent : el.dataset.module;
-    });
-    
-    const message = `Hidden modules:\n\n${moduleNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}\n\nShow all hidden modules?`;
-    
-    if (confirm(message)) {
-        hiddenModules.forEach(module => module.classList.remove('hidden'));
-        saveHiddenModules();
-        updateShowHiddenButton();
-    }
+    console.warn('showHiddenModules() is deprecated - use Alpine.js show-all-button instead');
 }
 
+// LEGACY: Replaced by Alpine.js reactive count
 function updateShowHiddenButton() {
-    const btn = document.getElementById('show-hidden-btn');
-    if (!btn) return;
-    
-    const hiddenCount = document.querySelectorAll('.dashboard-module.hidden').length;
-    if (hiddenCount > 0) {
-        btn.classList.remove('d-none');
-        btn.innerHTML = `<i class="bi bi-eye"></i> Show Hidden (${hiddenCount})`;
-    } else {
-        btn.classList.add('d-none');
-    }
+    console.warn('updateShowHiddenButton() is deprecated - Alpine.js updates UI reactively');
 }
 
 // Public IP obfuscation
@@ -3340,21 +3303,48 @@ document.getElementById('command-palette-input').addEventListener('input', funct
     renderCommands(filtered);
 });
 
+// ⚠️ DEPRECATION NOTICES - Framework Modernization Campaign
+// ============================================================================
+// This section documents legacy functions maintained for backward compatibility.
+// These functions use manual DOM manipulation (classList.add/remove) and manual
+// state management. They should be gradually migrated to Alpine.js directives.
+//
+// Migration Status:
+// ✅ Completed: notification-center, intro-modal, module-hide/show, mobile-collapse
+// 🔄 Pending: help-modal, about-modal, changelog-modal, login-modal (Bootstrap)
+// 📋 To Consider: Sidebar state management, theme toggle, keyboard shortcuts
+//
+// New Alpine.js Pattern:
+// Instead of:   element.classList.add('show')
+// Use:          x-show="isOpen" in HTML + Alpine reactive state
+//
+// Benefits:
+// - Reduces ~30 lines of JavaScript per modal
+// - Eliminates manual event listener setup/teardown
+// - Automatic click-outside handling with @click.outside
+// - Reactive state persists between page navigations
+// - Smoother transitions with x-transition directives
+// ============================================================================
+
 // Help Modal Functions
 function showHelpModal() {
+    console.warn('showHelpModal() uses classList - candidate for Alpine.js migration');
     document.getElementById('help-modal-overlay').classList.add('show');
 }
 
 function closeHelpModal() {
+    console.warn('closeHelpModal() uses classList - candidate for Alpine.js migration');
     document.getElementById('help-modal-overlay').classList.remove('show');
 }
 
 // About Modal Functions
 function showAboutModal() {
+    console.warn('showAboutModal() uses classList - candidate for Alpine.js migration');
     document.getElementById('about-modal-overlay').classList.add('show');
 }
 
 function closeAboutModal() {
+    console.warn('closeAboutModal() uses classList - candidate for Alpine.js migration');
     document.getElementById('about-modal-overlay').classList.remove('show');
 }
 
@@ -3399,61 +3389,34 @@ function markdownToHtml(markdown) {
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 }
 
-// Intro Modal Functions
+// ⚠️ DEPRECATED: Intro modal is now managed by Alpine.js
+// Modal visibility and checkbox state handled by x-data and x-show directives
+// See: dash/dashboard_base.html - intro-modal-overlay Alpine.js setup
+
+// LEGACY: Replaced by Alpine.js on init and localStorage syncing
 function checkShowIntro() {
-    const dontShow = localStorage.getItem('dontShowIntro');
-    if (!dontShow) {
-        setTimeout(() => {
-            document.getElementById('intro-modal-overlay').classList.add('show');
-        }, 1000);
-    }
+    console.warn('checkShowIntro() is deprecated - Alpine.js manages intro modal visibility');
+    // Alpine.js handles this on initialization
 }
 
+// LEGACY: Replaced by Alpine.js @click handler
 function closeIntroModal() {
-    const dontShow = document.getElementById('dont-show-intro').checked;
-    if (dontShow) {
-        localStorage.setItem('dontShowIntro', 'true');
-    }
-    document.getElementById('intro-modal-overlay').classList.remove('show');
+    console.warn('closeIntroModal() is deprecated - Alpine.js handles modal dismissal');
+    // Alpine.js handles both dismissal and localStorage persistence
 }
 
-// Mobile Collapsible Cards
+// ⚠️ DEPRECATED: Mobile collapsible functionality is now managed by Alpine.js
+// Card collapse state is handled by Alpine.js @click directives with x-data tracking
+// See: dash/dashboard.html - card-header Alpine.js setup for modules
+
+// LEGACY: Replaced by Alpine.js @click and x-data directives
 function initMobileCollapsible() {
-    if (window.innerWidth <= 768) {
-        document.querySelectorAll('.dashboard-module .card-header, .config-module .card-header').forEach(header => {
-            // Only add click handler once
-            if (!header.dataset.collapsibleInit) {
-                header.dataset.collapsibleInit = 'true';
-                header.addEventListener('click', function(e) {
-                    // Don't collapse if clicking on a button or input
-                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || 
-                        e.target.closest('button') || e.target.closest('.drag-handle') || 
-                        e.target.closest('.hide-toggle')) {
-                        return;
-                    }
-                    const module = this.closest('.dashboard-module, .config-module');
-                    if (module) {
-                        module.classList.toggle('collapsed');
-                    }
-                });
-            }
-        });
-    }
+    console.warn('initMobileCollapsible() is deprecated - Alpine.js handles collapse state declaratively');
+    // No-op: Alpine.js handles this automatically
 }
 
-// Re-init on resize
-let resizeTimer;
-window.addEventListener('resize', function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {
-        initMobileCollapsible();
-    }, 250);
-});
-
-// Initialize mobile features on load
-document.addEventListener('DOMContentLoaded', function() {
-    initMobileCollapsible();
-});
+// Note: Mobile collapsible cards are now managed by Alpine.js with x-data and @click directives
+console.log('Framework modernization: Mobile collapse handled by Alpine.js');
 </script>
 <script>
 // Note: Service control functions MIGRATED TO HTMX
