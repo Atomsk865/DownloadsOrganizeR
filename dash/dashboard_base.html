@@ -941,17 +941,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             box-shadow: inset 0 0 0 8px var(--bg-secondary), 0 4px 12px rgba(0,0,0,0.1);
         }
         .gauge-value {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-primary);
+            position: relative;
+            z-index: 10;
+            line-height: 1;
+            text-shadow: 0 0 2px rgba(255,255,255,0.5);
         }
         .gauge-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
+            font-size: 0.75rem;
+            color: var(--text-primary);
             text-align: center;
+            position: relative;
+            z-index: 10;
+            margin-top: 2px;
+            font-weight: 500;
+            text-shadow: 0 0 2px rgba(255,255,255,0.5);
         }
         .gauge-threshold {
             position: absolute;

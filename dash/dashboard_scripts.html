@@ -4681,24 +4681,26 @@ async function updateResourceSummary() {
         if (response.ok) {
             const data = await response.json();
             
-            // Update memory display
+            // Update memory display - support both data.memory_info and top-level fields
             const memUsed = document.getElementById('mem-used');
             const memTotal = document.getElementById('mem-total');
-            if (memUsed && data.memory_info) {
-                const used = (data.memory_info.used / 1024 / 1024 / 1024).toFixed(2);
-                const total = (data.memory_info.total / 1024 / 1024 / 1024).toFixed(2);
-                memUsed.textContent = used;
-                memTotal.textContent = total;
+            if (memUsed) {
+                const memInfo = data.memory_info || {};
+                const used = data.memory_used_gb || (memInfo.used ? (memInfo.used / 1024 / 1024 / 1024).toFixed(2) : '-');
+                const total = data.memory_total_gb || (memInfo.total ? (memInfo.total / 1024 / 1024 / 1024).toFixed(2) : '-');
+                memUsed.textContent = typeof used === 'number' ? used.toFixed(2) : used;
+                if (memTotal) memTotal.textContent = typeof total === 'number' ? total.toFixed(2) : total;
             }
             
-            // Update disk display
+            // Update disk display - support both data.disk_info and top-level fields
             const diskUsed = document.getElementById('disk-used');
             const diskTotal = document.getElementById('disk-total');
-            if (diskUsed && data.disk_info) {
-                const used = (data.disk_info.used / 1024 / 1024 / 1024).toFixed(2);
-                const total = (data.disk_info.total / 1024 / 1024 / 1024).toFixed(2);
-                diskUsed.textContent = used;
-                diskTotal.textContent = total;
+            if (diskUsed) {
+                const diskInfo = data.disk_info || {};
+                const used = data.disk_used_gb || (diskInfo.used ? (diskInfo.used / 1024 / 1024 / 1024).toFixed(2) : '-');
+                const total = data.disk_total_gb || (diskInfo.total ? (diskInfo.total / 1024 / 1024 / 1024).toFixed(2) : '-');
+                diskUsed.textContent = typeof used === 'number' ? used.toFixed(2) : used;
+                if (diskTotal) diskTotal.textContent = typeof total === 'number' ? total.toFixed(2) : total;
             }
             
             // Update timestamp
