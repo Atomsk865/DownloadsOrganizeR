@@ -23,7 +23,6 @@
             --card-header-bg: #f8f9fa;
             --progress-bg: #e9ecef;
             --table-header-bg: #f8f9fa;
-            --sidebar-width: 20%;
         }
         [data-theme="dark"] {
             --bg-primary: #1a1d23;
@@ -577,31 +576,20 @@
             background: var(--card-header-bg);
         }
         .dashboard-container {
-            padding-left: var(--sidebar-width);
-            transition: padding-left 0.3s;
+            margin-left: 260px;
+            transition: margin-left 0.3s;
         }
         body.sidebar-collapsed .dashboard-container {
-            padding-left: 60px;
+            margin-left: 60px;
         }
         .dashboard-root {
-            padding-left: var(--sidebar-width);
-            transition: padding-left 0.3s;
+            margin-left: 260px;
+            transition: margin-left 0.3s;
         }
         body.sidebar-collapsed .dashboard-root {
-            padding-left: 60px;
+            margin-left: 60px;
         }
-        .sidebar-resizer { position: fixed; top: 0; bottom: 0; left: calc(var(--sidebar-width)); width: 8px; cursor: col-resize; z-index: 1001; background: transparent; }
-        .sidebar-resizer:hover::after {
-            content: "Drag to resize • Double-click for presets";
-            position: fixed;
-            top: 8px;
-            left: calc(var(--sidebar-width) + 12px);
-            font-size: 11px;
-            color: rgba(0,0,0,0.55);
-            z-index: 1002;
-            pointer-events: none;
-        }
-        [data-theme="dark"] .sidebar-resizer:hover::after { color: rgba(255,255,255,0.7); }
+        /* Removed resizer logic */
         @media (max-width: 768px) {
             .notification-dropdown {
                 width: calc(100vw - 30px);
@@ -611,7 +599,7 @@
         @media (max-width: 992px) {
             .dashboard-container,
             .dashboard-root {
-                padding-left: 0;
+                margin-left: 0;
             }
         }
         

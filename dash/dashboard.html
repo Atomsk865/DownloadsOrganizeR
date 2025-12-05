@@ -11,21 +11,7 @@
             position: relative;
             padding-left: var(--sidebar-width, 20%);
         }
-        .sidebar-resizer {
-            position: fixed;
-            left: calc(var(--sidebar-width, 20%));
-            top: 0;
-            bottom: 0;
-            width: 8px;
-            cursor: col-resize;
-            background: transparent;
-            border-left: 2px solid transparent;
-            z-index: 1001; /* above content, below modals */
-            pointer-events: auto; /* only this thin strip is interactive */
-        }
-        .sidebar-resizer:hover, .sidebar-resizer.active {
-            border-left-color: #0d6efd;
-        }
+        /* Removed sidebar-resizer for new sidebar layout */
         
         /* Fixed left sidebar (outside container) */
         #sidebar {
@@ -662,8 +648,7 @@
     </div>
     <div class="container-fluid p-0" style="max-width: 100%;">
         <div class="dashboard-container">
-            <!-- Draggable resizer between sidebar and content -->
-                <div class="sidebar-resizer" id="sidebar-resizer" title="Drag to resize • Double-click for presets"></div>
+            <!-- Removed draggable resizer for new sidebar layout -->
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
                     <button id="login-btn" class="btn btn-primary btn-sm" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
