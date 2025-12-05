@@ -22,7 +22,10 @@ def requires_right(right_name):
     def decorator(f):
         def wrapper(*args, **kwargs):
             from flask_login import current_user
-            from SortNStoreDashboard.auth.auth import check_auth
+            from SortNStoreDashboard.auth.auth import check_auth, initialize_auth_manager
+            
+            # Ensure auth manager is initialized
+            initialize_auth_manager()
             
             # Check Flask-Login or Basic Auth
             auth = request.authorization
@@ -31,16 +34,26 @@ def requires_right(right_name):
             
             if not is_authenticated:
                 if auth:
-                    if check_auth(str(auth.username), str(auth.password)):
+                    # Debug: print auth attempt
+                    username = str(auth.username)
+                    password = str(auth.password)
+                    print(f"[API Auth] Checking {username}...")
+                    auth_result = check_auth(username, password)
+                    print(f"[API Auth] check_auth({username}) = {auth_result}")
+                    if auth_result:
                         is_authenticated = True
                         # Try to load user role from dashboard config
                         main = get_main_module()
                         dash_cfg = getattr(main, 'dashboard_config', {})
                         for u in dash_cfg.get('users', []):
-                            if u.get('username') == auth.username:
+                            if u.get('username') == username:
                                 is_admin = u.get('role') == 'admin'
                                 break
+                    else:
+                        print(f"[API Auth] Authentication failed for {username}")
+                        return jsonify({'error': 'Unauthorized'}), 401
                 else:
+                    print("[API Auth] No Authorization header")
                     return jsonify({'error': 'Unauthorized'}), 401
             
             if not is_authenticated:
