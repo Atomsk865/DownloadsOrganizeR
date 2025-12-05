@@ -34,7 +34,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
               </form>
-              <div class="alert alert-warning mt-3" role="alert">
+              <div class="alert alert-warning mt-3" id="organizer-missing-warning" style="display: none;" role="alert">
                 <div class="d-flex flex-column gap-2">
                   <div>
                     <strong>Organizer files missing?</strong>
@@ -53,6 +53,25 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/start_organizer.js') }}"></script>
+    <script>
+      // Show organizer missing warning only if enabled in features
+      (async function() {
+        try {
+          const response = await fetch('/api/dashboard-config');
+          if (response.ok) {
+            const config = await response.json();
+            const features = config.features || {};
+            const showWarning = features.show_organizer_missing_warning === true;
+            const warningElement = document.getElementById('organizer-missing-warning');
+            if (warningElement) {
+              warningElement.style.display = showWarning ? 'block' : 'none';
+            }
+          }
+        } catch (error) {
+          console.warn('Could not load dashboard config for warning visibility');
+        }
+      })();
+    </script>
     <script>
       // Restore persisted theme on login page
       function restoreLoginTheme() {
