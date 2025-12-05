@@ -2759,85 +2759,6 @@ async function saveFeaturesConfig(){
 
 document.addEventListener('DOMContentLoaded', loadFeaturesConfig);
 
-// Expose functions to global scope for inline onclick handlers
-window.saveUser = window.saveUser || saveUser;
-window.repairAuth = window.repairAuth || repairAuth;
-window.viewAuthState = window.viewAuthState || viewAuthState;
-window.deleteUser = window.deleteUser || deleteUser;
-window.addNetworkTarget = window.addNetworkTarget || addNetworkTarget;
-window.deleteNetworkTarget = window.deleteNetworkTarget || deleteNetworkTarget;
-window.saveNetworkConfig = window.saveNetworkConfig || saveNetworkConfig;
-window.saveSmtpAndCredentials = window.saveSmtpAndCredentials || saveSmtpAndCredentials;
-window.testSMTP = window.testSMTP || testSMTP;
-window.testNAS = window.testNAS || testNAS;
-window.applyNASTemplate = window.applyNASTemplate || applyNASTemplate;
-window.applySMTPTemplate = window.applySMTPTemplate || applySMTPTemplate;
-window.filterUsers = window.filterUsers || filterUsers;
-window.clearUserSearch = window.clearUserSearch || clearUserSearch;
-window.filterRoles = window.filterRoles || filterRoles;
-window.clearRoleSearch = window.clearRoleSearch || clearRoleSearch;
-window.filterNetworkTargets = window.filterNetworkTargets || filterNetworkTargets;
-window.clearNetworkTargetSearch = window.clearNetworkTargetSearch || clearNetworkTargetSearch;
-
-// ==================== API Settings Functions ====================
-
-/**
- * Load API settings from the server
- */
-function loadApiSettings() {
-  fetch('/api/organizer/settings/vt-api-key', {headers: getAuthHeaders()})
-    .then(r => r.json())
-    .then(data => {
-      if (data.configured) {
-        document.getElementById('vt-api-key-config').value = '*'.repeat(16); // Mask for security
-      }
-      showNotification('API settings loaded', 'info');
-    })
-    .catch(e => showNotification('Error loading settings: ' + e.message, 'danger'));
-  
-  // Also load features
-  fetch('/api/organizer/config', {headers: getAuthHeaders()})
-    .then(r => r.json())
-    .then(cfg => {
-      const feats = cfg.features || {};
-      document.getElementById('feat-virustotal-config').checked = feats.virustotal_enabled === true;
-      document.getElementById('feat-duplicates-config').checked = feats.duplicates_enabled === true;
-      document.getElementById('feat-reports-config').checked = feats.reports_enabled === true;
-    })
-    .catch(e => console.warn('Error loading features:', e));
-}
-
-/**
- * Save API settings to the server
- */
-function saveApiSettings() {
-  const apiKey = document.getElementById('vt-api-key-config').value.trim();
-  const msgEl = document.getElementById('api-settings-message');
-  
-  if (!apiKey || apiKey.startsWith('*')) {
-    showNotification('Please enter a valid VirusTotal API key', 'warning');
-    return;
-  }
-  
-  // Save VT API key
-  fetch('/api/organizer/settings/vt-api-key', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', ...getAuthHeaders()},
-    body: JSON.stringify({vt_api_key: apiKey})
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      // Clear the input and show masked version
-      document.getElementById('vt-api-key-config').value = data.masked;
-      showNotification('VirusTotal API key saved successfully', 'success');
-    } else {
-      showNotification(data.error || 'Failed to save API key', 'danger');
-    }
-  })
-  .catch(e => showNotification('Error saving API key: ' + e.message, 'danger'));
-}
-
 // Load API settings when page loads
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
@@ -2846,5 +2767,18 @@ if (document.readyState === 'loading') {
 } else {
   setTimeout(loadApiSettings, 500);
 }
+
+// ==================== Global Function Exports ====================
+// Ensure all inline onclick handlers can access these functions
+window.applyPresetTheme = window.applyPresetTheme || applyPresetTheme;
+window.extractColorsFromLogo = window.extractColorsFromLogo || extractColorsFromLogo;
+window.previewTheme = window.previewTheme || previewTheme;
+window.toggleThemePreview = window.toggleThemePreview || toggleThemePreview;
+window.saveBranding = window.saveBranding || saveBranding;
+window.exportTheme = window.exportTheme || exportTheme;
+window.resetBranding = window.resetBranding || resetBranding;
+window.loadBranding = window.loadBranding || loadBranding;
+window.saveApiSettings = window.saveApiSettings || saveApiSettings;
+window.loadApiSettings = window.loadApiSettings || loadApiSettings;
 </script>
 {% endblock %}
