@@ -3221,6 +3221,34 @@ async function scanVirusTotal(filePath, fileName) {
 // Statistics Charts - MIGRATED TO APEXCHARTS
 let chartCategory, chartExtensions, chartTimeline, chartHourly;
 
+// Display drill-down details for a category
+function showCategoryDrillDown(category, drillData) {
+    // Create modal or toast showing the drill-down details
+    const message = `
+        <div class="p-3">
+            <h6 class="mb-3">${category} Details</h6>
+            <small class="d-block mb-2"><b>Total Files:</b> ${drillData.total || 0}</small>
+            <small class="d-block mb-2"><b>Total Size:</b> ${formatBytes(drillData.total_size || 0)}</small>
+            ${drillData.top_extensions ? `<small class="d-block mb-2"><b>Top Extensions:</b> ${drillData.top_extensions.slice(0, 3).join(', ')}</small>` : ''}
+            <small class="d-block text-muted mt-2">Files in this category</small>
+        </div>
+    `;
+    
+    if (typeof showNotification === 'function') {
+        // Show as notification
+        showNotification(`${category}: ${drillData.total || 0} files (${formatBytes(drillData.total_size || 0)})`, 'info');
+    }
+}
+
+// Helper function to format bytes to human readable
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
 async function loadStatistics() {
     try {
         // Load overview stats
@@ -3243,7 +3271,7 @@ async function loadStatistics() {
             setTextIfExists('stat-avg-day', overview.avg_per_day || 0);
         }
         
-        // Load category chart (ApexCharts Donut)
+        // Load category chart (ApexCharts Donut with drill-down interactivity)
         const categoryRes = await fetch('/api/statistics/by-category', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -3258,7 +3286,27 @@ async function loadStatistics() {
                     chart: {
                         type: 'donut',
                         height: 300,
-                        animations: { enabled: true, easing: 'easeinout', speed: 800 }
+                        animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                        events: {
+                            click: async (event, chartContext, { seriesIndex }) => {
+                                // Drill-down on segment click
+                                const category = categoryData.labels?.[seriesIndex];
+                                if (category) {
+                                    try {
+                                        const drillRes = await fetch(`/api/statistics/by-category-detail/${encodeURIComponent(category)}`, {
+                                            credentials: 'include',
+                                            headers: { 'Authorization': __authHeader }
+                                        });
+                                        if (drillRes.ok) {
+                                            const drillData = await drillRes.json();
+                                            showCategoryDrillDown(category, drillData);
+                                        }
+                                    } catch (e) {
+                                        console.log('Could not drill down:', e);
+                                    }
+                                }
+                            }
+                        }
                     },
                     series: categoryData.data || [],
                     labels: categoryData.labels || [],
@@ -3280,7 +3328,14 @@ async function loadStatistics() {
                             }
                         }
                     },
-                    tooltip: { y: { formatter: (val) => val + ' files' } }
+                    tooltip: { 
+                        y: { formatter: (val) => val + ' files' },
+                        custom: () => '<span style="font-size: 0.8rem;">Click to drill down</span>'
+                    },
+                    states: {
+                        hover: { filter: { type: 'none', value: 0 } },
+                        active: { filter: { type: 'none', value: 0 } }
+                    }
                 });
                 chartCategory.render();
             }

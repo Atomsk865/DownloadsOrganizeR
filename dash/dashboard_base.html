@@ -959,6 +959,36 @@
             color: var(--text-secondary);
         }
         
+        /* Interactive Charts */
+        .apexcharts-canvas {
+            transition: opacity 0.2s;
+        }
+        /* Highlight interactive chart segments */
+        .apexcharts-series g:hover {
+            opacity: 0.8;
+        }
+        /* Show cursor feedback on interactive charts */
+        #chart-category svg,
+        #chart-extensions svg {
+            cursor: pointer;
+        }
+        #chart-category {
+            position: relative;
+        }
+        #chart-category::after {
+            content: "💡 Click segments to drill down";
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #chart-category:hover::after {
+            opacity: 1;
+        }
+        
         /* Alert Pulse (for thresholds) */
         @keyframes alertPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
