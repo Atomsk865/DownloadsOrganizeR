@@ -300,3 +300,64 @@ def get_audit_log_folders():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# Settings endpoints
+
+@routes_api_config_mgmt.route('/settings/vt-api-key', methods=['GET', 'POST'])
+@requires_right('view_metrics')
+def vt_api_key_config():
+    """GET/POST /api/organizer/settings/vt-api-key - Get or set VirusTotal API key."""
+    try:
+        import sys
+        from pathlib import Path
+        
+        if request.method == 'GET':
+            # Return current VT API key status (not the actual key for security)
+            main = get_main_module()
+            config = getattr(main, 'config', {})
+            api_key = config.get('vt_api_key') or config.get('virustotal_api_key')
+            
+            return jsonify({
+                'configured': bool(api_key),
+                'key_length': len(api_key) if api_key else 0,
+                'masked': ('*' * (len(api_key) - 4) + api_key[-4:]) if api_key else None
+            }), 200
+        
+        else:  # POST
+            # Update VT API key in config file
+            data = request.get_json() or {}
+            new_key = data.get('vt_api_key', '').strip()
+            
+            if not new_key:
+                return jsonify({'error': 'API key cannot be empty'}), 400
+            
+            # Load current config
+            base = Path(__file__).resolve().parents[2]
+            cfg_path = base / 'sortnstore_config.json'
+            
+            config_data = {}
+            if cfg_path.exists():
+                with open(cfg_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+            
+            # Update the key
+            config_data['vt_api_key'] = new_key
+            
+            # Save back
+            with open(cfg_path, 'w', encoding='utf-8') as f:
+                json.dump(config_data, f, indent=2)
+            
+            # Update in-memory config if available
+            main = get_main_module()
+            if main and hasattr(main, 'config') and main.config:
+                main.config['vt_api_key'] = new_key
+            
+            return jsonify({
+                'success': True,
+                'message': 'VirusTotal API key updated successfully',
+                'masked': ('*' * (len(new_key) - 4) + new_key[-4:])
+            }), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

@@ -27,10 +27,31 @@ const ThemeSystem = (() => {
         const savedTheme = getSavedTheme();
         applyTheme(savedTheme);
         
-        // Apply custom theme if active
+        // Apply custom theme if active (both old and new formats)
         const customTheme = getCustomTheme();
         if (customTheme && customTheme.active) {
             applyCustomTheme(customTheme);
+        }
+        
+        // Also check for dashboard_theme_v1 (theme builder storage)
+        try {
+            const dashboardTheme = localStorage.getItem('dashboard_theme_v1');
+            if (dashboardTheme && !customTheme) {
+                const parsed = JSON.parse(dashboardTheme);
+                if (parsed && parsed.theme) {
+                    // Apply theme builder theme if no custom theme already applied
+                    applyCustomTheme({
+                        active: true,
+                        colors: parsed.theme.colors || {},
+                        borderRadius: parsed.theme.borderRadius,
+                        fontSize: parsed.theme.fontSize,
+                        shadow: parsed.theme.shadow,
+                        css: parsed.theme.css
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to load dashboard theme:', e);
         }
         
         // Initialize theme toggle if it exists

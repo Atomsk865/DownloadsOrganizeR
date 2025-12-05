@@ -669,6 +669,63 @@
       </div>
     </div>
   </div>
+
+  <!-- Settings: API Keys & Features -->
+  <div class="config-module full-width" data-module="api-settings" draggable="true">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <b>API Keys & Features</b>
+        <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      </div>
+      <div class="card-body p-2">
+        <form id="form-api-settings">
+          <!-- VirusTotal API Key -->
+          <div class="mb-3">
+            <label for="vt-api-key-config" class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
+            <input class="form-control form-control-sm" id="vt-api-key-config" type="password" placeholder="Paste your VirusTotal API key (32+ chars)">
+            <small class="text-muted">Used for malware hash lookups in Recent Files. Leave blank to disable VirusTotal features.</small>
+          </div>
+
+          <!-- VirusTotal Status -->
+          <div class="mb-2">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feat-virustotal-config">
+              <label class="form-check-label" for="feat-virustotal-config">
+                <small>Enable VirusTotal Integration</small>
+              </label>
+            </div>
+          </div>
+
+          <!-- Duplicates Detection -->
+          <div class="mb-2">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feat-duplicates-config">
+              <label class="form-check-label" for="feat-duplicates-config">
+                <small>Enable Duplicate Detection</small>
+              </label>
+            </div>
+          </div>
+
+          <!-- Reports -->
+          <div class="mb-3">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="feat-reports-config">
+              <label class="form-check-label" for="feat-reports-config">
+                <small>Enable Reports</small>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary btn-sm" type="button" onclick="saveApiSettings()"><i class="bi bi-save"></i> Save Settings</button>
+            <button class="btn btn-secondary btn-sm" type="button" onclick="loadApiSettings()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          </div>
+          <div id="api-settings-message" class="alert alert-info alert-sm mt-2 py-1 px-2" role="alert" style="font-size: 0.85rem; display:none;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
   
   <!-- Logs (Real-time) -->
   <div class="config-module full-width" data-module="logs" draggable="true">
@@ -1185,6 +1242,24 @@ function saveBranding() {
       // Persist theme locally for cross-page/cross-session access
       if (typeof persistThemeLocally === 'function') {
         persistThemeLocally(theme);
+      }
+      
+      // Also persist to ThemeSystem for universal access
+      if (typeof ThemeSystem !== 'undefined' && ThemeSystem.saveCustomTheme) {
+        const customThemeData = {
+          active: true,
+          colors: theme.colors,
+          borderRadius: theme.borderRadius,
+          fontSize: theme.fontSize,
+          shadow: theme.shadow,
+          css: theme.css,
+          title: theme.title,
+          logo: theme.logo,
+          themeName: theme.themeName
+        };
+        ThemeSystem.saveCustomTheme(customThemeData);
+        // Apply immediately to ensure all pages see it
+        ThemeSystem.applyCustomTheme(customThemeData);
       }
     } else {
       showNotification(j.error || 'Failed to save theme', 'danger');
@@ -2703,5 +2778,73 @@ window.filterRoles = window.filterRoles || filterRoles;
 window.clearRoleSearch = window.clearRoleSearch || clearRoleSearch;
 window.filterNetworkTargets = window.filterNetworkTargets || filterNetworkTargets;
 window.clearNetworkTargetSearch = window.clearNetworkTargetSearch || clearNetworkTargetSearch;
+
+// ==================== API Settings Functions ====================
+
+/**
+ * Load API settings from the server
+ */
+function loadApiSettings() {
+  fetch('/api/organizer/settings/vt-api-key', {headers: getAuthHeaders()})
+    .then(r => r.json())
+    .then(data => {
+      if (data.configured) {
+        document.getElementById('vt-api-key-config').value = '*'.repeat(16); // Mask for security
+      }
+      showNotification('API settings loaded', 'info');
+    })
+    .catch(e => showNotification('Error loading settings: ' + e.message, 'danger'));
+  
+  // Also load features
+  fetch('/api/organizer/config', {headers: getAuthHeaders()})
+    .then(r => r.json())
+    .then(cfg => {
+      const feats = cfg.features || {};
+      document.getElementById('feat-virustotal-config').checked = feats.virustotal_enabled === true;
+      document.getElementById('feat-duplicates-config').checked = feats.duplicates_enabled === true;
+      document.getElementById('feat-reports-config').checked = feats.reports_enabled === true;
+    })
+    .catch(e => console.warn('Error loading features:', e));
+}
+
+/**
+ * Save API settings to the server
+ */
+function saveApiSettings() {
+  const apiKey = document.getElementById('vt-api-key-config').value.trim();
+  const msgEl = document.getElementById('api-settings-message');
+  
+  if (!apiKey || apiKey.startsWith('*')) {
+    showNotification('Please enter a valid VirusTotal API key', 'warning');
+    return;
+  }
+  
+  // Save VT API key
+  fetch('/api/organizer/settings/vt-api-key', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', ...getAuthHeaders()},
+    body: JSON.stringify({vt_api_key: apiKey})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the input and show masked version
+      document.getElementById('vt-api-key-config').value = data.masked;
+      showNotification('VirusTotal API key saved successfully', 'success');
+    } else {
+      showNotification(data.error || 'Failed to save API key', 'danger');
+    }
+  })
+  .catch(e => showNotification('Error saving API key: ' + e.message, 'danger'));
+}
+
+// Load API settings when page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(loadApiSettings, 500);
+  });
+} else {
+  setTimeout(loadApiSettings, 500);
+}
 </script>
 {% endblock %}
