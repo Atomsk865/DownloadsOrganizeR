@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.0-beta] - December 5, 2025
+
+### 🚀 Highlights
+
+- Phase 2 configuration platform completed with four production-ready modules and blueprint wiring for Phase 4 backend routes
+- Multi-method authentication (Basic, LDAP/AD, Windows) with configurable fallback and provider pattern
+- Config import/export/validate flow with timestamped backups and selective restore
+- Dashboard UX hardening: search/filter across tables, notifications center, stats dashboards, command palette, mobile responsiveness
+- Documentation set refreshed (architecture review, module reference, quickstarts) to support rollout and testing
+
+### 🧩 Modules (Phase 2)
+
+- **Users & Roles Config**: full user lifecycle, role-based rights, LDAP/AD hooks, bcrypt hashing, audit-friendly responses
+- **Network Targets Config**: UNC validation, SMB3-aware connection pooling, credential storage, reliability monitoring, batch tests
+- **SMTP & Credentials Manager**: TLS/OAuth email settings, encrypted credential handling, notification templates, test-and-verify endpoints
+- **Watched Folders Config**: multi-path monitoring with placeholder resolution (`%USERNAME%`, `%USER%`), read/write checks, batch folder tests, audit trail
+
+### 🧪 Testing & Quality
+
+- 90+ test cases across two suites: `tests/test_phase2_api_integration.py` (30+ API routes) and `tests/test_phase2_dashboard_smoke.py` (4 pages/forms/tables)
+- Status codes covered: 200/201/204/400/401/404/409/500/504; validation for malformed JSON and missing fields
+- Coverage target 85%+ with `pytest tests/test_phase2_*.py --cov`
+- Performance target <200ms for list operations; concurrency and state persistence scenarios included
+
+### 📦 Upgrade Steps
+
+1. **Back up configs**: `cp organizer_config.json organizer_config.json.bak && cp dashboard_config.json dashboard_config.json.bak`
+2. **Pull release**: `git pull` on the target branch (tag `v2.0.0-beta`)
+3. **Dependencies**: `pip install -r requirements.txt --upgrade`
+4. **Run tests (recommended)**: `pytest tests/test_phase2_*.py -v`
+5. **Restart services**: restart Organizer service and `OrganizerDashboard.py`
+6. **Verify**: login, run `/config` smoke checks, and execute API integration spot-checks
+
+### 📚 References
+
+- `docs/PHASE2_MODULE_REFERENCE.md` – full API contracts and examples (30+ routes)
+- `AUTHENTICATION.md` & `AUTH_QUICK_REFERENCE.md` – auth setup and comparisons
+- `ARCHITECTURE_REVIEW_FINDINGS.md` – approval for Phase 4 backend implementation
+
 ## [v1.1.0] - December 2, 2025
 
 ### 🎉 Major Features Added
