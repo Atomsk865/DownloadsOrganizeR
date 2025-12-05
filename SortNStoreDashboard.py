@@ -313,6 +313,10 @@ def create_app():
     from SortNStoreDashboard.routes.auth_settings import routes_auth_settings
     from SortNStoreDashboard.routes.dashboard_config import routes_dashboard_config
     from SortNStoreDashboard.routes.auth_session import routes_auth_session
+    from SortNStoreDashboard.routes.api_users_config import routes_api_users
+    from SortNStoreDashboard.routes.api_network_targets import routes_api_network_targets
+    from SortNStoreDashboard.routes.api_smtp_config import routes_api_smtp
+    from SortNStoreDashboard.routes.api_watch_folders_config import routes_api_watch_folders
     from SortNStoreDashboard.routes.sse_streams import bp as sse_streams_bp
     from SortNStoreDashboard.routes.service_install import routes_service_install
     from SortNStoreDashboard.routes.factory_reset import routes_factory_reset
@@ -361,6 +365,10 @@ def create_app():
     app.register_blueprint(routes_auth_settings)
     app.register_blueprint(routes_dashboard_config)
     app.register_blueprint(routes_auth_session)
+    app.register_blueprint(routes_api_users)
+    app.register_blueprint(routes_api_network_targets)
+    app.register_blueprint(routes_api_smtp)
+    app.register_blueprint(routes_api_watch_folders)
     app.register_blueprint(routes_service_install)
     app.register_blueprint(routes_factory_reset)
     app.register_blueprint(routes_setup)
@@ -397,6 +405,11 @@ def create_app():
     csrf.exempt(routes_env)
     # Exempt batch organize endpoints
     csrf.exempt(batch_organize_bp)
+    # Exempt Phase 4 API blueprints (CSRF protected via @requires_right)
+    csrf.exempt(routes_api_users)
+    csrf.exempt(routes_api_network_targets)
+    csrf.exempt(routes_api_smtp)
+    csrf.exempt(routes_api_watch_folders)
     # Exempt recent files API (VirusTotal, etc.) - protected by @requires_right
     if routes_api_recent_files:
         csrf.exempt(routes_api_recent_files)
