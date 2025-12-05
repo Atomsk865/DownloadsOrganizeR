@@ -82,12 +82,40 @@ const ThemeBuilder = (() => {
   function init() {
     if (initialized) return;
 
-    // Bind preset theme buttons
+    // Bind preset theme buttons and action buttons via event delegation
     document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('preset-theme-btn')) {
-        const themeName = e.target.dataset.theme;
+      const target = e.target.closest('button');
+      if (!target) return;
+
+      // Handle preset theme buttons
+      if (target.classList.contains('preset-theme-btn')) {
+        const themeName = target.dataset.theme;
         applyPresetTheme(themeName);
         e.preventDefault();
+        return;
+      }
+
+      // Handle theme action buttons via data-action attribute
+      const action = target.dataset.themeAction;
+      if (action) {
+        e.preventDefault();
+        switch (action) {
+          case 'save':
+            saveBranding();
+            break;
+          case 'export':
+            exportTheme();
+            break;
+          case 'reset':
+            resetBranding();
+            break;
+          case 'preview':
+            toggleThemePreview();
+            break;
+          case 'extract-logo':
+            extractColorsFromLogo();
+            break;
+        }
       }
     });
 
