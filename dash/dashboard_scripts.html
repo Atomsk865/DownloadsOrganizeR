@@ -3040,14 +3040,12 @@ async function loadNotificationCenter() {
 }
 
 function updateNotificationBadge(count) {
-    const badge = document.getElementById('notification-badge');
-    if (badge) {
-        if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
+    // Alpine.js handles badge display reactively via x-show and x-text
+    // Just update the Alpine data property
+    const bellContainer = document.querySelector('.notification-bell');
+    if (bellContainer && window.Alpine) {
+        const alpineData = Alpine.$data(bellContainer);
+        if (alpineData) alpineData.unreadCount = count;
     }
 }
 
@@ -3111,35 +3109,8 @@ function formatNotificationTime(timestamp) {
     }
 }
 
-function toggleNotificationCenter() {
-    const dropdown = document.getElementById('notification-dropdown');
-    if (!dropdown) return;
-    
-    notificationCenterOpen = !notificationCenterOpen;
-    
-    if (notificationCenterOpen) {
-        dropdown.classList.add('show');
-        loadNotificationCenter();
-        // Close when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', closeNotificationCenter);
-        }, 100);
-    } else {
-        dropdown.classList.remove('show');
-        document.removeEventListener('click', closeNotificationCenter);
-    }
-}
-
-function closeNotificationCenter(event) {
-    const dropdown = document.getElementById('notification-dropdown');
-    const bell = document.querySelector('.notification-bell');
-    
-    if (dropdown && bell && !dropdown.contains(event.target) && !bell.contains(event.target)) {
-        dropdown.classList.remove('show');
-        notificationCenterOpen = false;
-        document.removeEventListener('click', closeNotificationCenter);
-    }
-}
+// toggleNotificationCenter removed - now handled by Alpine.js @click directive
+// Alpine.js automatically handles click-outside via @click.outside directive
 
 async function markNotificationRead(notificationId) {
     try {
