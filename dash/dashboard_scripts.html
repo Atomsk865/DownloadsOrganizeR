@@ -53,7 +53,8 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 <!-- ApexCharts - Modern charting library -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
-<!-- Chart.js (keeping for gradual migration) -->
+<!-- Chart.js (DEPRECATED - being replaced by ApexCharts) -->
+<!-- Statistics module migrated to ApexCharts. Keeping Chart.js temporarily for any unmigrated charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- GridStack.js for drag-drop grid layouts -->
 <script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.all.js"></script>
@@ -2141,9 +2142,9 @@ async function updateSidebarStats() {
             if (totalEl) totalEl.textContent = data.total_files || 0;
             if (todayEl) todayEl.textContent = data.today_count || 0;
             
-            // Update mini chart
-            const chartCanvas = document.getElementById('sidebar-stats-chart');
-            if (chartCanvas) {
+            // Update mini chart (ApexCharts)
+            const chartContainer = document.getElementById('sidebar-stats-chart');
+            if (chartContainer) {
                 const categoryRes = await fetch('/api/statistics/by-category', {
                     credentials: 'include',
                     headers: getAuthHeaders()
@@ -2156,28 +2157,28 @@ async function updateSidebarStats() {
                         sidebarStatsChart.destroy();
                     }
                     
-                    sidebarStatsChart = new Chart(chartCanvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: categoryData.labels || [],
-                            datasets: [{
-                                data: categoryData.values || [],
-                                backgroundColor: [
-                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-                                    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
-                                ]
-                            }]
+                    sidebarStatsChart = new ApexCharts(chartContainer, {
+                        chart: {
+                            type: 'donut',
+                            height: 150,
+                            animations: { enabled: true, speed: 400 }
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                                legend: {
-                                    display: false
+                        series: categoryData.data || categoryData.values || [],
+                        labels: categoryData.labels || [],
+                        colors: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'],
+                        legend: { show: false },
+                        dataLabels: { enabled: false },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: { show: false }
                                 }
                             }
-                        }
+                        },
+                        tooltip: { enabled: true, y: { formatter: (val) => val + ' files' } }
                     });
+                    sidebarStatsChart.render();
                 }
             }
         }
@@ -2855,7 +2856,7 @@ async function scanVirusTotal(filePath, fileName) {
         showNotification('VirusTotal request failed: ' + e.message, 'danger');
     }
 }
-// Statistics Charts
+// Statistics Charts - MIGRATED TO APEXCHARTS
 let chartCategory, chartExtensions, chartTimeline, chartHourly;
 
 async function loadStatistics() {
@@ -2880,7 +2881,7 @@ async function loadStatistics() {
             setTextIfExists('stat-avg-day', overview.avg_per_day || 0);
         }
         
-        // Load category chart
+        // Load category chart (ApexCharts Donut)
         const categoryRes = await fetch('/api/statistics/by-category', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -2888,34 +2889,42 @@ async function loadStatistics() {
         
         if (categoryRes.ok) {
             const categoryData = await categoryRes.json();
-            const ctx = document.getElementById('chart-category');
-            if (ctx) {
+            const container = document.getElementById('chart-category');
+            if (container) {
                 if (chartCategory) chartCategory.destroy();
-                chartCategory = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: categoryData.labels || [],
-                        datasets: [{
-                            data: categoryData.data || [],
-                            backgroundColor: [
-                                '#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545',
-                                '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0'
-                            ]
-                        }]
+                chartCategory = new ApexCharts(container, {
+                    chart: {
+                        type: 'donut',
+                        height: 300,
+                        animations: { enabled: true, easing: 'easeinout', speed: 800 }
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'right'
+                    series: categoryData.data || [],
+                    labels: categoryData.labels || [],
+                    colors: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0'],
+                    legend: { position: 'right' },
+                    dataLabels: { enabled: true, formatter: (val) => Math.round(val) + '%' },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '65%',
+                                labels: {
+                                    show: true,
+                                    total: {
+                                        show: true,
+                                        label: 'Total Files',
+                                        formatter: () => (categoryData.data || []).reduce((a,b) => a+b, 0)
+                                    }
+                                }
                             }
                         }
-                    }
+                    },
+                    tooltip: { y: { formatter: (val) => val + ' files' } }
                 });
+                chartCategory.render();
             }
         }
         
-        // Load extensions chart
+        // Load extensions chart (ApexCharts Bar)
         const extRes = await fetch('/api/statistics/by-extension', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -2923,40 +2932,29 @@ async function loadStatistics() {
         
         if (extRes.ok) {
             const extData = await extRes.json();
-            const ctx = document.getElementById('chart-extensions');
-            if (ctx) {
+            const container = document.getElementById('chart-extensions');
+            if (container) {
                 if (chartExtensions) chartExtensions.destroy();
-                chartExtensions = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: extData.labels || [],
-                        datasets: [{
-                            label: 'Files',
-                            data: extData.data || [],
-                            backgroundColor: '#0d6efd'
-                        }]
+                chartExtensions = new ApexCharts(container, {
+                    chart: {
+                        type: 'bar',
+                        height: 300,
+                        animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                        toolbar: { show: true, tools: { download: true, zoom: false } }
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
-                    }
+                    series: [{ name: 'Files', data: extData.data || [] }],
+                    xaxis: { categories: extData.labels || [], labels: { rotate: -45, rotateAlways: true } },
+                    yaxis: { title: { text: 'Number of Files' }, labels: { formatter: (val) => Math.round(val) } },
+                    colors: ['#0d6efd'],
+                    plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' } } },
+                    dataLabels: { enabled: true, offsetY: -20, style: { colors: ['#333'] } },
+                    tooltip: { y: { formatter: (val) => val + ' files' } }
                 });
+                chartExtensions.render();
             }
         }
         
-        // Load timeline chart
+        // Load timeline chart (ApexCharts Area)
         const timelineRes = await fetch('/api/statistics/timeline', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -2964,49 +2962,31 @@ async function loadStatistics() {
         
         if (timelineRes.ok) {
             const timelineData = await timelineRes.json();
-            const ctx = document.getElementById('chart-timeline');
-            if (ctx) {
+            const container = document.getElementById('chart-timeline');
+            if (container) {
                 if (chartTimeline) chartTimeline.destroy();
-                chartTimeline = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: timelineData.labels || [],
-                        datasets: [{
-                            label: 'Files Organized',
-                            data: timelineData.data || [],
-                            borderColor: '#198754',
-                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
+                chartTimeline = new ApexCharts(container, {
+                    chart: {
+                        type: 'area',
+                        height: 250,
+                        animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                        toolbar: { show: true, tools: { download: true, zoom: true, pan: true } },
+                        zoom: { enabled: true }
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            },
-                            x: {
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                }
-                            }
-                        }
-                    }
+                    series: [{ name: 'Files Organized', data: timelineData.data || [] }],
+                    xaxis: { categories: timelineData.labels || [], labels: { rotate: -45, rotateAlways: true } },
+                    yaxis: { title: { text: 'Files' }, labels: { formatter: (val) => Math.round(val) } },
+                    colors: ['#198754'],
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3 } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    dataLabels: { enabled: false },
+                    tooltip: { y: { formatter: (val) => val + ' files' } }
                 });
+                chartTimeline.render();
             }
         }
         
-        // Load hourly activity chart
+        // Load hourly activity chart (ApexCharts Column)
         const hourlyRes = await fetch('/api/statistics/hourly-activity', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
@@ -3014,36 +2994,25 @@ async function loadStatistics() {
         
         if (hourlyRes.ok) {
             const hourlyData = await hourlyRes.json();
-            const ctx = document.getElementById('chart-hourly');
-            if (ctx) {
+            const container = document.getElementById('chart-hourly');
+            if (container) {
                 if (chartHourly) chartHourly.destroy();
-                chartHourly = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: hourlyData.labels || [],
-                        datasets: [{
-                            label: 'Files',
-                            data: hourlyData.data || [],
-                            backgroundColor: '#0dcaf0'
-                        }]
+                chartHourly = new ApexCharts(container, {
+                    chart: {
+                        type: 'bar',
+                        height: 250,
+                        animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                        toolbar: { show: false }
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
-                    }
+                    series: [{ name: 'Files', data: hourlyData.data || [] }],
+                    xaxis: { categories: hourlyData.labels || [], title: { text: 'Hour of Day' } },
+                    yaxis: { title: { text: 'Files' }, labels: { formatter: (val) => Math.round(val) } },
+                    colors: ['#0dcaf0'],
+                    plotOptions: { bar: { borderRadius: 4, columnWidth: '80%' } },
+                    dataLabels: { enabled: false },
+                    tooltip: { y: { formatter: (val) => val + ' files' } }
                 });
+                chartHourly.render();
             }
         }
         

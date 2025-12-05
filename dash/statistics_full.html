@@ -76,31 +76,31 @@
     <div class="row">
       <div class="col-lg-6 mb-3">
         <h6>Files by Category</h6>
-        <canvas id="chart-category" height="200"></canvas>
+        <div id="chart-category" style="min-height: 300px;"></div>
       </div>
       <div class="col-lg-6 mb-3">
         <h6>Top 10 File Extensions</h6>
-        <canvas id="chart-extensions" height="200"></canvas>
+        <div id="chart-extensions" style="min-height: 300px;"></div>
       </div>
     </div>
 
     <div class="row">
       <div class="col-12 mb-3">
         <h6>Activity Timeline (Last 30 Days)</h6>
-        <canvas id="chart-timeline" height="80"></canvas>
+        <div id="chart-timeline" style="min-height: 250px;"></div>
       </div>
     </div>
 
     <div class="row">
       <div class="col-12">
         <h6>Activity by Hour of Day</h6>
-        <canvas id="chart-hourly" height="80"></canvas>
+        <div id="chart-hourly" style="min-height: 250px;"></div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
   <script>
     let __authHeader = null;
     function getAuthHeaderFromCookie() {
@@ -133,53 +133,78 @@
         const categoryRes = await fetch('/api/statistics/by-category', { credentials: 'include', headers: getAuthHeaders() });
         if (categoryRes.ok) {
           const categoryData = await categoryRes.json();
-          const ctx = document.getElementById('chart-category');
-          if (ctx) {
+          const container = document.getElementById('chart-category');
+          if (container) {
             if (chartCategory) chartCategory.destroy();
-            chartCategory = new Chart(ctx, {
-              type: 'doughnut',
-              data: { labels: categoryData.labels || [], datasets: [{ data: categoryData.data || [], backgroundColor: ['#0d6efd','#6610f2','#6f42c1','#d63384','#dc3545','#fd7e14','#ffc107','#198754','#20c997','#0dcaf0'] }] },
-              options: { responsive: true, plugins: { legend: { position: 'right' } } }
+            chartCategory = new ApexCharts(container, {
+              chart: { type: 'donut', height: 300, animations: { enabled: true, easing: 'easeinout', speed: 800 } },
+              series: categoryData.data || [],
+              labels: categoryData.labels || [],
+              colors: ['#0d6efd','#6610f2','#6f42c1','#d63384','#dc3545','#fd7e14','#ffc107','#198754','#20c997','#0dcaf0'],
+              legend: { position: 'right' },
+              dataLabels: { enabled: true, formatter: (val) => Math.round(val) + '%' },
+              plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total Files', formatter: () => (categoryData.data || []).reduce((a,b) => a+b, 0) } } } } },
+              tooltip: { y: { formatter: (val) => val + ' files' } }
             });
+            chartCategory.render();
           }
         }
         const extRes = await fetch('/api/statistics/by-extension', { credentials: 'include', headers: getAuthHeaders() });
         if (extRes.ok) {
           const extData = await extRes.json();
-          const ctx = document.getElementById('chart-extensions');
-          if (ctx) {
+          const container = document.getElementById('chart-extensions');
+          if (container) {
             if (chartExtensions) chartExtensions.destroy();
-            chartExtensions = new Chart(ctx, {
-              type: 'bar',
-              data: { labels: extData.labels || [], datasets: [{ label: 'Files', data: extData.data || [], backgroundColor: '#0d6efd' }] },
-              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            chartExtensions = new ApexCharts(container, {
+              chart: { type: 'bar', height: 300, animations: { enabled: true, easing: 'easeinout', speed: 800 }, toolbar: { show: true, tools: { download: true, zoom: false } } },
+              series: [{ name: 'Files', data: extData.data || [] }],
+              xaxis: { categories: extData.labels || [], labels: { rotate: -45, rotateAlways: true } },
+              yaxis: { title: { text: 'Number of Files' }, labels: { formatter: (val) => Math.round(val) } },
+              colors: ['#0d6efd'],
+              plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' } } },
+              dataLabels: { enabled: true, offsetY: -20, style: { colors: ['#333'] } },
+              tooltip: { y: { formatter: (val) => val + ' files' } }
             });
+            chartExtensions.render();
           }
         }
         const timelineRes = await fetch('/api/statistics/timeline', { credentials: 'include', headers: getAuthHeaders() });
         if (timelineRes.ok) {
           const timelineData = await timelineRes.json();
-          const ctx = document.getElementById('chart-timeline');
-          if (ctx) {
+          const container = document.getElementById('chart-timeline');
+          if (container) {
             if (chartTimeline) chartTimeline.destroy();
-            chartTimeline = new Chart(ctx, {
-              type: 'line',
-              data: { labels: timelineData.labels || [], datasets: [{ label: 'Files Organized', data: timelineData.data || [], borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', fill: true, tension: 0.4 }] },
-              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+            chartTimeline = new ApexCharts(container, {
+              chart: { type: 'area', height: 250, animations: { enabled: true, easing: 'easeinout', speed: 800 }, toolbar: { show: true, tools: { download: true, zoom: true, pan: true } }, zoom: { enabled: true } },
+              series: [{ name: 'Files Organized', data: timelineData.data || [] }],
+              xaxis: { categories: timelineData.labels || [], labels: { rotate: -45, rotateAlways: true } },
+              yaxis: { title: { text: 'Files' }, labels: { formatter: (val) => Math.round(val) } },
+              colors: ['#198754'],
+              fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3 } },
+              stroke: { curve: 'smooth', width: 2 },
+              dataLabels: { enabled: false },
+              tooltip: { y: { formatter: (val) => val + ' files' } }
             });
+            chartTimeline.render();
           }
         }
         const hourlyRes = await fetch('/api/statistics/hourly-activity', { credentials: 'include', headers: getAuthHeaders() });
         if (hourlyRes.ok) {
           const hourlyData = await hourlyRes.json();
-          const ctx = document.getElementById('chart-hourly');
-          if (ctx) {
+          const container = document.getElementById('chart-hourly');
+          if (container) {
             if (chartHourly) chartHourly.destroy();
-            chartHourly = new Chart(ctx, {
-              type: 'bar',
-              data: { labels: hourlyData.labels || [], datasets: [{ label: 'Files', data: hourlyData.data || [], backgroundColor: '#0dcaf0' }] },
-              options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            chartHourly = new ApexCharts(container, {
+              chart: { type: 'bar', height: 250, animations: { enabled: true, easing: 'easeinout', speed: 800 }, toolbar: { show: false } },
+              series: [{ name: 'Files', data: hourlyData.data || [] }],
+              xaxis: { categories: hourlyData.labels || [], title: { text: 'Hour of Day' } },
+              yaxis: { title: { text: 'Files' }, labels: { formatter: (val) => Math.round(val) } },
+              colors: ['#0dcaf0'],
+              plotOptions: { bar: { borderRadius: 4, columnWidth: '80%' } },
+              dataLabels: { enabled: false },
+              tooltip: { y: { formatter: (val) => val + ' files' } }
             });
+            chartHourly.render();
           }
         }
       } catch (e) { console.error('Statistics full view load failed:', e); }
