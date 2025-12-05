@@ -54,7 +54,7 @@
 <!-- ApexCharts - Modern charting library (replaced Chart.js) -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
 <!-- GridStack.js for drag-drop grid layouts -->
-<script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.all.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack-all.js"></script>
 
 <!-- MODERN UI UTILITIES - Alpine.js Helpers for Enhanced Interactivity -->
 <script>
@@ -687,8 +687,13 @@ function initDragAndDrop() {
     if (gridStack) return;
     
     const gridContainer = document.getElementById('dashboard-grid');
-    if (!gridContainer || typeof GridStack === 'undefined') {
-        console.warn('GridStack not available, falling back to basic layout');
+    if (!gridContainer) {
+        console.warn('Dashboard grid container not found');
+        return;
+    }
+    
+    if (typeof GridStack === 'undefined') {
+        console.warn('GridStack not available, falling back to basic layout. Check if gridstack-all.js loaded correctly.');
         return;
     }
     
