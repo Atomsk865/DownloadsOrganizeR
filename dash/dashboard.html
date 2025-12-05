@@ -497,7 +497,10 @@
         <i class="bi bi-list" style="font-size: 1.5rem;"></i>
     </button>
     
-    <div id="sidebar">
+        <div id="sidebar">
+            <button class="sidebar-toggle-btn" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" title="Toggle Sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
                 <!-- Custom Branding Logo -->
                 <div class="card mb-3">
                     <div class="card-body p-3 text-center">
@@ -577,30 +580,6 @@
                 </div>
                 
                 <!-- Resource Monitor -->
-                <div class="card mb-3 sidebar-collapsible">
-                    <div class="card-header sidebar-collapse-header" data-bs-toggle="collapse" data-bs-target="#sidebar-resources" style="cursor: pointer; user-select: none;">
-                        <b><small><i class="bi bi-activity"></i> Resource Monitor</small></b>
-                        <i class="bi bi-chevron-down float-end"></i>
-                    </div>
-                    <div id="sidebar-resources" class="collapse show">
-                        <div class="card-body p-2" style="font-size: 0.7rem;">
-                            <div class="mb-2">
-                                <small><b>Memory:</b></small>
-                                <div class="progress mb-1" style="height:14px;">
-                                    <div id="sidebar-ram-bar" class="progress-bar bg-success" role="progressbar" style="width: {{ ram_percent }}%; font-size:9px;">{{ ram_percent }}%</div>
-                                </div>
-                                <small class="text-muted" id="sidebar-ram-text">{{ total_memory_mb }}/{{ total_memory_gb }}GB</small>
-                            </div>
-                            <div class="mb-2">
-                                <small><b>CPU:</b></small>
-                                <div class="progress mb-1" style="height:14px;">
-                                    <div id="sidebar-cpu-bar" class="progress-bar bg-info" role="progressbar" style="width: {{ total_cpu_percent }}%; font-size:9px;">{{ total_cpu_percent }}%</div>
-                                </div>
-                                <small class="text-muted" id="sidebar-cpu-text">System: {{ total_cpu_percent }}%</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Statistics -->
                 <div class="card mb-3 sidebar-collapsible">
