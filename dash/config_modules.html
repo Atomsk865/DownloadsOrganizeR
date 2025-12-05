@@ -349,25 +349,25 @@
       <div class="mb-3">
         <label class="form-label mb-2"><small><b>Preset Themes</b></small></label>
         <div class="btn-group btn-group-sm w-100" role="group" style="flex-wrap: wrap; gap: 0.5rem;">
-          <button type="button" class="btn btn-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
+          <button type="button" class="btn btn-primary preset-theme-btn" data-theme="default" title="Default Blue Theme">
             <i class="bi bi-palette"></i> Default
           </button>
-          <button type="button" class="btn btn-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
+          <button type="button" class="btn btn-dark preset-theme-btn" data-theme="dark" title="Dark Mode Theme">
             <i class="bi bi-moon"></i> Dark
           </button>
-          <button type="button" class="btn btn-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
+          <button type="button" class="btn btn-success preset-theme-btn" data-theme="forest" title="Forest Green Theme">
             <i class="bi bi-tree"></i> Forest
           </button>
-          <button type="button" class="btn btn-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
+          <button type="button" class="btn btn-danger preset-theme-btn" data-theme="sunset" title="Sunset Orange Theme">
             <i class="bi bi-sunset"></i> Sunset
           </button>
-          <button type="button" class="btn btn-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
+          <button type="button" class="btn btn-warning preset-theme-btn" data-theme="ocean" title="Ocean Blue Theme">
             <i class="bi bi-water"></i> Ocean
           </button>
-          <button type="button" class="btn btn-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
+          <button type="button" class="btn btn-info preset-theme-btn" data-theme="mint" title="Mint Fresh Theme">
             <i class="bi bi-leaf"></i> Mint
           </button>
-          <button type="button" class="btn btn-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
+          <button type="button" class="btn btn-secondary preset-theme-btn" data-theme="cyberpunk" title="Cyberpunk Neon Theme">
             <i class="bi bi-lightning"></i> Cyberpunk
           </button>
         </div>
@@ -482,10 +482,10 @@
         </div>
 
         <div class="mt-2 d-flex gap-2 flex-wrap">
-          <button class="btn btn-primary btn-sm" onclick="saveBranding()"><i class="bi bi-save"></i> Save Theme</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportTheme()"><i class="bi bi-download"></i> Export</button>
-          <button class="btn btn-warning btn-sm" onclick="resetBranding()"><i class="bi bi-arrow-clockwise"></i> Reset</button>
-          <button class="btn btn-info btn-sm" onclick="toggleThemePreview()"><i class="bi bi-eye"></i> Preview</button>
+          <button class="btn btn-primary btn-sm" data-theme-action="save"><i class="bi bi-save"></i> Save Theme</button>
+          <button class="btn btn-secondary btn-sm" data-theme-action="export"><i class="bi bi-download"></i> Export</button>
+          <button class="btn btn-warning btn-sm" data-theme-action="reset"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+          <button class="btn btn-info btn-sm" data-theme-action="preview"><i class="bi bi-eye"></i> Preview</button>
         </div>
       </div>
     </div>

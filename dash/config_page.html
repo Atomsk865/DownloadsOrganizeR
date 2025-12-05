@@ -428,5 +428,19 @@
     <script type="module">
         import { configApp } from '{{ url_for("static", filename="js/modules/config-app.js") }}';
     </script>
+
+    <!-- Theme Builder Module -->
+    <script type="module">
+        const themeBuilderModule = await import('{{ url_for("static", filename="js/modules/theme-builder.js") }}');
+        const ThemeBuilder = themeBuilderModule.ThemeBuilder || themeBuilderModule.default;
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => ThemeBuilder.init?.());
+        } else {
+            ThemeBuilder.init?.();
+        }
+        
+        window.ThemeBuilder = ThemeBuilder;
+    </script>
 </body>
 </html>
