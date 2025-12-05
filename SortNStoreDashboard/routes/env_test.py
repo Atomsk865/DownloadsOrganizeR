@@ -8,8 +8,10 @@ routes_env = Blueprint('routes_env', __name__)
 
 
 @routes_env.route('/env-test')
+@requires_auth
 def env_test_page():
-    return render_template('environment_test.html')
+    """Render the modern debug/environment test page"""
+    return render_template('debug_page.html')
 
 
 @routes_env.route('/api/env/ping')
