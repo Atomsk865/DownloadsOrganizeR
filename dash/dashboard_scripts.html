@@ -2769,11 +2769,23 @@ async function scanVirusTotal(filePath, fileName) {
         });
         console.log('[VT] Response status:', res.status);
         console.log('[VT] Response URL:', res.url);
-        if (!res.ok && res.status === 404) {
-            showNotification('VirusTotal endpoint not found. Please restart the dashboard service.', 'warning');
+        
+        const data = await res.json().catch(() => ({}));
+        
+        // Check for file not found in VT database
+        if (res.status === 404 && data.error && typeof data.error === 'string' && data.error.includes('NotFoundError')) {
+            // File exists locally but not in VT database - offer upload link
+            const uploadUrl = 'https://www.virustotal.com/gui/home/upload';
+            showNotification(`File not found in VirusTotal database. <a href="${uploadUrl}" target="_blank" class="text-white text-decoration-underline">Click here to upload and scan it</a>.`, 'info', 8000);
             return;
         }
-        const data = await res.json().catch(() => ({}));
+        
+        // Check for local file not found
+        if (res.status === 404 && data.error === 'File not found') {
+            showNotification('File not found on disk. It may have been moved or deleted.', 'warning');
+            return;
+        }
+        
         if (res.ok) {
             const attrs = data.data && data.data.attributes;
             const stats = attrs && attrs.last_analysis_stats;
@@ -2818,7 +2830,18 @@ async function scanVirusTotal(filePath, fileName) {
                 console.warn('Failed to render VT modal:', e);
             }
         } else {
-            showNotification('VirusTotal error: ' + (data.error || res.status), 'danger');
+            // Handle other errors
+            let errorMsg = 'VirusTotal scan failed: ';
+            if (res.status === 400 && data.error && data.error.includes('API key')) {
+                errorMsg += 'API key not configured or invalid.';
+            } else if (res.status === 403) {
+                errorMsg += 'Access forbidden. Check API key permissions.';
+            } else if (res.status === 429) {
+                errorMsg += 'Rate limit exceeded. Please wait and try again.';
+            } else {
+                errorMsg += (data.error || `HTTP ${res.status}`);
+            }
+            showNotification(errorMsg, 'danger');
         }
     } catch (e) {
         showNotification('VirusTotal request failed: ' + e.message, 'danger');
