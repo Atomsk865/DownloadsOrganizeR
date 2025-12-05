@@ -1,6 +1,39 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Chart.js -->
+<!-- htmx - AJAX requests via HTML attributes -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+    // htmx configuration
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        // Add auth headers to all htmx requests
+        if (typeof getAuthHeaders === 'function') {
+            const headers = getAuthHeaders();
+            Object.keys(headers).forEach(key => {
+                event.detail.headers[key] = headers[key];
+            });
+        }
+    });
+    
+    // Handle htmx errors
+    document.body.addEventListener('htmx:responseError', (event) => {
+        console.error('htmx request failed:', event.detail);
+        if (typeof showNotification === 'function') {
+            showNotification('Request failed: ' + (event.detail.xhr.statusText || 'Unknown error'), 'danger');
+        }
+    });
+    
+    // Success notifications
+    document.body.addEventListener('htmx:afterSwap', (event) => {
+        // Auto-initialize any new components after htmx swaps content
+        if (typeof initDragAndDrop === 'function') initDragAndDrop();
+        if (typeof initResizableTables === 'function') initResizableTables();
+    });
+</script>
+<!-- Alpine.js - Lightweight reactive framework -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+<!-- ApexCharts - Modern charting library -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+<!-- Chart.js (keeping for gradual migration) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- GridStack.js for drag-drop grid layouts -->
 <script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.all.js"></script>
