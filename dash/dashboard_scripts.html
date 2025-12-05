@@ -55,6 +55,248 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
 <!-- GridStack.js for drag-drop grid layouts -->
 <script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.all.js"></script>
+
+<!-- MODERN UI UTILITIES - Alpine.js Helpers for Enhanced Interactivity -->
+<script>
+// Initialize after Alpine loads
+document.addEventListener('alpine:init', () => {
+    // ========== FORM VALIDATION UTILITIES ==========
+    window.uiComponents = {
+        // Form field validation with visual feedback
+        createFormValidator: (fieldName, maxLength = null, pattern = null) => ({
+            value: '',
+            error: '',
+            isValid: false,
+            charCount: 0,
+            
+            validate() {
+                this.charCount = this.value.length;
+                
+                // Check if empty
+                if (!this.value.trim()) {
+                    this.error = 'This field is required';
+                    this.isValid = false;
+                    return;
+                }
+                
+                // Check max length
+                if (maxLength && this.charCount > maxLength) {
+                    this.error = `Maximum ${maxLength} characters allowed`;
+                    this.isValid = false;
+                    return;
+                }
+                
+                // Check pattern (regex)
+                if (pattern && !pattern.test(this.value)) {
+                    this.error = 'Invalid format';
+                    this.isValid = false;
+                    return;
+                }
+                
+                this.error = '';
+                this.isValid = true;
+            },
+            
+            reset() {
+                this.value = '';
+                this.error = '';
+                this.isValid = false;
+                this.charCount = 0;
+            }
+        }),
+        
+        // ========== TABLE UTILITIES ==========
+        // Sortable table support
+        createTableManager: (data = []) => ({
+            data: data,
+            sortKey: null,
+            sortDirection: 'asc',
+            selectedRows: [],
+            
+            sort(key) {
+                if (this.sortKey === key) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortKey = key;
+                    this.sortDirection = 'asc';
+                }
+                
+                this.data.sort((a, b) => {
+                    const aVal = a[key];
+                    const bVal = b[key];
+                    
+                    if (typeof aVal === 'string') {
+                        return this.sortDirection === 'asc' 
+                            ? aVal.localeCompare(bVal)
+                            : bVal.localeCompare(aVal);
+                    }
+                    
+                    return this.sortDirection === 'asc'
+                        ? aVal - bVal
+                        : bVal - aVal;
+                });
+            },
+            
+            toggleRow(rowId) {
+                const idx = this.selectedRows.indexOf(rowId);
+                if (idx >= 0) {
+                    this.selectedRows.splice(idx, 1);
+                } else {
+                    this.selectedRows.push(rowId);
+                }
+            },
+            
+            selectAll() {
+                this.selectedRows = this.data.map((_, i) => i);
+            },
+            
+            deselectAll() {
+                this.selectedRows = [];
+            },
+            
+            getSelectedCount() {
+                return this.selectedRows.length;
+            }
+        }),
+        
+        // ========== GAUGE/METER UTILITIES ==========
+        // Real-time resource gauge
+        createGauge: (maxValue = 100, threshold = 80) => ({
+            value: 0,
+            maxValue: maxValue,
+            threshold: threshold,
+            isAlert: false,
+            
+            update(newValue) {
+                this.value = Math.min(newValue, this.maxValue);
+                this.isAlert = this.value >= this.threshold;
+            },
+            
+            getPercentage() {
+                return Math.round((this.value / this.maxValue) * 100);
+            },
+            
+            getColor() {
+                const pct = this.getPercentage();
+                if (pct >= 80) return '#dc3545';  // Red
+                if (pct >= 60) return '#ffc107';  // Yellow
+                if (pct >= 40) return '#17a2b8';  // Cyan
+                return '#198754';  // Green
+            }
+        }),
+        
+        // ========== NOTIFICATION UTILITIES ==========
+        // Smart notification grouping
+        createNotificationManager: () => ({
+            notifications: [],
+            autoHideDelay: 5000,
+            
+            add(message, type = 'info', action = null) {
+                const notification = {
+                    id: Date.now(),
+                    message: message,
+                    type: type,
+                    action: action,
+                    show: true
+                };
+                
+                this.notifications.unshift(notification);
+                
+                // Auto-hide based on type
+                if (['success', 'info'].includes(type)) {
+                    setTimeout(() => this.remove(notification.id), this.autoHideDelay);
+                }
+            },
+            
+            remove(id) {
+                this.notifications = this.notifications.filter(n => n.id !== id);
+            },
+            
+            clear() {
+                this.notifications = [];
+            },
+            
+            group() {
+                const grouped = {};
+                this.notifications.forEach(notif => {
+                    if (!grouped[notif.type]) grouped[notif.type] = [];
+                    grouped[notif.type].push(notif);
+                });
+                return grouped;
+            }
+        }),
+        
+        // ========== UI STATE UTILITIES ==========
+        // Floating action menu
+        createFABMenu: () => ({
+            open: false,
+            items: [],
+            
+            toggle() {
+                this.open = !this.open;
+            },
+            
+            close() {
+                this.open = false;
+            },
+            
+            addItem(icon, label, action) {
+                this.items.push({ icon, label, action });
+            }
+        }),
+        
+        // Smart form hints
+        createSmartHints: () => ({
+            hints: {},
+            activeField: null,
+            
+            getHint(fieldName) {
+                return this.hints[fieldName] || '';
+            },
+            
+            setHint(fieldName, hint) {
+                this.hints[fieldName] = hint;
+            },
+            
+            showHint(fieldName) {
+                this.activeField = fieldName;
+            },
+            
+            hideHint() {
+                this.activeField = null;
+            }
+        }),
+        
+        // ========== ACCESSIBILITY UTILITIES ==========
+        // Keyboard navigation support
+        createKeyboardHandler: () => ({
+            shortcuts: {},
+            
+            register(key, handler, label = '') {
+                this.shortcuts[key] = { handler, label };
+            },
+            
+            handle(event) {
+                const key = `${event.ctrlKey ? 'Ctrl+' : ''}${event.key.toUpperCase()}`;
+                if (this.shortcuts[key]) {
+                    event.preventDefault();
+                    this.shortcuts[key].handler();
+                }
+            }
+        })
+    };
+    
+    // Register globally for Alpine components
+    window.Alpine = Alpine;
+    console.log('✅ Modern UI components initialized');
+});
+
+// Ensure utilities available before Alpine init
+if (!window.uiComponents) {
+    window.uiComponents = {};
+}
+</script>
+
 <script>console.log('[Dashboard Scripts] Version: 2025-12-04-VT-FIX');</script>
 <!-- Login / Change-password Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true" role="dialog">
