@@ -31,10 +31,10 @@ This README is user‑centric: quick install, how it works, features, configurat
 
   ```bash
   pip install -r requirements.txt
-  python OrganizerDashboard.py
+  python SortNStoreDashboard.py
   ```
 
-  Visit `http://localhost:5000` (default credentials: `admin` / `change_this_password`)
+  The dashboard will run preflight checks to validate your environment, then start at `http://localhost:5000` (default credentials: `admin` / `change_this_password`)
 
 Want more detail? See `docs/INSTALL.md`.
 
@@ -90,13 +90,14 @@ See `docs/INSTALL.md` for configuration steps.
 
 ## Troubleshooting
 
+- **Preflight Checks**: Run `python preflight_check.py` to validate your environment before starting the dashboard.
 - Files not moving? Check `C:\Users\{username}\Downloads\organizer.log` for details.
 - Incomplete downloads are ignored until finished (`.crdownload`, `.part`, `.tmp`).
 - Verify extensions exist in routes (case‑insensitive).
 - Confirm destination folders are writable.
 - Dashboard not loading? Ensure `pip install -r requirements.txt` and Python 3.10+.
 
-More in `docs/BUGS.md` and `docs/INSTALL.md`.
+More in `docs/BUGS.md`, `docs/INSTALL.md`, and `docs/PREFLIGHT_CHECKS.md`.
 
 ## Uninstall
 
@@ -113,3 +114,4 @@ See `LICENSE`.
 - `docs/FEATURES.md` – Feature details and scenarios
 - `docs/BUGS.md` – Known issues and limitations
 - `docs/ARCHITECTURE.md` – System overview and file paths
+- `docs/PREFLIGHT_CHECKS.md` – Environment validation and troubleshooting
