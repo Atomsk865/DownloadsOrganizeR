@@ -204,8 +204,8 @@ def create_app():
     except KeyError:
         _sys.modules['__main__'] = _sys.modules.get('__main__', sys.modules[__name__])
 
-    from flask_caching import Cache
-    from flask_compress import Compress
+    from flask_caching import Cache  # type: ignore
+    from flask_compress import Compress  # type: ignore
     
     app = Flask(__name__, template_folder='dash')
     # Basic secret key for session cookies; can be overridden via env
