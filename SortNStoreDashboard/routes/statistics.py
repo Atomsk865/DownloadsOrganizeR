@@ -133,7 +133,7 @@ def get_statistics_by_category():
         category = move.get("category", "Other")
         category_counts[category] += 1
     
-    # Format for Chart.js
+    # Format for charting libraries (ApexCharts)
     categories = []
     counts = []
     for cat, count in category_counts.most_common():
