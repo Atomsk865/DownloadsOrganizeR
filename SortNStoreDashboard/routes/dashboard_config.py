@@ -8,7 +8,7 @@ routes_dashboard_config = Blueprint('routes_dashboard_config', __name__)
 
 @routes_dashboard_config.route('/config', methods=['GET'])
 def config_page():
-    """Render dashboard configuration UI (users, roles, layout)."""
+    """Render standalone dashboard configuration UI (users, roles, layout)."""
     # Check both session auth (Flask-Login) and Basic Auth header
     from SortNStoreDashboard.auth.auth import check_auth
     auth = request.authorization
@@ -20,7 +20,7 @@ def config_page():
     
     main = sys.modules['__main__']
     dash_cfg = getattr(main, 'dashboard_config', {})
-    return render_template('dashboard_config.html', roles=dash_cfg.get('roles', {}))
+    return render_template('config_page.html', roles=dash_cfg.get('roles', {}))
 
 @routes_dashboard_config.route('/api/dashboard/config', methods=['GET'])
 def get_dashboard_config():

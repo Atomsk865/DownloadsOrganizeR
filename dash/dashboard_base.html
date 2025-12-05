@@ -541,53 +541,124 @@
             top: 0;
             bottom: 0;
             width: 260px;
-            max-width: 90vw;
-            min-width: 60px;
+            max-width: 260px;
+            min-width: 260px;
             z-index: 1000;
             overflow-y: auto;
+            overflow-x: hidden;
             background: var(--bg-secondary);
             border-top-right-radius: 24px;
             border-bottom-right-radius: 24px;
             box-shadow: 2px 0 12px rgba(0,0,0,0.08);
             border-right: 2px solid var(--border-color);
-            transition: width 0.3s, background 0.3s, border-radius 0.3s, box-shadow 0.3s;
+            transition: left 0.3s ease-in-out, opacity 0.3s, visibility 0.3s, background 0.3s, box-shadow 0.3s;
+            opacity: 1;
+            visibility: visible;
         }
-        #sidebar.collapsed {
-            width: 60px;
+        body.sidebar-collapsed #sidebar {
+            left: -260px;
+            opacity: 0;
+            visibility: hidden;
         }
         .sidebar-toggle-btn {
-            position: absolute;
-            top: 18px;
-            right: -18px;
-            width: 36px;
-            height: 36px;
+            position: fixed;
+            top: 50%;
+            left: 258px;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 100px;
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            border-left: none;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: 3px 0 8px rgba(0,0,0,0.15);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 4px;
             cursor: pointer;
             z-index: 1100;
-            transition: background 0.3s, border 0.3s;
+            transition: left 0.3s ease-in-out, background 0.3s, transform 0.3s;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
         }
         .sidebar-toggle-btn:hover {
             background: var(--card-header-bg);
+            box-shadow: 3px 0 12px rgba(0,0,0,0.2);
+        }
+        .sidebar-toggle-btn::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--bg-secondary);
+            z-index: -1;
+        }
+        body.sidebar-collapsed .sidebar-toggle-btn {
+            left: 0;
+        }
+        .sidebar-toggle-btn i {
+            writing-mode: horizontal-tb;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            transition: transform 0.3s;
+        }
+        body.sidebar-collapsed .sidebar-toggle-btn i {
+            transform: rotate(180deg);
+        }
+        .sidebar-toggle-text {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        /* Delay tooltip on sidebar toggle button */
+        .sidebar-toggle-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            opacity: 0;
+            pointer-events: none;
+            animation: tooltipDelay 10s forwards;
+            z-index: 10000;
+        }
+        @keyframes tooltipDelay {
+            0%, 99.9% { opacity: 0; visibility: hidden; }
+            100% { opacity: 1; visibility: visible; }
         }
         .dashboard-container {
             margin-left: 260px;
-            transition: margin-left 0.3s;
+            padding: 80px 1.25rem 2rem 2.5rem;
+            transition: margin-left 0.3s ease-in-out, padding 0.3s ease-in-out;
+            min-width: 0;
         }
         body.sidebar-collapsed .dashboard-container {
-            margin-left: 60px;
+            margin-left: 0;
+            padding-left: 2.5rem;
         }
         .dashboard-root {
             margin-left: 260px;
-            transition: margin-left 0.3s;
+            transition: margin-left 0.3s ease-in-out;
+            padding: 0 1rem 2rem 1rem;
+            min-width: 0;
         }
         body.sidebar-collapsed .dashboard-root {
-            margin-left: 60px;
+            margin-left: 0;
         }
         /* Removed resizer logic */
         @media (max-width: 768px) {
@@ -1311,88 +1382,44 @@
     </div>
 </div>
 
-<!-- Theme Toggle and Notification Bell -->
-<div class="theme-toggle-container">
-    <div class="theme-toggle" onclick="toggleTheme()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Dark/Light mode" style="position: relative;">
-        <div class="help-modal-header">
-            <h4><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h4>
-            <button class="btn btn-sm btn-secondary" onclick="closeHelpModal()">
-                <i class="bi bi-x-lg"></i>
-            </button>
+<!-- Intro Modal (hidden by default; enable via JS) -->
+<div class="intro-modal" style="display: none;">
+    <div class="intro-modal-header">
+        <h2>🎉 Welcome to DownloadsOrganizeR!</h2>
+        <p class="version">Version 1.1.0</p>
+    </div>
+    <div class="intro-modal-body">
+        <div class="feature-highlight">
+            <h5><i class="bi bi-graph-up"></i> File Organization Statistics</h5>
+            <p>Track your file organization with beautiful charts showing activity over time, file categories, and trending extensions.</p>
         </div>
-        <div class="help-modal-body">
-            <div class="shortcut-grid">
-                <div class="shortcut-item">
-                    <span>Open Command Palette</span>
-                    <span class="shortcut-key">Ctrl + K</span>
-    <div class="notification-bell" x-data="{ open: false, unreadCount: 0 }" @click.outside="open = false">
-        <button class="btn" @click="open = !open; if(open) loadNotificationCenter()" title="Notifications">
-            <i class="bi bi-bell-fill"></i>
-            <span class="notification-badge" id="notification-badge" x-show="unreadCount > 0" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
-        </button>
-        <div class="notification-dropdown" id="notification-dropdown" x-show="open" x-transition>
-            <div class="notification-header">
-                <h6><i class="bi bi-bell"></i> Notifications</h6>
-                <div>
-                    <button class="btn btn-sm btn-primary me-1" onclick="markAllNotificationsRead()" title="Mark all as read">
-                        <i class="bi bi-check-all"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="clearAllNotifications()" title="Clear all">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="notification-body" id="notification-body">
-                <div class="notification-empty">
-                    <i class="bi bi-bell-slash"></i>
-                    <p>No notifications</p>
-                </div>
-            </div>
-            <div class="notification-footer">
-                <small class="text-muted">Showing recent notifications</small>
-            </div>
+        <div class="feature-highlight">
+            <h5><i class="bi bi-bell-fill"></i> Notification Center</h5>
+            <p>All dashboard alerts are now saved to the notification center (bell icon in top-right). Never miss an important update!</p>
+        </div>
+        <div class="feature-highlight">
+            <h5><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h5>
+            <p>Navigate faster with keyboard shortcuts! Press <kbd>Ctrl+K</kbd> for the command palette or <kbd>?</kbd> to see all shortcuts.</p>
+        </div>
+        <div class="feature-highlight">
+            <h5><i class="bi bi-moon-stars-fill"></i> Dark Mode</h5>
+            <p>Toggle between light and dark themes with the sun/moon icon in the top-right or press <kbd>Ctrl+D</kbd>.</p>
+        </div>
+        <div class="feature-highlight">
+            <h5><i class="bi bi-grip-vertical"></i> Customizable Layout</h5>
+            <p>Drag and drop modules to rearrange your dashboard. Your layout is saved automatically!</p>
         </div>
     </div>
-                </div>
-<!-- Fixed Notification Container -->
-    <div class="intro-modal">
-        <div class="intro-modal-header">
-            <h2>🎉 Welcome to DownloadsOrganizeR!</h2>
-            <p class="version">Version 1.1.0</p>
-        </div>
-        <div class="intro-modal-body">
-            <div class="feature-highlight">
-                <h5><i class="bi bi-graph-up"></i> File Organization Statistics</h5>
-                <p>Track your file organization with beautiful charts showing activity over time, file categories, and trending extensions.</p>
-            </div>
-            <div class="feature-highlight">
-                <h5><i class="bi bi-bell-fill"></i> Notification Center</h5>
-                <p>All dashboard alerts are now saved to the notification center (bell icon in top-right). Never miss an important update!</p>
-            </div>
-            <div class="feature-highlight">
-                <h5><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h5>
-                <p>Navigate faster with keyboard shortcuts! Press <kbd>Ctrl+K</kbd> for the command palette or <kbd>?</kbd> to see all shortcuts.</p>
-            </div>
-            <div class="feature-highlight">
-                <h5><i class="bi bi-moon-stars-fill"></i> Dark Mode</h5>
-                <p>Toggle between light and dark themes with the sun/moon icon in the top-right or press <kbd>Ctrl+D</kbd>.</p>
-            </div>
-            <div class="feature-highlight">
-                <h5><i class="bi bi-grip-vertical"></i> Customizable Layout</h5>
-                <p>Drag and drop modules to rearrange your dashboard. Your layout is saved automatically!</p>
-            </div>
-        </div>
-        <div class="intro-modal-footer">
-            <label for="dont-show-intro">
-                <input type="checkbox" id="dont-show-intro" x-model="dontShow"> Don't show this again
-            </label>
-            <button class="btn btn-primary" @click="
-                if (dontShow) localStorage.setItem('dontShowIntro', 'true');
-                show = false;
-            ">
-                <i class="bi bi-check-lg"></i> Got it!
-            </button>
-        </div>
+    <div class="intro-modal-footer">
+        <label for="dont-show-intro">
+            <input type="checkbox" id="dont-show-intro" x-model="dontShow"> Don't show this again
+        </label>
+        <button class="btn btn-primary" @click="
+            if (dontShow) localStorage.setItem('dontShowIntro', 'true');
+            show = false;
+        ">
+            <i class="bi bi-check-lg"></i> Got it!
+        </button>
     </div>
 </div>
 
@@ -1479,78 +1506,55 @@
     </div>
 </div>
 
-<div class="container dashboard-root">
+<div class="container-fluid dashboard-root p-0" style="max-width: 100%;">
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
     {% block dashboard_content %}{% endblock %}
 </div>
+    <!-- Shared Theme System -->
+    <script src="{{ url_for('static', filename='js/theme-system.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/start_organizer.js') }}"></script>
     <script>
-        // Dark mode functionality
-        function toggleTheme() {
-            // Get current state
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const isCustomThemeActive = document.documentElement.getAttribute('data-custom-theme') === 'true';
-            
-            // If custom theme is active, switch to dark
-            if (isCustomThemeActive) {
-                disableCustomTheme();
-                const newTheme = 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            } else {
-                // Toggle between light and dark
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            }
-            
-            // Apply theme changes
-            applyThemeMode();
-        }
+        // Theme management - delegates to ThemeSystem when available
+        // These functions are kept for backward compatibility
         
-        function applyThemeMode() {
-            const theme = document.documentElement.getAttribute('data-theme') || 'light';
-            const isCustom = document.documentElement.getAttribute('data-custom-theme') === 'true';
-            
-            // Apply Bootstrap theme
-            document.documentElement.setAttribute('data-bs-theme', isCustom ? 'light' : theme);
+        function toggleTheme() {
+            if (typeof ThemeSystem !== 'undefined' && ThemeSystem.toggleTheme) {
+                return ThemeSystem.toggleTheme();
+            }
+            // Fallback if ThemeSystem not loaded yet
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('organizer_theme_v1', JSON.stringify({ mode: newTheme }));
         }
         
         function enableCustomTheme() {
-            document.documentElement.setAttribute('data-custom-theme', 'true');
-            document.documentElement.setAttribute('data-bs-theme', 'light');
-            localStorage.setItem('custom_theme_active', 'true');
-            updateThemeToggleUI();
-        }
-        
-        function disableCustomTheme() {
-            document.documentElement.setAttribute('data-custom-theme', 'false');
-            localStorage.setItem('custom_theme_active', 'false');
-            updateThemeToggleUI();
-        }
-        
-        function revertToDefaultTheme() {
-            disableCustomTheme();
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            document.documentElement.setAttribute('data-bs-theme', currentTheme);
-            applyThemeMode();
-        }
-        
-        function undoCustomTheme() {
-            // Undo goes back to the custom theme (since we're currently in default mode)
-            const customTheme = getPersistedTheme();
-            if (customTheme) {
-                enableCustomTheme();
-                if (typeof applyThemeStyles === 'function') {
-                    applyThemeStyles(customTheme);
+            if (typeof ThemeSystem !== 'undefined' && ThemeSystem.applyCustomTheme) {
+                const customTheme = ThemeSystem.getCustomTheme();
+                if (customTheme) {
+                    ThemeSystem.applyCustomTheme(customTheme);
                 }
             }
         }
         
+        function disableCustomTheme() {
+            if (typeof ThemeSystem !== 'undefined' && ThemeSystem.resetTheme) {
+                ThemeSystem.resetTheme();
+            }
+        }
+        
+        function revertToDefaultTheme() {
+            if (typeof ThemeSystem !== 'undefined' && ThemeSystem.resetTheme) {
+                ThemeSystem.resetTheme();
+            }
+        }
+        
         function updateThemeToggleUI() {
-            const isCustom = document.documentElement.getAttribute('data-custom-theme') === 'true';
+            // Legacy function - kept for compatibility
             const customBadge = document.getElementById('custom-theme-badge');
             const undoBtn = document.getElementById('theme-undo-btn');
+            const customTheme = typeof ThemeSystem !== 'undefined' ? ThemeSystem.getCustomTheme() : null;
+            const isCustom = customTheme && customTheme.active;
             
             if (isCustom) {
                 if (customBadge) customBadge.style.display = 'flex';
@@ -1560,24 +1564,6 @@
                 if (undoBtn) undoBtn.style.display = 'none';
             }
         }
-        
-        // Load saved theme on page load
-        (function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const customThemeActive = localStorage.getItem('custom_theme_active') === 'true';
-            
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            document.documentElement.setAttribute('data-custom-theme', customThemeActive ? 'true' : 'false');
-            document.documentElement.setAttribute('data-bs-theme', customThemeActive ? 'light' : savedTheme);
-            
-            // Update UI after page load
-            setTimeout(() => {
-                updateThemeToggleUI();
-                if (customThemeActive && typeof restorePersistedTheme === 'function') {
-                    restorePersistedTheme();
-                }
-            }, 100);
-        })();
         
         // Initialize Bootstrap tooltips globally
         document.addEventListener('DOMContentLoaded', function(){

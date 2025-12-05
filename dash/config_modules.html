@@ -1,0 +1,546 @@
+<!-- Config Modules - Reusable Include for Config Page -->
+
+<!-- Features & Integrations -->
+<div class="config-module" data-module="features-integrations" draggable="true">
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <b>Features & Integrations</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="row g-2">
+        <div class="col-md-8">
+          <label class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
+          <input class="form-control form-control-sm" id="cfg-vt-api-key" placeholder="Paste your VirusTotal API key">
+          <small class="text-muted">Used for hash lookups in Recent Files. Leave blank to disable.</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label mb-1"><small><b>Feature Toggles</b></small></label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="cfg-feat-virustotal" checked>
+            <label class="form-check-label"><small>VirusTotal integration</small></label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="cfg-feat-duplicates" checked>
+            <label class="form-check-label"><small>Duplicate Detection</small></label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="cfg-feat-reports" checked>
+            <label class="form-check-label"><small>Reports & Analytics</small></label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="cfg-feat-developer-mode">
+            <label class="form-check-label"><small>Developer Mode</small></label>
+          </div>
+          <small class="text-muted d-block mt-1">Shows env-test and DEV RESET links</small>
+        </div>
+      </div>
+      <div class="mt-2 d-flex justify-content-end">
+        <button class="btn btn-sm btn-primary" onclick="saveFeaturesConfig()" data-right="manage_config"><i class="bi bi-save"></i> Save Features</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Users & Roles -->
+<div class="config-module" data-module="users-roles" draggable="true">
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <b>Users & Roles</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="search-users" placeholder="Search users..." oninput="filterUsers()">
+          <button class="btn btn-secondary" onclick="clearUserSearch()" title="Clear search">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <table class="table table-sm" id="users-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th style="width:80px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+      <hr class="mt-2 mb-2"/>
+      <div class="mb-2"><b>Add / Update User</b></div>
+      <div class="mb-2">
+        <input id="new-username" class="form-control form-control-sm" placeholder="Username">
+      </div>
+      <div class="mb-2">
+        <select id="new-role" class="form-select form-select-sm"></select>
+      </div>
+      <div class="mb-2">
+        <input id="user-new-password" class="form-control form-control-sm" type="password" placeholder="Password (leave blank to keep)">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Role Rights -->
+<div class="config-module" data-module="role-rights" draggable="true">
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <b>Role Rights</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="search-roles" placeholder="Search roles..." oninput="filterRoles()">
+          <button class="btn btn-secondary" onclick="clearRoleSearch()" title="Clear search">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Rights</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for role, rights in roles.items() %}
+          <tr>
+            <td><small>{{ role }}</small></td>
+            <td>
+              {% for r, allowed in rights.items() %}
+                <span class="badge bg-{{ 'success' if allowed else 'secondary' }} mb-1">{{ r }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Service Installation -->
+<div class="config-module" data-module="service-install" draggable="true">
+  <div class="card" data-right="manage_service">
+    <div class="card-header d-flex align-items-center">
+      <b>Service Installation</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <label class="form-label mb-1"><small><b>Service Name</b></small></label>
+        <input id="service-name-input" class="form-control form-control-sm" value="DownloadsOrganizer">
+      </div>
+      <div class="mb-2">
+        <label class="form-label mb-1"><small><b>Scripts Root Directory</b></small></label>
+        <input id="scripts-root-input" class="form-control form-control-sm" value="C:\Scripts">
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-2">
+          <label class="form-label mb-1"><small><b>Memory Threshold (MB)</b></small></label>
+          <input id="memory-threshold-input" type="number" class="form-control form-control-sm" value="200">
+        </div>
+        <div class="col-md-6 mb-2">
+          <label class="form-label mb-1"><small><b>CPU Threshold (%)</b></small></label>
+          <input id="cpu-threshold-input" type="number" class="form-control form-control-sm" value="60">
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-primary btn-sm" onclick="installService()">
+          <i class="bi bi-download"></i> Install Service
+        </button>
+        <button class="btn btn-warning btn-sm" onclick="reinstallService()">
+          <i class="bi bi-arrow-repeat"></i> Reinstall
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="uninstallService()">
+          <i class="bi bi-trash"></i> Uninstall Service
+        </button>
+      </div>
+      <div class="mt-2">
+        <small class="text-muted">
+          <i class="bi bi-info-circle"></i> Service installation requires Windows and administrator privileges.
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Network Targets -->
+<div class="config-module" data-module="network-targets" draggable="true">
+  <div class="card" data-right="manage_config">
+    <div class="card-header d-flex align-items-center">
+      <b>Network Targets (NAS/SMB)</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <div class="input-group input-group-sm mb-2">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="search-network-targets" placeholder="Search network targets..." oninput="filterNetworkTargets()">
+          <button class="btn btn-secondary" onclick="clearNetworkTargetSearch()" title="Clear search">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <label class="form-label mb-1"><small><b>Template</b></small></label>
+        <select class="form-select form-select-sm" id="nas-template" onchange="applyNASTemplate()" title="Quick setup for common NAS types">
+          <option value="">-- Select a template --</option>
+          <option value="synology">Synology NAS</option>
+          <option value="qnap">QNAP NAS</option>
+          <option value="windows">Windows Share</option>
+          <option value="generic">Generic SMB/CIFS</option>
+        </select>
+      </div>
+      <table class="table table-sm" id="network-targets-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>UNC Path</th>
+            <th>Credential Key</th>
+            <th style="width:80px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="network-targets-tbody"></tbody>
+      </table>
+      <hr class="mt-2 mb-2"/>
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input id="nt-name" class="form-control form-control-sm" placeholder="Name" title="Reference name for the network target">
+          <div class="invalid-feedback">Name is required.</div>
+        </div>
+        <div class="col-md-5">
+          <input id="nt-path" class="form-control form-control-sm" placeholder="\\\\NAS\\Share\\Downloads" title="UNC path to the NAS/SMB share">
+          <div class="invalid-feedback">Provide a valid UNC path, e.g., \\server\share\folder</div>
+        </div>
+        <div class="col-md-3">
+          <input id="nt-cred" class="form-control form-control-sm" placeholder="credential_key" title="Key to credentials in config">
+          <div class="invalid-feedback">Credential key is required.</div>
+        </div>
+      </div>
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-primary btn-sm" onclick="addNetworkTarget()" title="Add or update network target">Save Target</button>
+        <button class="btn btn-info btn-sm" onclick="testNAS()" title="Test selected network target">Test NAS</button>
+        <button class="btn btn-success btn-sm" onclick="saveNetworkConfig()" title="Persist network targets and credentials to organizer config">Persist Network Config</button>
+      </div>
+      <div class="mt-2">
+        <small class="text-muted">Credentials are referenced by key. Configure below in SMTP & Credentials.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SMTP & Credentials -->
+<div class="config-module" data-module="smtp-creds" draggable="true">
+  <div class="card" data-right="manage_config">
+    <div class="card-header d-flex align-items-center">
+      <b>SMTP & Credentials</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <label class="form-label mb-1"><small><b>SMTP Template</b></small></label>
+        <select class="form-select form-select-sm" id="smtp-template" onchange="applySMTPTemplate()" title="Quick setup for common email providers">
+          <option value="">-- Select a template --</option>
+          <option value="gmail">Gmail</option>
+          <option value="outlook">Outlook.com</option>
+          <option value="office365">Office 365</option>
+          <option value="yahoo">Yahoo Mail</option>
+          <option value="generic">Generic SMTP</option>
+        </select>
+      </div>
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input id="smtp-host" class="form-control form-control-sm" placeholder="SMTP Host" title="Mail server hostname">
+          <div class="invalid-feedback">SMTP host is required.</div>
+        </div>
+        <div class="col-md-2">
+          <input id="smtp-port" type="number" class="form-control form-control-sm" placeholder="587" title="SMTP port">
+          <div class="invalid-feedback">Port must be between 1 and 65535.</div>
+        </div>
+        <div class="col-md-3">
+          <input id="smtp-from" class="form-control form-control-sm" placeholder="from@example.com" title="Sender address">
+          <div class="invalid-feedback">Enter a valid email address.</div>
+        </div>
+        <div class="col-md-4">
+          <input id="smtp-to" class="form-control form-control-sm" placeholder="to@example.com" title="Recipient address (comma-separated)">
+          <div class="invalid-feedback">Enter one or more valid email addresses.</div>
+        </div>
+        <div class="col-md-3"><input id="smtp-user" class="form-control form-control-sm" placeholder="Username" title="SMTP username"></div>
+        <div class="col-md-3"><input id="smtp-pass" type="password" class="form-control form-control-sm" placeholder="Password" title="SMTP password"></div>
+        <div class="col-md-2 form-check d-flex align-items-center ms-2">
+          <input class="form-check-input" type="checkbox" id="smtp-tls" checked title="Use STARTTLS">
+          <label class="form-check-label ms-1"><small>TLS</small></label>
+        </div>
+      </div>
+      <hr class="mt-2 mb-2"/>
+      <div class="mb-2"><b>Stored Credentials</b> <small class="text-muted">(Base64 password; consider OS vault for production)</small></div>
+      <table class="table table-sm" id="credentials-table">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Username</th>
+            <th>Password (base64)</th>
+            <th style="width:80px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="credentials-tbody"></tbody>
+      </table>
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input id="cred-key" class="form-control form-control-sm" placeholder="nas_default" title="Credential key">
+          <div class="invalid-feedback">Credential key is required.</div>
+        </div>
+        <div class="col-md-3"><input id="cred-user" class="form-control form-control-sm" placeholder="user" title="Username"></div>
+        <div class="col-md-6">
+          <input id="cred-pass-b64" class="form-control form-control-sm" placeholder="cGFzc3dvcmQ=" title="Base64-encoded password">
+          <div class="invalid-feedback">Password must be base64-encoded.</div>
+        </div>
+      </div>
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-primary btn-sm" onclick="addCredential()" title="Add or update credential">Save Credential</button>
+        <button class="btn btn-info btn-sm" onclick="testSMTP()" title="Send a test email">Test SMTP</button>
+        <button class="btn btn-success btn-sm" onclick="saveSmtpAndCredentials()" title="Persist SMTP and credentials">Persist SMTP & Credentials</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Watched Folders -->
+<div class="config-module" data-module="watched-folders" draggable="true">
+  <div class="card" data-right="manage_config">
+    <div class="card-header d-flex align-items-center">
+      <b>Watched Folders</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" id="watch-folder-input" placeholder="Add folder path (e.g., C:/Users/you/Downloads)">
+        <button class="btn btn-primary" type="button" onclick="addWatchFolder()"><i class="bi bi-plus"></i> Add</button>
+        <button class="btn btn-success" type="button" onclick="saveWatchFolders()"><i class="bi bi-save"></i> Save</button>
+        <button class="btn btn-secondary" type="button" onclick="testSelectedWatchFolder()"><i class="bi bi-check2-circle"></i> Test Selected</button>
+        <button class="btn btn-info" type="button" onclick="openConfigActions()"><i class="bi bi-journal-text"></i> View Config Actions</button>
+      </div>
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="wf-create-missing">
+        <label class="form-check-label" for="wf-create-missing"><small>Create folder if missing (with confirmation)</small></label>
+      </div>
+      <ul class="list-group" id="watch-folders-config-list"></ul>
+      <small class="text-muted d-block mt-1">These folders will be monitored and organized into category subfolders.</small>
+      <small class="text-muted d-block">Accepted formats: UNC (`\\\\server\\share\\path`), Windows absolute (`C:/path` or `C:\\path`), Unix absolute (`/path`). Placeholders `%USERNAME%` and `%USER%` are supported and resolved at runtime.</small>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Branding & Styles -->
+<div class="config-module full-width" data-module="branding" draggable="true">
+  <div class="card" data-right="manage_config">
+    <div class="card-header d-flex align-items-center">
+      <b>Custom Branding & Themes</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <!-- Preset Themes -->
+      <div class="mb-3">
+        <label class="form-label mb-2"><small><b>Preset Themes</b></small></label>
+        <div class="btn-group btn-group-sm w-100" role="group" style="flex-wrap: wrap; gap: 0.5rem;">
+          <button type="button" class="btn btn-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
+            <i class="bi bi-palette"></i> Default
+          </button>
+          <button type="button" class="btn btn-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
+            <i class="bi bi-moon"></i> Dark
+          </button>
+          <button type="button" class="btn btn-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
+            <i class="bi bi-tree"></i> Forest
+          </button>
+          <button type="button" class="btn btn-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
+            <i class="bi bi-sunset"></i> Sunset
+          </button>
+          <button type="button" class="btn btn-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
+            <i class="bi bi-water"></i> Ocean
+          </button>
+          <button type="button" class="btn btn-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
+            <i class="bi bi-leaf"></i> Mint
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
+            <i class="bi bi-lightning"></i> Cyberpunk
+          </button>
+        </div>
+      </div>
+
+      <hr class="my-2">
+
+      <!-- Theme Creator -->
+      <div class="mb-3">
+        <label class="form-label mb-2"><small><b>Custom Theme Creator</b></small></label>
+        <div class="row g-2 mb-2">
+          <div class="col-md-4">
+            <label class="form-label mb-1"><small><b>Dashboard Title</b></small></label>
+            <input id="brand-title" class="form-control form-control-sm" placeholder="DownloadsOrganizeR" title="Custom dashboard title">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label mb-1"><small><b>Logo URL</b></small></label>
+            <input id="brand-logo" class="form-control form-control-sm" placeholder="https://example.com/logo.png" title="URL to custom logo image">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label mb-1"><small><b>Theme Name</b></small></label>
+            <input id="brand-theme-name" class="form-control form-control-sm" placeholder="My Custom Theme" title="Name for your custom theme">
+          </div>
+        </div>
+
+        <!-- Auto-generate colors from logo -->
+        <div class="row g-2 mb-2">
+          <div class="col-md-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="auto-generate-colors" title="Automatically extract colors from the logo to generate matching theme">
+              <label class="form-check-label" for="auto-generate-colors">
+                <small><b>Auto-generate theme colors from logo</b></small>
+              </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-info mt-2" id="btn-extract-colors" onclick="if(typeof extractColorsFromLogo==='function')extractColorsFromLogo()" title="Extract dominant colors from logo and apply to theme">
+              <i class="bi bi-palette-fill"></i> Extract Colors from Logo
+            </button>
+            <small class="d-block text-muted mt-1">Enable this option to automatically generate a matching theme from your logo colors.</small>
+          </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="card bg-light p-2 mb-2" id="color-palette-card" style="background-color: rgba(13, 110, 253, 0.1) !important;">
+          <small class="fw-bold mb-2 d-block">Color Palette</small>
+          <div class="row g-2">
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Primary</b></small></label>
+              <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Secondary</b></small></label>
+              <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Success</b></small></label>
+              <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Danger</b></small></label>
+              <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Warning</b></small></label>
+              <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label mb-1"><small><b>Info</b></small></label>
+              <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Options -->
+        <div class="card bg-light p-2 mb-2" style="background-color: rgba(13, 110, 253, 0.1) !important;">
+          <small class="fw-bold mb-2 d-block">Advanced Options</small>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Card Border Radius</b></small></label>
+              <select id="brand-border-radius" class="form-select form-select-sm" onchange="previewTheme()">
+                <option value="0px">Squared (0px)</option>
+                <option value="4px">Slight (4px)</option>
+                <option value="8px" selected>Moderate (8px)</option>
+                <option value="16px">Rounded (16px)</option>
+                <option value="24px">Very Rounded (24px)</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Font Size Scale</b></small></label>
+              <select id="brand-font-size" class="form-select form-select-sm" onchange="previewTheme()">
+                <option value="90%">Small (-10%)</option>
+                <option value="100%" selected>Normal</option>
+                <option value="110%">Large (+10%)</option>
+                <option value="120%">X-Large (+20%)</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label mb-1"><small><b>Shadow Intensity</b></small></label>
+              <select id="brand-shadow" class="form-select form-select-sm" onchange="previewTheme()">
+                <option value="none">None</option>
+                <option value="light">Light</option>
+                <option value="normal" selected>Normal</option>
+                <option value="strong">Strong</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <label class="form-label mb-1"><small><b>Custom CSS</b></small></label>
+          <textarea id="brand-css" class="form-control form-control-sm" rows="4" placeholder="/* Add custom CSS here - applied after all theme styles */" title="Custom CSS styles applied to dashboard"></textarea>
+          <small class="text-muted">Advanced: Add custom CSS to override dashboard styles. Applied after all theme styling.</small>
+        </div>
+
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveBranding()"><i class="bi bi-save"></i> Save Theme</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportTheme()"><i class="bi bi-download"></i> Export</button>
+          <button class="btn btn-warning btn-sm" onclick="resetBranding()"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+          <button class="btn btn-info btn-sm" onclick="toggleThemePreview()"><i class="bi bi-eye"></i> Preview</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Logs (Real-time) -->
+<div class="config-module full-width" data-module="logs" draggable="true">
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <b>Logs (Real-time)</b>
+      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+    </div>
+    <div class="card-body p-2">
+      <div class="mb-2">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="search-logs" placeholder="Search logs (highlights matching lines)..." oninput="filterLogs()">
+          <button class="btn btn-secondary" onclick="clearLogSearch()" title="Clear search">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <div class="mb-1"><b>Stdout Log</b></div>
+          <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stdout')">Clear Log</button>
+          <pre id="stdout-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></pre>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-1"><b>Stderr Log</b></div>
+          <button class="btn btn-secondary btn-sm mb-1" onclick="clearLog('stderr')">Clear Log</button>
+          <pre id="stderr-log" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Config Actions Modal -->
+<div class="modal fade" id="configActionsModal" tabindex="-1" aria-labelledby="configActionsLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="configActionsLabel">Recent Configuration Actions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="config-actions-body">
+          <div class="text-muted">No audit entries</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

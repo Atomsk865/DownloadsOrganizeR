@@ -104,7 +104,7 @@
     },
     "custom_routes": {},
     "dashboard_user": "admin",
-    "dashboard_pass_hash": "$2b$12$tsJf1K08.wmBQyBBHSqCAuU8nIhSHeTSK5vIKlU3UyKI0fDhFFHgS",
+    "dashboard_pass_hash": "$2b$12$BquRxzDZ55vy9Ubgu8/aSeYauUNsGASO6ETRVwQfiH.1SwVjAGz.W",
     "watch_folders": [
         "C:/Users/%USERNAME%/Downloads"
     ],

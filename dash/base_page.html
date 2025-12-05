@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block page_title %}<title>Organizer Service</title>{% endblock %}
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <!-- Base Styles -->
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --card-header-bg: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #1a1d23;
+            --bg-secondary: #23262d;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --border-color: #495057;
+            --card-header-bg: #2b2f37;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .card-header {
+            background-color: var(--card-header-bg);
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .form-control, .form-select, input, textarea {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 10000;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .theme-toggle i {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+        .theme-toggle:hover i {
+            transform: rotate(20deg);
+        }
+        [data-theme="dark"] .theme-toggle .bi-sun-fill { display: none; }
+        [data-theme="light"] .theme-toggle .bi-moon-stars-fill { display: none; }
+        
+        /* Notification Container */
+        #notification-container {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+    </style>
+    
+    <!-- Page-specific styles -->
+    {% block page_styles %}{% endblock %}
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light mode" style="cursor: pointer;">
+        <i class="bi bi-sun-fill" style="color: #ffc107;"></i>
+        <i class="bi bi-moon-stars-fill" style="color: #6ea8fe;"></i>
+    </div>
+
+    <!-- Page Content -->
+    {% block page_content %}{% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Shared Theme System -->
+    <script src="{{ url_for('static', filename='js/theme-system.js') }}" defer></script>
+    
+    <!-- Shared notification function -->
+    <script>
+        function showNotification(msg, type) {
+            let container = document.getElementById('notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-container';
+                document.body.appendChild(container);
+            }
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type || 'info'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `${msg || ''}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            container.appendChild(alertDiv);
+            setTimeout(() => { try { alertDiv.remove(); } catch(e){} }, 5000);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips
+            if(window.bootstrap && typeof bootstrap.Tooltip === 'function') {
+                const tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+            }
+            
+            // Call page-specific init if defined
+            if (typeof pageInit === 'function') {
+                pageInit();
+            }
+        });
+    </script>
+    
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

@@ -4019,6 +4019,22 @@ function persistThemeLocally(theme) {
         };
         localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(themeData));
         
+        // Also save to new theme system key for universal theme support
+        if (typeof ThemeSystem !== 'undefined' && ThemeSystem.saveCustomTheme) {
+            const customTheme = {
+                active: true,
+                colors: theme.colors || {},
+                borderRadius: theme.borderRadius,
+                fontSize: theme.fontSize,
+                shadow: theme.shadow,
+                customCss: theme.customCss,
+                themeName: theme.themeName,
+                title: theme.title,
+                logo: theme.logo
+            };
+            ThemeSystem.saveCustomTheme(customTheme);
+        }
+        
         // Queue for server sync
         scheduleThemeSync(theme);
     } catch (e) {

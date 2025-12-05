@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Configuration - Organizer Service</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --card-header-bg: #f8f9fa;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #1a1d23;
+            --bg-secondary: #23262d;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --border-color: #495057;
+            --card-header-bg: #2b2f37;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: background 0.3s, color 0.3s;
+            padding: 0;
+            margin: 0;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        .config-container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            background: var(--bg-primary);
+        }
+        .config-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .config-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .config-header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #0d6efd;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
+        .config-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            width: 100%;
+        }
+        .config-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s;
+        }
+        .config-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .config-card-header {
+            background-color: var(--card-header-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+        .config-card-body {
+            padding: 1.5rem;
+        }
+        .config-card-body p {
+            margin-bottom: 1rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        .btn {
+            transition: transform 0.08s ease, box-shadow 0.2s ease;
+            font-weight: 500;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 10000;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .theme-toggle i {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+        .theme-toggle:hover i {
+            transform: rotate(20deg);
+        }
+        [data-theme="dark"] .theme-toggle .bi-sun-fill { display: none; }
+        [data-theme="light"] .theme-toggle .bi-moon-stars-fill { display: none; }
+        
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] input,
+        [data-theme="dark"] textarea {
+            background-color: #2b2f37;
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus,
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] textarea:focus {
+            background-color: #343a40;
+            color: var(--text-primary);
+            border-color: #6ea8fe;
+        }
+        [data-theme="dark"] .table {
+            color: var(--text-primary);
+        }
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .card-header {
+            background-color: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+        }
+        @media (max-width: 768px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+            .config-container {
+                padding: 1rem 0.5rem;
+            }
+            .config-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Dark/Light mode">
+        <i class="bi bi-sun-fill" style="color: #ffc107;"></i>
+        <i class="bi bi-moon-stars-fill" style="color: #6ea8fe;"></i>
+    </div>
+
+    <!-- Config Container -->
+    <div class="config-container">
+        <div class="config-header">
+            <a href="/" class="back-link"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            <h1>Dashboard Configuration</h1>
+            <p>Manage users, roles, and system settings</p>
+        </div>
+
+        <div class="config-content">
+            <div class="config-grid" id="config-grid">
+                {% include "config_modules.html" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Shared Theme System -->
+    <script src="{{ url_for('static', filename='js/theme-system.js') }}" defer></script>
+    
+    <!-- Include shared dashboard scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard_scripts.js') }}" defer></script>
+    
+    <script>
+        // Auth header management
+        let __authHeader = null;
+        let __rights = {};
+        let __csrfToken = null;
+        
+        // Get auth headers for API calls
+        function getAuthHeaders() {
+            if (!__authHeader) {
+                try {
+                    const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+                    if (match) __authHeader = decodeURIComponent(match[1]);
+                } catch (e) {}
+            }
+            return __authHeader ? { 'Authorization': __authHeader } : {};
+        }
+
+        // Show notification helper
+        function showNotification(msg, type) {
+            let container = document.getElementById('notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notification-container';
+                container.style.position = 'fixed';
+                container.style.top = '20px';
+                container.style.right = '20px';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+            }
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type || 'info'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `${msg || ''}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            container.appendChild(alertDiv);
+            setTimeout(() => { try { alertDiv.remove(); } catch(e){} }, 5000);
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            if(window.bootstrap && typeof bootstrap.Tooltip === 'function') {
+                const tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+            }
+            
+            // Verify auth on page load
+            fetch('/auth_check', {
+                credentials: 'include',
+                headers: getAuthHeaders()
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Auth check failed');
+                }
+            })
+            .then(data => {
+                __rights = data.rights || {};
+                // Notify that auth is ready
+                console.log('Config page auth verified');
+                // Call any initialization functions if defined
+                if (typeof initConfigDragDrop === 'function') {
+                    initConfigDragDrop();
+                }
+                if (typeof loadConfigLayout === 'function') {
+                    loadConfigLayout();
+                }
+            })
+            .catch(err => {
+                console.error('Auth verification failed:', err);
+                showNotification('Authentication failed. Please login again.', 'danger');
+                setTimeout(() => { window.location.href = '/'; }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>
