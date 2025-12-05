@@ -4644,11 +4644,15 @@ function toggleDrawer() {
     const backdrop = document.getElementById('drawer-backdrop');
     const toggle = document.getElementById('drawer-toggle');
     
+    console.log('toggleDrawer called', { sidebar: !!sidebar, backdrop: !!backdrop, toggle: !!toggle });
+    
     if (!sidebar || !backdrop) return;
     
     sidebar.classList.toggle('drawer-open');
     backdrop.classList.toggle('show');
-    toggle.classList.toggle('active');
+    if (toggle) toggle.classList.toggle('active');
+    
+    console.log('Drawer toggled', { isOpen: sidebar.classList.contains('drawer-open') });
 }
 
 // Close drawer when clicking on links inside it
@@ -4681,26 +4685,38 @@ async function updateResourceSummary() {
         if (response.ok) {
             const data = await response.json();
             
-            // Update memory display - support both data.memory_info and top-level fields
+            // Update memory display - API returns total_memory_mb and total_memory_gb
             const memUsed = document.getElementById('mem-used');
             const memTotal = document.getElementById('mem-total');
-            if (memUsed) {
-                const memInfo = data.memory_info || {};
-                const used = data.memory_used_gb || (memInfo.used ? (memInfo.used / 1024 / 1024 / 1024).toFixed(2) : '-');
-                const total = data.memory_total_gb || (memInfo.total ? (memInfo.total / 1024 / 1024 / 1024).toFixed(2) : '-');
-                memUsed.textContent = typeof used === 'number' ? used.toFixed(2) : used;
-                if (memTotal) memTotal.textContent = typeof total === 'number' ? total.toFixed(2) : total;
+            if (memUsed && memTotal) {
+                const used = data.total_memory_mb ? (data.total_memory_mb / 1024).toFixed(2) : '-';
+                const total = data.total_memory_gb ? data.total_memory_gb.toFixed(2) : '-';
+                memUsed.textContent = used;
+                memTotal.textContent = total;
             }
             
-            // Update disk display - support both data.disk_info and top-level fields
+            // Update disk display - fetch disk info from psutil
             const diskUsed = document.getElementById('disk-used');
             const diskTotal = document.getElementById('disk-total');
-            if (diskUsed) {
-                const diskInfo = data.disk_info || {};
-                const used = data.disk_used_gb || (diskInfo.used ? (diskInfo.used / 1024 / 1024 / 1024).toFixed(2) : '-');
-                const total = data.disk_total_gb || (diskInfo.total ? (diskInfo.total / 1024 / 1024 / 1024).toFixed(2) : '-');
-                diskUsed.textContent = typeof used === 'number' ? used.toFixed(2) : used;
-                if (diskTotal) diskTotal.textContent = typeof total === 'number' ? total.toFixed(2) : total;
+            if (diskUsed && diskTotal) {
+                try {
+                    // Try to get disk usage info (this requires an additional API call or we use cached data)
+                    const diskInfo = await fetch('/api/disk-usage', {
+                        headers: getAuthHeaders ? getAuthHeaders() : {}
+                    }).then(r => r.ok ? r.json() : null).catch(() => null);
+                    
+                    if (diskInfo) {
+                        diskUsed.textContent = diskInfo.used_gb ? diskInfo.used_gb.toFixed(2) : '-';
+                        diskTotal.textContent = diskInfo.total_gb ? diskInfo.total_gb.toFixed(2) : '-';
+                    } else {
+                        // Fallback to "-" if disk info unavailable
+                        diskUsed.textContent = '-';
+                        diskTotal.textContent = '-';
+                    }
+                } catch (err) {
+                    diskUsed.textContent = '-';
+                    diskTotal.textContent = '-';
+                }
             }
             
             // Update timestamp
