@@ -4617,9 +4617,54 @@ function closeDrawerOnLinkClick() {
     });
 }
 
+// Update resource summary from metrics
+async function updateResourceSummary() {
+    try {
+        const response = await fetch('/metrics', {
+            headers: getAuthHeaders ? getAuthHeaders() : {}
+        });
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update memory display
+            const memUsed = document.getElementById('mem-used');
+            const memTotal = document.getElementById('mem-total');
+            if (memUsed && data.memory_info) {
+                const used = (data.memory_info.used / 1024 / 1024 / 1024).toFixed(2);
+                const total = (data.memory_info.total / 1024 / 1024 / 1024).toFixed(2);
+                memUsed.textContent = used;
+                memTotal.textContent = total;
+            }
+            
+            // Update disk display
+            const diskUsed = document.getElementById('disk-used');
+            const diskTotal = document.getElementById('disk-total');
+            if (diskUsed && data.disk_info) {
+                const used = (data.disk_info.used / 1024 / 1024 / 1024).toFixed(2);
+                const total = (data.disk_info.total / 1024 / 1024 / 1024).toFixed(2);
+                diskUsed.textContent = used;
+                diskTotal.textContent = total;
+            }
+            
+            // Update timestamp
+            const timestamp = document.getElementById('metric-timestamp');
+            if (timestamp) {
+                const now = new Date();
+                timestamp.textContent = now.toLocaleTimeString();
+            }
+        }
+    } catch (error) {
+        console.debug('Could not update resource summary:', error);
+    }
+}
+
 // Initialize drawer on page load
 document.addEventListener('DOMContentLoaded', () => {
     closeDrawerOnLinkClick();
+    
+    // Update resource summary immediately and every 5 seconds
+    updateResourceSummary();
+    setInterval(updateResourceSummary, 5000);
     
     // Close drawer on escape key
     document.addEventListener('keydown', (e) => {

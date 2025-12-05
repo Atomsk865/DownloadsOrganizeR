@@ -9,6 +9,68 @@
             <div id="env-mismatch" class="alert alert-warning py-2 px-3 mb-2" style="display:none;">
                 <strong>Heads up:</strong> Your browser appears to be on Windows while the server reports Linux. Make sure you're viewing the dashboard hosted on your Windows machine (not Codespaces).
             </div>
+            
+            <!-- Live Resource Gauges Section -->
+            <div class="mb-3 pb-3 border-bottom">
+                <small class="text-muted d-block mb-2"><i class="bi bi-speedometer2"></i> <b>Live System Metrics</b></small>
+                <div class="row g-3">
+                    <!-- CPU Gauge -->
+                    <div class="col-lg-3 col-md-6">
+                        <div x-data="{ cpu: uiComponents.createGauge(100, 80) }" 
+                             x-init="setInterval(() => fetch('/metrics').then(r => r.json()).then(d => { cpu.value = d.cpu_percent || 0; }), 2000)">
+                            <div class="gauge-container">
+                                <div class="gauge-circle" 
+                                     :style="`--gauge-value: ${cpu.value}; --gauge-color: ${cpu.getColor()}`">
+                                    <div class="gauge-value" x-text="`${Math.round(cpu.value)}%`"></div>
+                                    <div class="gauge-label">CPU Usage</div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i :class="cpu.value > 80 ? 'bi bi-exclamation-triangle text-warning' : 'bi bi-check-circle text-success'"></i>
+                                    <span x-text="cpu.value > 80 ? 'High usage' : 'Normal'"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Memory Gauge -->
+                    <div class="col-lg-3 col-md-6">
+                        <div x-data="{ mem: uiComponents.createGauge(100, 85) }" 
+                             x-init="setInterval(() => fetch('/metrics').then(r => r.json()).then(d => { mem.value = d.memory_percent || 0; }), 2000)">
+                            <div class="gauge-container">
+                                <div class="gauge-circle" 
+                                     :style="`--gauge-value: ${mem.value}; --gauge-color: ${mem.getColor()}`">
+                                    <div class="gauge-value" x-text="`${Math.round(mem.value)}%`"></div>
+                                    <div class="gauge-label">Memory Usage</div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i :class="mem.value > 85 ? 'bi bi-exclamation-triangle text-warning' : 'bi bi-check-circle text-success'"></i>
+                                    <span x-text="mem.value > 85 ? 'High usage' : 'Normal'"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="col-lg-6 col-md-12">
+                        <small class="text-muted d-block mb-2"><b>Resource Summary</b></small>
+                        <div id="resource-summary" class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between">
+                                <small>Memory:</small>
+                                <small><span id="mem-used">-</span> / <span id="mem-total">-</span> GB</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>Disk:</small>
+                                <small><span id="disk-used">-</span> / <span id="disk-total">-</span> GB</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small>Last Update:</small>
+                                <small id="metric-timestamp">-</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Server (host) info -->
             <div class="mb-2"><span class="badge bg-secondary">Server</span></div>
             <div class="row g-2">
