@@ -211,7 +211,7 @@
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="search-users" placeholder="Search users..." oninput="filterUsers()">
-            <button class="btn btn-outline-secondary" onclick="clearUserSearch()" title="Clear search">
+            <button class="btn btn-secondary" onclick="clearUserSearch()" title="Clear search">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -254,7 +254,7 @@
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="search-roles" placeholder="Search roles..." oninput="filterRoles()">
-            <button class="btn btn-outline-secondary" onclick="clearRoleSearch()" title="Clear search">
+            <button class="btn btn-secondary" onclick="clearRoleSearch()" title="Clear search">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -341,7 +341,7 @@
           <div class="input-group input-group-sm mb-2">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="search-network-targets" placeholder="Search network targets..." oninput="filterNetworkTargets()">
-            <button class="btn btn-outline-secondary" onclick="clearNetworkTargetSearch()" title="Clear search">
+            <button class="btn btn-secondary" onclick="clearNetworkTargetSearch()" title="Clear search">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -478,10 +478,10 @@
       <div class="card-body p-2">
         <div class="input-group mb-2">
           <input type="text" class="form-control" id="watch-folder-input" placeholder="Add folder path (e.g., C:/Users/you/Downloads)">
-          <button class="btn btn-outline-primary" type="button" onclick="addWatchFolder()"><i class="bi bi-plus"></i> Add</button>
-          <button class="btn btn-outline-success" type="button" onclick="saveWatchFolders()"><i class="bi bi-save"></i> Save</button>
-          <button class="btn btn-outline-secondary" type="button" onclick="testSelectedWatchFolder()"><i class="bi bi-check2-circle"></i> Test Selected</button>
-          <button class="btn btn-outline-info" type="button" onclick="openConfigActions()"><i class="bi bi-journal-text"></i> View Config Actions</button>
+          <button class="btn btn-primary" type="button" onclick="addWatchFolder()"><i class="bi bi-plus"></i> Add</button>
+          <button class="btn btn-success" type="button" onclick="saveWatchFolders()"><i class="bi bi-save"></i> Save</button>
+          <button class="btn btn-secondary" type="button" onclick="testSelectedWatchFolder()"><i class="bi bi-check2-circle"></i> Test Selected</button>
+          <button class="btn btn-info" type="button" onclick="openConfigActions()"><i class="bi bi-journal-text"></i> View Config Actions</button>
         </div>
         <div class="form-check mb-2">
           <input class="form-check-input" type="checkbox" id="wf-create-missing">
@@ -526,25 +526,25 @@
         <div class="mb-3">
           <label class="form-label mb-2"><small><b>Preset Themes</b></small></label>
           <div class="btn-group btn-group-sm w-100" role="group" style="flex-wrap: wrap; gap: 0.5rem;">
-            <button type="button" class="btn btn-outline-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
+            <button type="button" class="btn btn-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
               <i class="bi bi-palette"></i> Default
             </button>
-            <button type="button" class="btn btn-outline-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
+            <button type="button" class="btn btn-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
               <i class="bi bi-moon"></i> Dark
             </button>
-            <button type="button" class="btn btn-outline-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
+            <button type="button" class="btn btn-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
               <i class="bi bi-tree"></i> Forest
             </button>
-            <button type="button" class="btn btn-outline-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
+            <button type="button" class="btn btn-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
               <i class="bi bi-sunset"></i> Sunset
             </button>
-            <button type="button" class="btn btn-outline-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
+            <button type="button" class="btn btn-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
               <i class="bi bi-water"></i> Ocean
             </button>
-            <button type="button" class="btn btn-outline-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
+            <button type="button" class="btn btn-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
               <i class="bi bi-leaf"></i> Mint
             </button>
-            <button type="button" class="btn btn-outline-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
+            <button type="button" class="btn btn-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
               <i class="bi bi-lightning"></i> Cyberpunk
             </button>
           </div>
@@ -660,9 +660,9 @@
 
           <div class="mt-2 d-flex gap-2 flex-wrap">
             <button class="btn btn-primary btn-sm" onclick="saveBranding()"><i class="bi bi-save"></i> Save Theme</button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="exportTheme()"><i class="bi bi-download"></i> Export</button>
-            <button class="btn btn-outline-warning btn-sm" onclick="resetBranding()"><i class="bi bi-arrow-clockwise"></i> Reset</button>
-            <button class="btn btn-outline-info btn-sm" onclick="toggleThemePreview()"><i class="bi bi-eye"></i> Preview</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportTheme()"><i class="bi bi-download"></i> Export</button>
+            <button class="btn btn-warning btn-sm" onclick="resetBranding()"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+            <button class="btn btn-info btn-sm" onclick="toggleThemePreview()"><i class="bi bi-eye"></i> Preview</button>
           </div>
         </div>
       </div>
@@ -681,7 +681,7 @@
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="search-logs" placeholder="Search logs (highlights matching lines)..." oninput="filterLogs()">
-            <button class="btn btn-outline-secondary" onclick="clearLogSearch()" title="Clear search">
+            <button class="btn btn-secondary" onclick="clearLogSearch()" title="Clear search">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>

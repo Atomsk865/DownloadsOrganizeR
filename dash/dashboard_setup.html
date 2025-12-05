@@ -475,7 +475,7 @@ function addCustomWatchFolder(){
   }
   const li = document.createElement('li');
   li.setAttribute('data-path', val);
-  li.innerHTML = `<code>${val}</code> <button class="btn btn-sm btn-outline-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${val}')">Remove</button>`;
+  li.innerHTML = `<code>${val}</code> <button class="btn btn-sm btn-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${val}')">Remove</button>`;
   const ul = list.querySelector('ul');
   if(ul){ ul.appendChild(li); }
   else {
