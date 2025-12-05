@@ -2643,7 +2643,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCustomWidgets();
     initDragAndDrop(); // Initialize GridStack first
     loadDashboardLayout(); // Then load saved layout
-    loadHiddenModules();
+    // loadHiddenModules() removed - Alpine.js handles state automatically
     initResizableTables();
     syncAuthButtons();
     initSidebarResizer();
@@ -2657,8 +2657,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start notification polling every 30 seconds
     notificationPollingInterval = setInterval(loadNotificationCenter, 30000);
     
-    // Check if we should show intro
-    checkShowIntro();
+    // checkShowIntro() removed - Alpine.js manages intro modal visibility automatically
     
     // Load developer mode setting
     loadDeveloperMode();
