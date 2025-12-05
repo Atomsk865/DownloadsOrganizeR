@@ -1895,6 +1895,63 @@ function initializeFormValidation(container = document) {
     });
 }
 
+// Initialize table sorting for .table-sortable tables
+function initializeTableSorting(container = document) {
+    const tables = container.querySelectorAll('.table-sortable');
+    
+    tables.forEach(table => {
+        const headers = table.querySelectorAll('thead th');
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        
+        headers.forEach((header, columnIndex) => {
+            header.style.cursor = 'pointer';
+            header.title = 'Click to sort';
+            
+            header.addEventListener('click', () => {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const isAscending = header.dataset.sortOrder !== 'asc';
+                
+                // Remove previous sort indicators
+                headers.forEach(h => {
+                    h.dataset.sortOrder = '';
+                    const sortSpan = h.querySelector('.sort-indicator');
+                    if (sortSpan) sortSpan.textContent = '';
+                });
+                
+                // Sort rows
+                rows.sort((a, b) => {
+                    const cellA = a.children[columnIndex]?.textContent || '';
+                    const cellB = b.children[columnIndex]?.textContent || '';
+                    
+                    // Try numeric sort first
+                    const numA = parseFloat(cellA);
+                    const numB = parseFloat(cellB);
+                    
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return isAscending ? numA - numB : numB - numA;
+                    }
+                    
+                    // Fall back to string sort
+                    return isAscending 
+                        ? cellA.localeCompare(cellB)
+                        : cellB.localeCompare(cellA);
+                });
+                
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+                
+                // Add sort indicator
+                header.dataset.sortOrder = isAscending ? 'asc' : 'desc';
+                const sortSpan = header.querySelector('.sort-indicator');
+                if (sortSpan) {
+                    sortSpan.textContent = isAscending ? ' ↑' : ' ↓';
+                }
+            });
+        });
+    });
+}
+
 function deleteRow(btn) {
     btn.closest('tr').remove();
 }
@@ -2015,6 +2072,12 @@ async function loadFileCategories(routes) {
     
     // Initialize form validation on all inputs
     initializeFormValidation(tbody);
+    
+    // Initialize table sorting
+    const table = tbody.closest('table');
+    if (table) {
+        initializeTableSorting(table.closest('.dashboard-module') || document);
+    }
 }
 
 async function initializeCustomRoutes() {
@@ -2080,6 +2143,12 @@ function loadTagRoutes(tagRoutes) {
     
     // Initialize form validation on all inputs
     initializeFormValidation(tbody);
+    
+    // Initialize table sorting
+    const table = tbody.closest('table');
+    if (table) {
+        initializeTableSorting(table.closest('.dashboard-module') || document);
+    }
 }
 
 // Log streaming
