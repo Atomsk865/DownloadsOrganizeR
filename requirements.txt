@@ -12,3 +12,5 @@ pywin32>=306; sys_platform == 'win32'
 flask-login>=0.6,<0.7
 pyinstaller>=6.10,<7
 requests>=2.31,<3
+flask-caching
+flask-compress

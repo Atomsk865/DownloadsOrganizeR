@@ -230,6 +230,7 @@ async function dryRunOrganize() {
 
 /**
  * Load organization history
+ * Note: This endpoint is optional and may not be available
  */
 async function refreshOrgHistory() {
   try {
@@ -239,6 +240,16 @@ async function refreshOrgHistory() {
       headers: getAuthHeaders()
     });
     
+    if (!response.ok) {
+      // Endpoint not available, silently disable history feature
+      console.debug('File history endpoint not available, feature disabled');
+      const table = document.getElementById('org-history-tbody');
+      if (table) {
+        table.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3"><small>History tracking not available</small></td></tr>`;
+      }
+      return;
+    }
+    
     const data = await response.json();
     if (data.success) {
       orgHistoryData = data.operations;
@@ -246,7 +257,8 @@ async function refreshOrgHistory() {
       renderOrgHistory();
     }
   } catch (e) {
-    console.warn('Error loading history:', e);
+    console.debug('Could not load history:', e);
+    // Silently fail - history feature is optional
   }
 }
 
@@ -306,6 +318,7 @@ function renderOrgHistory() {
 
 /**
  * Undo an organization operation
+ * Note: This endpoint is optional and may not be available
  */
 async function undoOrgOperation(timestamp) {
   if (!confirm('Move file back to Downloads folder?')) return;
@@ -316,6 +329,11 @@ async function undoOrgOperation(timestamp) {
       credentials: 'include',
       headers: getAuthHeaders()
     });
+    
+    if (!response.ok) {
+      showNotification('Undo feature not available', 'warning');
+      return;
+    }
     
     const data = await response.json();
     if (data.success) {
@@ -332,6 +350,7 @@ async function undoOrgOperation(timestamp) {
 
 /**
  * Load organization statistics
+ * Note: This endpoint is optional and may not be available
  */
 async function loadOrgStats() {
   try {
@@ -339,6 +358,16 @@ async function loadOrgStats() {
       credentials: 'include',
       headers: getAuthHeaders()
     });
+    
+    if (!response.ok) {
+      // Endpoint not available, hide stats section
+      console.debug('File history stats endpoint not available');
+      const statsDiv = document.getElementById('org-stats');
+      if (statsDiv) {
+        statsDiv.style.display = 'none';
+      }
+      return;
+    }
     
     const data = await response.json();
     if (data.success) {
@@ -360,7 +389,8 @@ async function loadOrgStats() {
       document.getElementById('org-stats').style.display = 'grid';
     }
   } catch (e) {
-    console.warn('Error loading stats:', e);
+    console.debug('Could not load stats:', e);
+    // Silently fail - stats feature is optional
   }
 }
 
