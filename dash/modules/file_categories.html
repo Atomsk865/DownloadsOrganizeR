@@ -10,7 +10,7 @@
                 <i class="bi bi-info-circle"></i> <strong>Note:</strong> Changes to file categories and custom routes require restarting the Organizer service to take effect.
             </div>
             <form id="config-form">
-                <table class="table table-sm mb-3" style="table-layout: auto; width: 100%;">
+                <table class="table table-sm mb-3" style="table-layout: auto; width: 100%;" class="table-sortable">
                     <thead>
                         <tr>
                             <th style="width: 18%; min-width: 100px;">Folder</th>
@@ -21,9 +21,17 @@
                     <tbody>
                         <!-- Images -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_1" value="Images"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_1" value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_1" value="Images" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon" title="Folder name (alphanumeric, spaces, -, _)"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_1" value="jpg, jpeg, png, gif, bmp, tiff, svg, webp, heic, ico, raw, psd, ai, eps" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon" title="Extensions (comma-separated)"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -33,9 +41,17 @@
                         </tr>
                         <!-- Music -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_2" value="Music"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_2" value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_2" value="Music" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_2" value="mp3, wav, flac, aac, ogg, wma, m4a, alac, aiff, opus, amr, mid, midi" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -45,9 +61,17 @@
                         </tr>
                         <!-- Videos -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_3" value="Videos"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_3" value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_3" value="Videos" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_3" value="mp4, mkv, avi, mov, wmv, flv, webm, mpeg, mpg, m4v, 3gp, vob, ogv, ts, mts, m2ts" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -57,9 +81,17 @@
                         </tr>
                         <!-- Documents -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_4" value="Documents"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_4" value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_4" value="Documents" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_4" value="pdf, doc, docx, txt, rtf, odt, xls, xlsx, ppt, pptx, csv, md, tex, epub, mobi, pages, numbers, key" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -69,9 +101,17 @@
                         </tr>
                         <!-- Archives -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_5" value="Archives"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_5" value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_5" value="Archives" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_5" value="zip, rar, 7z, tar, gz, bz2, xz, iso, cab, arj, lzh, ace, uue, jar, tar.gz, tar.bz2" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -81,9 +121,17 @@
                         </tr>
                         <!-- Executables -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_6" value="Executables"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_6" value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_6" value="Executables" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_6" value="exe, msi, bat, cmd, ps1, sh, app, deb, rpm, apk, com, bin, run" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -93,9 +141,17 @@
                         </tr>
                         <!-- Shortcuts -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_7" value="Shortcuts"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_7" value="lnk, url, desktop, webloc">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_7" value="Shortcuts" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_7" value="lnk, url, desktop, webloc" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -105,9 +161,17 @@
                         </tr>
                         <!-- Scripts -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_8" value="Scripts"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_8" value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_8" value="Scripts" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_8" value="py, js, html, css, json, xml, sh, ts, php, rb, pl, swift, go, c, cpp, cs, java, scala, lua, r, ipynb, jsx, tsx" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -117,9 +181,17 @@
                         </tr>
                         <!-- Fonts -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_9" value="Fonts"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_9" value="ttf, otf, woff, woff2, fon, fnt, eot, svg">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_9" value="Fonts" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_9" value="ttf, otf, woff, woff2, fon, fnt, eot, svg" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -129,9 +201,17 @@
                         </tr>
                         <!-- Logs -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_10" value="Logs"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_10" value="log, out, err">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_10" value="Logs" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_10" value="log, out, err" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
@@ -141,9 +221,17 @@
                         </tr>
                         <!-- Other -->
                         <tr>
-                            <td><input class="form-control form-control-sm" type="text" name="folder_11" value="Other"></td>
                             <td>
-                                <input class="form-control form-control-sm" type="text" name="exts_11" value="">
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="folder_11" value="Other" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-validation-wrapper">
+                                    <input class="form-control form-control-sm" type="text" name="exts_11" value="" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                                    <span class="form-validation-icon"><i class="bi"></i></span>
+                                </div>
                             </td>
                             <td>
                                 <button class="btn btn-danger btn-sm" type="button" >Delete</button>
