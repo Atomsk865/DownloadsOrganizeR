@@ -4150,6 +4150,10 @@ function applyThemeStyles(theme) {
   .text-warning { color: ${warning} !important; }
   .text-info { color: ${info} !important; }
   
+  /* Muted text - use secondary color for better contrast in all themes */
+  .text-muted { color: ${secondary} !important; }
+  small.text-muted { color: ${secondary} !important; }
+  
   /* Backgrounds with text */
   .bg-primary { background-color: ${primary} !important; color: ${primaryText} !important; }
   .bg-secondary { background-color: ${secondary} !important; color: ${secondaryText} !important; }

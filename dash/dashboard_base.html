@@ -235,9 +235,13 @@
         [data-theme="dark"] .card-title,
         [data-theme="dark"] .list-group-item,
         [data-theme="dark"] .form-label,
-        [data-theme="dark"] small,
-        [data-theme="dark"] .text-muted {
+        [data-theme="dark"] small {
             color: var(--text-primary) !important;
+        }
+        
+        /* Text-muted should always use secondary color for proper contrast */
+        [data-theme="dark"] .text-muted {
+            color: var(--text-secondary) !important;
         }
         
         /* System Info specifics */
