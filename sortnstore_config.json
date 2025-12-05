@@ -104,13 +104,14 @@
     },
     "custom_routes": {},
     "dashboard_user": "admin",
-    "dashboard_pass_hash": "$2b$12$bmHnzxjiZo/7iBT113ov7OxQGtSdbmZ6vU.6XA96S9uylVhEIDxem",
+    "dashboard_pass_hash": "$2b$12$tsJf1K08.wmBQyBBHSqCAuU8nIhSHeTSK5vIKlU3UyKI0fDhFFHgS",
     "watch_folders": [
         "C:/Users/%USERNAME%/Downloads"
     ],
     "features": {
-        "virustotal_enabled": false,
+        "virustotal_enabled": true,
         "duplicates_enabled": true,
         "reports_enabled": true
-    }
+    },
+    "vt_api_key": "3a5c798d31a66b4be0d18ba6001ad95b1149a16046e2dabced706d59cd9e40c7"
 }

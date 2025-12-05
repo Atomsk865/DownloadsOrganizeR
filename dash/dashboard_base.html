@@ -83,6 +83,28 @@
         [data-theme="dark"] .theme-toggle .bi-sun-fill { display: none; }
         [data-theme="light"] .theme-toggle .bi-moon-stars-fill { display: none; }
         
+        /* Theme undo button */
+        .theme-undo-btn {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+        .theme-undo-btn:hover {
+            transform: scale(1.1) rotate(-45deg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .theme-undo-btn i {
+            font-size: 1.1rem;
+        }
+        
         /* Fixed notification container */
         #notification-container {
             position: fixed;
@@ -794,13 +816,14 @@
 </head>
 <body>
 <!-- Theme Toggle -->
-<div class="theme-toggle-container">
-    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle between Dark/Light modes">
+<div class="theme-toggle-container" style="position: fixed; top: 15px; right: 15px; z-index: 10000; display: flex; gap: 8px;">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle between Dark/Light modes" style="position: relative;">
         <i class="bi bi-sun-fill" style="color: #ffc107;"></i>
         <i class="bi bi-moon-stars-fill" style="color: #6ea8fe;"></i>
-    </div>
-    <div class="custom-theme-toggle" id="custom-theme-btn" onclick="revertToDefaultTheme()" title="Revert to Light/Dark theme" style="display: none;">
-        <i class="bi bi-palette" style="color: #8e44ad;"></i>
+        <!-- Custom theme badge overlay -->
+        <span id="custom-theme-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #8e44ad; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer;" onclick="event.stopPropagation(); revertToDefaultTheme();" title="Custom theme active - click to revert">
+            <i class="bi bi-palette" style="font-size: 8px;"></i>
+        </span>
     </div>
     <div class="theme-undo-btn" id="theme-undo-btn" onclick="undoCustomTheme()" title="Undo custom theme" style="display: none;">
         <i class="bi bi-arrow-counterclockwise" style="color: #3498db;"></i>
@@ -1091,14 +1114,14 @@
         
         function updateThemeToggleUI() {
             const isCustom = document.documentElement.getAttribute('data-custom-theme') === 'true';
-            const customBtn = document.getElementById('custom-theme-btn');
+            const customBadge = document.getElementById('custom-theme-badge');
             const undoBtn = document.getElementById('theme-undo-btn');
             
             if (isCustom) {
-                if (customBtn) customBtn.style.display = 'flex';
+                if (customBadge) customBadge.style.display = 'flex';
                 if (undoBtn) undoBtn.style.display = 'flex';
             } else {
-                if (customBtn) customBtn.style.display = 'none';
+                if (customBadge) customBadge.style.display = 'none';
                 if (undoBtn) undoBtn.style.display = 'none';
             }
         }
