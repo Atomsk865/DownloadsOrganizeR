@@ -19,7 +19,7 @@ between different modules in a realistic scenario.
 
 import json
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 
 
 class DemoColors:
@@ -56,7 +56,7 @@ def print_info(message: str):
     print(f"{DemoColors.CYAN}ℹ {message}{DemoColors.END}")
 
 
-def print_example(title: str, content: Dict[str, Any]):
+def print_example(title: str, content: Union[Dict[str, Any], List[Any]]):
     """Print a formatted example."""
     print(f"\n{DemoColors.YELLOW}{title}:{DemoColors.END}")
     print(json.dumps(content, indent=2))

@@ -149,7 +149,7 @@ def import_config():
             return jsonify({'error': 'No file provided'}), 400
         
         file = request.files['file']
-        if not file.filename.endswith('.json'):
+        if not file or not file.filename or not file.filename.endswith('.json'):
             return jsonify({'error': 'Invalid file format (must be .json)'}), 400
         
         import_data = json.loads(file.read().decode('utf-8'))
@@ -200,7 +200,7 @@ def validate_import():
             return jsonify({'error': 'No file provided'}), 400
         
         file = request.files['file']
-        if not file.filename.endswith('.json'):
+        if not file or not file.filename or not file.filename.endswith('.json'):
             return jsonify({'valid': False, 'error': 'Invalid file format'}), 400
         
         import_data = json.loads(file.read().decode('utf-8'))
