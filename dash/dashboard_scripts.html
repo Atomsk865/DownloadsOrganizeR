@@ -4644,15 +4644,11 @@ function toggleDrawer() {
     const backdrop = document.getElementById('drawer-backdrop');
     const toggle = document.getElementById('drawer-toggle');
     
-    console.log('toggleDrawer called', { sidebar: !!sidebar, backdrop: !!backdrop, toggle: !!toggle });
-    
     if (!sidebar || !backdrop) return;
     
     sidebar.classList.toggle('drawer-open');
     backdrop.classList.toggle('show');
     if (toggle) toggle.classList.toggle('active');
-    
-    console.log('Drawer toggled', { isOpen: sidebar.classList.contains('drawer-open') });
 }
 
 // Close drawer when clicking on links inside it
@@ -4695,28 +4691,13 @@ async function updateResourceSummary() {
                 memTotal.textContent = total;
             }
             
-            // Update disk display - fetch disk info from psutil
+            // Update disk display - use psutil to get disk info (requires backend support)
             const diskUsed = document.getElementById('disk-used');
             const diskTotal = document.getElementById('disk-total');
             if (diskUsed && diskTotal) {
-                try {
-                    // Try to get disk usage info (this requires an additional API call or we use cached data)
-                    const diskInfo = await fetch('/api/disk-usage', {
-                        headers: getAuthHeaders ? getAuthHeaders() : {}
-                    }).then(r => r.ok ? r.json() : null).catch(() => null);
-                    
-                    if (diskInfo) {
-                        diskUsed.textContent = diskInfo.used_gb ? diskInfo.used_gb.toFixed(2) : '-';
-                        diskTotal.textContent = diskInfo.total_gb ? diskInfo.total_gb.toFixed(2) : '-';
-                    } else {
-                        // Fallback to "-" if disk info unavailable
-                        diskUsed.textContent = '-';
-                        diskTotal.textContent = '-';
-                    }
-                } catch (err) {
-                    diskUsed.textContent = '-';
-                    diskTotal.textContent = '-';
-                }
+                // For now, just show N/A until backend adds disk info to /metrics
+                diskUsed.textContent = 'N/A';
+                diskTotal.textContent = 'N/A';
             }
             
             // Update timestamp
