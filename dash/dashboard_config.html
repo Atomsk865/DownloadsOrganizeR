@@ -527,25 +527,25 @@
         <div class="mb-3">
           <label class="form-label mb-2"><small><b>Preset Themes</b></small></label>
           <div class="btn-group btn-group-sm w-100" role="group" style="flex-wrap: wrap; gap: 0.5rem;">
-            <button type="button" class="btn btn-primary" onclick="applyPresetTheme('default')" title="Default Blue Theme">
+            <button type="button" class="btn btn-primary preset-theme-btn" data-theme="default" title="Default Blue Theme">
               <i class="bi bi-palette"></i> Default
             </button>
-            <button type="button" class="btn btn-dark" onclick="applyPresetTheme('dark')" title="Dark Mode Theme">
+            <button type="button" class="btn btn-dark preset-theme-btn" data-theme="dark" title="Dark Mode Theme">
               <i class="bi bi-moon"></i> Dark
             </button>
-            <button type="button" class="btn btn-success" onclick="applyPresetTheme('forest')" title="Forest Green Theme">
+            <button type="button" class="btn btn-success preset-theme-btn" data-theme="forest" title="Forest Green Theme">
               <i class="bi bi-tree"></i> Forest
             </button>
-            <button type="button" class="btn btn-danger" onclick="applyPresetTheme('sunset')" title="Sunset Orange Theme">
+            <button type="button" class="btn btn-danger preset-theme-btn" data-theme="sunset" title="Sunset Orange Theme">
               <i class="bi bi-sunset"></i> Sunset
             </button>
-            <button type="button" class="btn btn-warning" onclick="applyPresetTheme('ocean')" title="Ocean Blue Theme">
+            <button type="button" class="btn btn-warning preset-theme-btn" data-theme="ocean" title="Ocean Blue Theme">
               <i class="bi bi-water"></i> Ocean
             </button>
-            <button type="button" class="btn btn-info" onclick="applyPresetTheme('mint')" title="Mint Fresh Theme">
+            <button type="button" class="btn btn-info preset-theme-btn" data-theme="mint" title="Mint Fresh Theme">
               <i class="bi bi-leaf"></i> Mint
             </button>
-            <button type="button" class="btn btn-secondary" onclick="applyPresetTheme('cyberpunk')" title="Cyberpunk Neon Theme">
+            <button type="button" class="btn btn-secondary preset-theme-btn" data-theme="cyberpunk" title="Cyberpunk Neon Theme">
               <i class="bi bi-lightning"></i> Cyberpunk
             </button>
           </div>
@@ -593,27 +593,27 @@
             <div class="row g-2">
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Primary</b></small></label>
-                <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-primary" type="color" class="form-control form-control-sm form-control-color" value="#0d6efd" title="Primary brand color" data-color-id="primary">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Secondary</b></small></label>
-                <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-secondary" type="color" class="form-control form-control-sm form-control-color" value="#6c757d" title="Secondary color" data-color-id="secondary">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Success</b></small></label>
-                <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-success" type="color" class="form-control form-control-sm form-control-color" value="#198754" title="Success color" data-color-id="success">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Danger</b></small></label>
-                <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-danger" type="color" class="form-control form-control-sm form-control-color" value="#dc3545" title="Danger color" data-color-id="danger">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Warning</b></small></label>
-                <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-warning" type="color" class="form-control form-control-sm form-control-color" value="#ffc107" title="Warning color" data-color-id="warning">
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1"><small><b>Info</b></small></label>
-                <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" oninput="previewTheme(); updateColorSwatchBackground(this);">
+                <input id="brand-color-info" type="color" class="form-control form-control-sm form-control-color" value="#0dcaf0" title="Info color" data-color-id="info">
               </div>
             </div>
           </div>
@@ -624,7 +624,7 @@
             <div class="row g-2">
               <div class="col-md-4">
                 <label class="form-label mb-1"><small><b>Card Border Radius</b></small></label>
-                <select id="brand-border-radius" class="form-select form-select-sm" onchange="previewTheme()">
+                <select id="brand-border-radius" class="form-select form-select-sm">
                   <option value="0px">Squared (0px)</option>
                   <option value="4px">Slight (4px)</option>
                   <option value="8px" selected>Moderate (8px)</option>
@@ -634,7 +634,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label mb-1"><small><b>Font Size Scale</b></small></label>
-                <select id="brand-font-size" class="form-select form-select-sm" onchange="previewTheme()">
+                <select id="brand-font-size" class="form-select form-select-sm">
                   <option value="90%">Small (-10%)</option>
                   <option value="100%" selected>Normal</option>
                   <option value="110%">Large (+10%)</option>
@@ -643,7 +643,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label mb-1"><small><b>Shadow Intensity</b></small></label>
-                <select id="brand-shadow" class="form-select form-select-sm" onchange="previewTheme()">
+                <select id="brand-shadow" class="form-select form-select-sm">
                   <option value="none">None</option>
                   <option value="light">Light</option>
                   <option value="normal" selected>Normal</option>
@@ -1068,6 +1068,8 @@ function applyPresetTheme(themeName) {
   saveBranding();
   
   showNotification(`Preset theme "${theme.name}" applied and saved`, 'success');
+// Ensure global export for inline handlers
+window.applyPresetTheme = window.applyPresetTheme || applyPresetTheme;
 }
 
 /**
@@ -1198,6 +1200,8 @@ function previewTheme() {
   if (typeof persistThemeLocally === 'function') {
     persistThemeLocally(theme);
   }
+// Ensure global export for inline handlers
+window.previewTheme = window.previewTheme || previewTheme;
 }
 
 function getThemeObject() {
@@ -2768,17 +2772,23 @@ if (document.readyState === 'loading') {
   setTimeout(loadApiSettings, 500);
 }
 
-// ==================== Global Function Exports ====================
-// Ensure all inline onclick handlers can access these functions
-window.applyPresetTheme = window.applyPresetTheme || applyPresetTheme;
-window.extractColorsFromLogo = window.extractColorsFromLogo || extractColorsFromLogo;
-window.previewTheme = window.previewTheme || previewTheme;
-window.toggleThemePreview = window.toggleThemePreview || toggleThemePreview;
-window.saveBranding = window.saveBranding || saveBranding;
-window.exportTheme = window.exportTheme || exportTheme;
-window.resetBranding = window.resetBranding || resetBranding;
-window.loadBranding = window.loadBranding || loadBranding;
-window.saveApiSettings = window.saveApiSettings || saveApiSettings;
-window.loadApiSettings = window.loadApiSettings || loadApiSettings;
+// Legacy theme builder functions removed - using module system instead
+</script>
+
+<!-- Theme Builder Module - Modern ES6 module-based approach -->
+<script type="module">
+  // Import the theme builder module
+  const themeBuilderModule = await import('{{ url_for("static", filename="js/modules/theme-builder.js") }}');
+  const ThemeBuilder = themeBuilderModule.ThemeBuilder || themeBuilderModule.default;
+  
+  // Initialize when page is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => ThemeBuilder.init?.());
+  } else {
+    ThemeBuilder.init?.();
+  }
+  
+  // Expose to window for any legacy code that might need it
+  window.ThemeBuilder = ThemeBuilder;
 </script>
 {% endblock %}
