@@ -81,7 +81,7 @@ async function loadDuplicates() {
                         <td style="min-width: 130px; white-space: nowrap;"><small>${modifiedLabel || '—'}</small></td>
                         <td style="word-wrap: break-word; word-break: break-word;"><small class="text-muted">${safePath}</small></td>
                         <td style="min-width: 80px; text-align: center;">
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
+                            <button class="btn btn-sm btn-danger" onclick="deleteSingleFile(${deletePath})" title="Delete this file">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -98,13 +98,13 @@ async function loadDuplicates() {
                                 <small class="text-muted">(Hash: ${hashDisplay})</small>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-sm btn-outline-primary" onclick="keepNewest(${index})" title="Keep newest file, delete older duplicates">
+                                <button class="btn btn-sm btn-primary" onclick="keepNewest(${index})" title="Keep newest file, delete older duplicates">
                                     <i class="bi bi-clock"></i> Keep Newest
                                 </button>
-                                <button class="btn btn-sm btn-outline-success" onclick="keepLargest(${index})" title="Keep largest file, delete smaller duplicates">
+                                <button class="btn btn-sm btn-success" onclick="keepLargest(${index})" title="Keep largest file, delete smaller duplicates">
                                     <i class="bi bi-file-earmark"></i> Keep Largest
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAllDuplicates(${index})" title="Delete all files in this group">
+                                <button class="btn btn-sm btn-danger" onclick="deleteAllDuplicates(${index})" title="Delete all files in this group">
                                     <i class="bi bi-trash"></i> Delete All
                                 </button>
                             </div>
@@ -298,3 +298,4 @@ window.deleteSelectedFiles = deleteSelectedFiles;
 window.resolveDuplicates = resolveDuplicates;
 
 console.log('✓ Duplicates module loaded');
+
