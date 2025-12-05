@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "downloads-organizer"
+version = "1.0.0"
+description = "Windows file organization service with web dashboard"
+
+[tool.pylint.messages_control]
+disable = [
+    "fixme",
+    "missing-docstring",
+    "line-too-long",
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-locals = 20
+max-arguments = 10
+max-branches = 15
+max-statements = 50
+
+[tool.pylance]
+exclude = ["**/*.md", "**/*.markdown", "docs/**", "README*"]
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | \.md$
+  | \.markdown$
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip_glob = ["**/*.md", "**/*.markdown", "docs/**"]

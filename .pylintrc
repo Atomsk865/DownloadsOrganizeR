@@ -1,0 +1,26 @@
+[MASTER]
+# Ignore Markdown files and documentation
+ignore-patterns=.*\.md$,.*\.markdown$
+ignore-paths=docs,README
+
+[MESSAGES CONTROL]
+# Disable warnings for markdown files embedded in code comments
+disable=
+    fixme,
+    missing-docstring,
+    too-many-locals,
+    too-many-arguments,
+    too-many-branches,
+    too-many-statements
+
+[DESIGN]
+# Adjust complexity thresholds
+max-locals=20
+max-arguments=10
+max-branches=15
+max-statements=50
+
+[FORMAT]
+# Python code formatting
+max-line-length=120
+indent-string='    '
