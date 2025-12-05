@@ -159,6 +159,23 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
+        
+        /* htmx spinner animation */
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
         /* Card styling */
         .dashboard-module { width: 100%; }
         .dashboard-module .card {
@@ -442,12 +459,44 @@
                     <div class="card-body p-2">
                         <div class="mb-1">
                             <small><b>Status:</b></small>
-                            <span id="service-badge-sidebar" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1" style="font-size: 0.7rem;">{{ service_status }}</span>
+                            <span id="service-badge-sidebar" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }} ms-1" style="font-size: 0.7rem;"
+                                  hx-get="/metrics"
+                                  hx-trigger="refresh-status from:body"
+                                  hx-swap="none"
+                                  hx-on::after-request="
+                                    const data = JSON.parse(event.detail.xhr.response);
+                                    const badge = document.getElementById('service-badge-sidebar');
+                                    const mainBadge = document.getElementById('service-badge');
+                                    const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
+                                    if(badge){badge.textContent=data.service_status;badge.className='badge '+statusClass+' ms-1';badge.style.fontSize='0.7rem';}
+                                    if(mainBadge){mainBadge.textContent=data.service_status;mainBadge.className='badge '+statusClass+' ms-1';}
+                                  ">{{ service_status }}</span>
                         </div>
                         <div class="d-flex gap-1 flex-wrap">
-                            <button id="btn-start-service" class="btn btn-success btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof startService==='function')startService()">Start</button>
-                            <button id="btn-stop-service" class="btn btn-danger btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof stopService==='function')stopService()">Stop</button>
-                            <button id="btn-restart-service" class="btn btn-warning btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;" onclick="if(typeof restartService==='function')restartService()">Restart</button>
+                            <button id="btn-start-service" class="btn btn-success btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"
+                                    hx-post="/start"
+                                    hx-trigger="click"
+                                    hx-swap="none"
+                                    hx-on::after-request="if(event.detail.successful){setTimeout(()=>htmx.trigger('#service-badge-sidebar','refresh-status'),1000)}">
+                                <span class="htmx-indicator"><i class="bi bi-arrow-clockwise spinner"></i></span>
+                                Start
+                            </button>
+                            <button id="btn-stop-service" class="btn btn-danger btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"
+                                    hx-post="/stop"
+                                    hx-trigger="click"
+                                    hx-swap="none"
+                                    hx-on::after-request="if(event.detail.successful){setTimeout(()=>htmx.trigger('#service-badge-sidebar','refresh-status'),1000)}">
+                                <span class="htmx-indicator"><i class="bi bi-arrow-clockwise spinner"></i></span>
+                                Stop
+                            </button>
+                            <button id="btn-restart-service" class="btn btn-warning btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"
+                                    hx-post="/restart"
+                                    hx-trigger="click"
+                                    hx-swap="none"
+                                    hx-on::after-request="if(event.detail.successful){setTimeout(()=>htmx.trigger('#service-badge-sidebar','refresh-status'),1000)}">
+                                <span class="htmx-indicator"><i class="bi bi-arrow-clockwise spinner"></i></span>
+                                Restart
+                            </button>
                         </div>
                     </div>
                 </div>

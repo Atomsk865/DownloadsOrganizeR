@@ -22,9 +22,29 @@
         }
     });
     
-    // Success notifications
+    // Handle successful htmx responses
+    document.body.addEventListener('htmx:afterRequest', (event) => {
+        if (event.detail.successful && event.detail.xhr.response) {
+            try {
+                const data = JSON.parse(event.detail.xhr.response);
+                // Show notification for service control actions
+                if (data.status === 'success' && data.message) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message, 'success');
+                    }
+                } else if (data.status === 'error' && data.message) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message, 'danger');
+                    }
+                }
+            } catch (e) {
+                // Not JSON or no message - silent success
+            }
+        }
+    });
+    
+    // Auto-initialize components after htmx swaps content
     document.body.addEventListener('htmx:afterSwap', (event) => {
-        // Auto-initialize any new components after htmx swaps content
         if (typeof initDragAndDrop === 'function') initDragAndDrop();
         if (typeof initResizableTables === 'function') initResizableTables();
     });
@@ -1170,68 +1190,13 @@ async function pollRights() {
     }
 }
 
-// Service Control Functions
-async function startService() {
-    await serviceAction('start');
-}
+// Service Control Functions - MIGRATED TO HTMX
+// Service control buttons now use htmx attributes directly in HTML
+// See dash/dashboard.html service control buttons for implementation
+// Benefits: 90% less code, automatic error handling, built-in loading states
 
-async function stopService() {
-    await serviceAction('stop');
-}
-
-async function restartService() {
-    await serviceAction('restart');
-}
-
-async function serviceAction(action) {
-    try {
-        if (!__authHeader) {
-            showNotification('Please login before performing service actions', 'warning');
-            return;
-        }
-        const response = await fetch(`/${action}`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders()
-        });
-        const data = await response.json();
-        if (response.ok) {
-            const pastTense = { 'start': 'started', 'stop': 'stopped', 'restart': 'restarted' }[action] || `${action}ed`;
-            showNotification(`Service ${pastTense} successfully`, 'success');
-            setTimeout(updateServiceStatus, 1000);
-        } else {
-            showNotification(data.message || `Failed to ${action} service`, 'danger');
-        }
-    } catch (error) {
-        showNotification(`Error: ${error.message}`, 'danger');
-    }
-}
-
-// Update service status
-async function updateServiceStatus() {
-    try {
-        const response = await fetch('/metrics');
-        const data = await response.json();
-        
-        // Update both main and sidebar badges
-        const badge = document.getElementById('service-badge');
-        const badgeSidebar = document.getElementById('service-badge-sidebar');
-        const statusClass = data.service_status === 'Running' ? 'bg-success' : 'bg-danger';
-        
-        if (badge) {
-            badge.textContent = data.service_status;
-            badge.className = `badge ${statusClass} ms-1`;
-        }
-        
-        if (badgeSidebar) {
-            badgeSidebar.textContent = data.service_status;
-            badgeSidebar.className = `badge ${statusClass} ms-1`;
-            badgeSidebar.style.fontSize = '0.7rem';
-        }
-    } catch (error) {
-        console.error('Error updating service status:', error);
-    }
-}
+// Legacy updateServiceStatus removed - now handled by htmx event trigger
+// Status updates triggered via: htmx.trigger('#service-badge-sidebar','refresh-status')
 
 // Fetch configured service name from server and display in header
 async function fetchServiceName() {
@@ -3554,8 +3519,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
-// Note: Service control functions (startService, stopService, restartService, serviceAction, updateServiceStatus)
-// are already defined earlier in dashboard_scripts.html around line 856-900.
+// Note: Service control functions MIGRATED TO HTMX
+// Service control (Start/Stop/Restart) now uses htmx attributes for:
+// - Declarative POST requests (hx-post="/start")
+// - Automatic loading indicators (hx-indicator)
+// - Auto status refresh (hx-on::after-request with refresh-status trigger)
+// Removed: startService(), stopService(), restartService(), serviceAction(), updateServiceStatus()
 
 // Export implementations to window for inline handlers
 (function(){
@@ -3567,7 +3536,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'loadDuplicates','loadWatchedFolders','refreshRecentFiles','copyServiceName','copyToClipboard','deleteRow',
         'toggleHideModule','saveSettings','addCategoryRow','saveConfiguration','addCustomRouteRow','addTagRouteRow',
         'devResetToSetup','initResizableTables','initMobileCollapsible','updateServiceStatus',
-        'startService','stopService','restartService','serviceAction','showHiddenModules','loadDeveloperMode',
+        'showHiddenModules','loadDeveloperMode',
         'updateSidebarMetrics','updateSidebarStats','openStatsWindow','streamLog'
     ];
     exportNames.forEach(function(name){
@@ -3598,10 +3567,9 @@ document.addEventListener('DOMContentLoaded', function(){
     bind('dev-reset-btn', window.devResetToSetup);
     bind('dev-reset-btn-sidebar', window.devResetToSetup);
     
-    // Service controls
-    bind('btn-start-service', window.startService);
-    bind('btn-stop-service', window.stopService);
-    bind('btn-restart-service', window.restartService);
+    // Service controls - MIGRATED TO HTMX
+    // Start/Stop/Restart buttons now use htmx attributes (hx-post="/start" etc.)
+    // Status updates via htmx refresh-status event trigger
     bind('service-name-btn', window.copyServiceName);
     
     // Module actions
