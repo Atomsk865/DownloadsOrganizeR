@@ -1405,6 +1405,14 @@ async function pollRights() {
 
 // Legacy updateServiceStatus removed - now handled by htmx event trigger
 // Status updates triggered via: htmx.trigger('#service-badge-sidebar','refresh-status')
+// Stub function for backward compatibility
+function updateServiceStatus() {
+    // Trigger htmx refresh for service status badge
+    if (typeof htmx !== 'undefined') {
+        const badge = document.getElementById('service-badge-sidebar');
+        if (badge) htmx.trigger(badge, 'refresh-status');
+    }
+}
 
 // Fetch configured service name from server and display in header
 async function fetchServiceName() {
