@@ -15,7 +15,7 @@
           <div class="small text-muted">Start the background service to recreate downloads metadata before continuing.</div>
         </div>
         <div class="ms-md-auto d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-start-organizer-setup">Start Organizer</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-start-organizer-setup">Start Organizer</button>
           <small id="start-organizer-status-setup" class="text-muted"></small>
         </div>
       </div>
@@ -35,10 +35,10 @@
             </label>
             <div class="input-group input-group-sm">
               <input type="password" class="form-control" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
-              <button class="btn btn-outline-secondary" type="button" id="toggle-password" onclick="togglePasswordVisibility()" title="Show/Hide" data-bs-toggle="tooltip" data-bs-placement="top">
+              <button class="btn btn-secondary" type="button" id="toggle-password" onclick="togglePasswordVisibility()" title="Show/Hide" data-bs-toggle="tooltip" data-bs-placement="top">
                 <span id="toggle-password-icon" aria-hidden="true">👁️</span>
               </button>
-              <button class="btn btn-outline-success" type="button" id="generate-password" onclick="generateStrongPassword()" title="Generate a strong password" data-bs-toggle="tooltip" data-bs-placement="top">
+              <button class="btn btn-success" type="button" id="generate-password" onclick="generateStrongPassword()" title="Generate a strong password" data-bs-toggle="tooltip" data-bs-placement="top">
                 Generate
               </button>
             </div>
@@ -127,9 +127,9 @@
                 </div>
                 <div class="input-group input-group-sm mt-1">
                   <input type="text" class="form-control" id="wf-custom-path" placeholder="Enter path (e.g., C:/Incoming or /data/downloads)" disabled value="{{ default_download_path }}">
-                  <button class="btn btn-outline-secondary" type="button" onclick="addCustomWatchFolder()" id="wf-custom-add" disabled>Add</button>
-                  <button class="btn btn-outline-info" type="button" onclick="prefillDefaultDownload()" id="wf-custom-prefill" disabled>Use Default</button>
-                  <button class="btn btn-outline-success" type="button" onclick="addDefaultToSelection()" id="wf-custom-add-default" disabled>Add Default to Selection</button>
+                  <button class="btn btn-secondary" type="button" onclick="addCustomWatchFolder()" id="wf-custom-add" disabled>Add</button>
+                  <button class="btn btn-info" type="button" onclick="prefillDefaultDownload()" id="wf-custom-prefill" disabled>Use Default</button>
+                  <button class="btn btn-success" type="button" onclick="addDefaultToSelection()" id="wf-custom-add-default" disabled>Add Default to Selection</button>
                 </div>
                 <div class="mt-1">
                   <small class="text-muted">Default detected: <code id="wf-default-hint">{{ default_download_path }}</code></small>
@@ -195,7 +195,7 @@
           <div class="col-12">
             <div class="d-flex w-100 align-items-center gap-2">
               <button type="button" class="btn btn-primary flex-grow-1" onclick="submitSetup()">Complete Setup</button>
-              <a href="/docs/readme" target="_blank" class="btn btn-outline-dark"><i class="bi bi-book"></i> Docs</a>
+              <a href="/docs/readme" target="_blank" class="btn btn-dark"><i class="bi bi-book"></i> Docs</a>
             </div>
           </div>
         </div>
@@ -452,7 +452,7 @@ function renderSelectedWatchFolders(){
     return;
   }
   list.innerHTML = '<small><b>Selected:</b></small>\n<ul class="mt-1 mb-0">' + selected.map(p=>
-    `<li data-path="${p}"><code>${p}</code> <button class="btn btn-sm btn-outline-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${p}')">Remove</button></li>`
+    `<li data-path="${p}"><code>${p}</code> <button class="btn btn-sm btn-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${p}')">Remove</button></li>`
   ).join('') + '</ul>';
 }
 

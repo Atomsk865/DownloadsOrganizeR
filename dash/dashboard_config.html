@@ -132,17 +132,17 @@
     <button class="btn btn-sm btn-danger me-2" onclick="factoryReset()" data-right="manage_config" title="Reset all settings to defaults">
       <i class="bi bi-exclamation-triangle"></i> Factory Reset
     </button>
-      <button class="btn btn-sm btn-outline-primary me-2" onclick="resetSetup()" data-right="manage_config" title="Re-run initial setup wizard">
+      <button class="btn btn-sm btn-danger me-2" onclick="resetSetup()" data-right="manage_config" title="Re-run initial setup wizard">
         <i class="bi bi-arrow-counterclockwise"></i> Re-run Setup
       </button>
       <button class="btn btn-sm btn-success me-2" onclick="repairAuth()" data-right="manage_config" title="Align admin credentials across configs">
         <i class="bi bi-shield-lock"></i> Repair Auth
       </button>
-      <button class="btn btn-sm btn-outline-info me-2" onclick="viewAuthState()" data-right="manage_config" title="View current auth state">
+      <button class="btn btn-sm btn-info me-2" onclick="viewAuthState()" data-right="manage_config" title="View current auth state">
         <i class="bi bi-info-circle"></i> Auth State
       </button>
       <div class="btn-group me-2">
-        <button type="button" class="btn btn-sm btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Open documentation in new tab">
+        <button type="button" class="btn btn-sm btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Open documentation in new tab">
           <i class="bi bi-book"></i> Docs
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -153,8 +153,8 @@
           <li><a class="dropdown-item" href="/docs/duplicate-detection" target="_blank">Duplicate Detection</a></li>
         </ul>
       </div>
-    <a href="/" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
-    <a href="/env-test" class="btn btn-sm btn-outline-primary ms-2 dev-only-element"><i class="bi bi-bug"></i> Environment Test</a>
+    <a href="/" class="btn btn-sm btn-secondary">Back to Dashboard</a>
+    <a href="/env-test" class="btn btn-sm btn-primary ms-2 dev-only-element"><i class="bi bi-bug"></i> Environment Test</a>
   </div>
 </div>
 <div id="config-grid">
@@ -2150,8 +2150,8 @@ function filterUsers() {
               </span>
             </span>
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-info" onclick="runInitialScan(${idx})" title="Run initial scan"><i class="bi bi-play"></i></button>
-              <button class="btn btn-sm btn-outline-danger" onclick="removeWatchFolder(${idx})" title="Remove"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-sm btn-info" onclick="runInitialScan(${idx})" title="Run initial scan"><i class="bi bi-play"></i></button>
+              <button class="btn btn-sm btn-danger" onclick="removeWatchFolder(${idx})" title="Remove"><i class="bi bi-trash"></i></button>
             </div>
           </li>
         `).join('');
@@ -2193,9 +2193,9 @@ function filterUsers() {
           </span>
         </span>
         <div class="btn-group">
-          <button class="btn btn-sm btn-outline-info" onclick="runInitialScan(${idx})" title="Run initial scan"><i class="bi bi-play"></i></button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="testWatchFolder(${idx})" title="Test folder access"><i class="bi bi-check2-circle"></i></button>
-          <button class="btn btn-sm btn-outline-danger" onclick="removeWatchFolder(${idx})" title="Remove"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-sm btn-info" onclick="runInitialScan(${idx})" title="Run initial scan"><i class="bi bi-play"></i></button>
+          <button class="btn btn-sm btn-secondary" onclick="testWatchFolder(${idx})" title="Test folder access"><i class="bi bi-check2-circle"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="removeWatchFolder(${idx})" title="Remove"><i class="bi bi-trash"></i></button>
         </div>
       </li>`;
     }).join('');
