@@ -1201,15 +1201,15 @@
 <body>
 <!-- Theme Toggle -->
 <div class="theme-toggle-container" style="position: fixed; top: 15px; right: 15px; z-index: 10000;">
-    <div class="theme-toggle" onclick="toggleTheme()" data-bs-toggle="tooltip" data-bs-placement="left" title="Toggle between Dark/Light modes" style="position: relative;">
+    <div class="theme-toggle" onclick="toggleTheme()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Dark/Light mode" style="position: relative;">
         <i class="bi bi-sun-fill" style="color: #ffc107;"></i>
         <i class="bi bi-moon-stars-fill" style="color: #6ea8fe;"></i>
         <!-- Custom theme badge overlay -->
-        <span id="custom-theme-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #8e44ad; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer;" onclick="event.stopPropagation(); revertToDefaultTheme();" data-bs-toggle="tooltip" data-bs-placement="left" title="Custom theme active - click to revert">
+        <span id="custom-theme-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #8e44ad; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer;" onclick="event.stopPropagation(); revertToDefaultTheme();" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Custom theme - click to revert">
             <i class="bi bi-palette" style="font-size: 8px;"></i>
         </span>
         <!-- Undo button badge at bottom-right -->
-        <span class="theme-undo-btn" id="theme-undo-btn" onclick="event.stopPropagation(); undoCustomTheme();" data-bs-toggle="tooltip" data-bs-placement="left" title="Undo custom theme" style="display: none; position: absolute; bottom: -6px; right: -6px; background: #3498db; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; border: 2px solid var(--bg-secondary);">
+        <span class="theme-undo-btn" id="theme-undo-btn" onclick="event.stopPropagation(); undoCustomTheme();" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo custom theme" style="display: none; position: absolute; bottom: -6px; right: -6px; background: #3498db; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; border: 2px solid var(--bg-secondary);">
             <i class="bi bi-arrow-counterclockwise" style="font-size: 10px; color: white;"></i>
         </span>
     </div>
