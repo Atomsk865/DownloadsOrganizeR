@@ -2,22 +2,50 @@
 {% block extra_head %}
 <style>
     #config-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
       width: 100%;
-      max-width: 1200px;
-      margin: 2rem auto 0 auto;
-      padding: 2rem 0;
-      justify-content: center;
+      padding: 1.25rem;
+      margin: 0 auto;
     }
+
+    /* GridStack theme (mirror dashboard layout) */
+    .grid-stack {
+      background: transparent;
+    }
+
+    .grid-stack-item {
+      background: transparent;
+      min-width: 260px;
+    }
+
+    .grid-stack-item-content {
+      background: transparent;
+      overflow: visible !important;
+      inset: 0 !important;
+      min-width: 260px;
+    }
+
     .config-module {
-        flex: 1 1 calc(50% - 0.5rem);
-        min-width: 400px;
-        transition: all 0.3s ease;
-        position: relative;
-        background: var(--bg-secondary);
-        border-radius: 0.375rem;
+      width: 100%;
+      min-width: 260px;
+      transition: all 0.3s ease;
+      position: relative;
+      background: var(--bg-secondary);
+      border-radius: 0.375rem;
+    }
+    .config-module .card {
+      height: 100%;
+      width: 100%;
+      margin-bottom: 0;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .config-module .card-body {
+      overflow: hidden;
+      overflow-x: auto;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
     }
     .config-module.dragging {
         opacity: 0.6;
@@ -30,8 +58,8 @@
         background-color: rgba(13, 110, 253, 0.05);
     }
     .config-module.full-width {
-        flex: 1 1 100%;
-        min-width: 100%;
+      width: 100%;
+      min-width: 100%;
     }
     .drag-handle {
         cursor: move;
@@ -45,8 +73,8 @@
     }
     @media (max-width: 1024px) {
         .config-module {
-            flex: 1 1 100%;
-            min-width: 100%;
+          width: 100%;
+          min-width: 100%;
         }
     }
     @media (max-width: 768px) {
@@ -158,7 +186,7 @@
     <a href="/env-test" class="btn btn-sm btn-primary ms-2 dev-only-element"><i class="bi bi-bug"></i> Environment Test</a>
   </div>
 </div>
-<div id="config-grid">
+<div id="config-grid" class="grid-stack config-grid">
   <!-- Features & Integrations -->
   <div class="config-module" data-module="features-integrations" draggable="true">
     <div class="card">
@@ -1077,8 +1105,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Fetch config AFTER rights are loaded to avoid race condition
       fetchConfig();
       // Initialize config page features
-      initConfigDragDrop();
-      loadConfigLayout();
+      if (window.ConfigDragDrop && typeof window.ConfigDragDrop.init === 'function') {
+        window.ConfigDragDrop.init();
+      } else {
+        initConfigDragDrop();
+        loadConfigLayout();
+      }
       // loadBranding() - now called by ThemeBuilder.init() module
       // Start log streaming
       if (__rights.view_metrics && typeof streamLog === 'function') {
@@ -2131,6 +2163,12 @@ if (document.readyState === 'loading') {
 }
 
 // Legacy theme builder functions removed - using module system instead
+</script>
+
+<!-- Config Drag/Drop Module -->
+<script type="module">
+  import { ConfigDragDrop } from '{{ url_for("static", filename="js/modules/config-drag-drop.js") }}';
+  window.ConfigDragDrop = ConfigDragDrop;
 </script>
 
 <!-- Theme Builder Module - Modern ES6 module-based approach -->
