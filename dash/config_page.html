@@ -421,6 +421,8 @@
         /* GridStack Integration */
         .grid-stack {
             background: transparent;
+            padding: 0 0 25px 0;
+            margin: 0;
         }
         
         .grid-stack-item {
@@ -508,7 +510,7 @@
     <!-- Main Content -->
     <main class="config-main">
         <div class="config-container">
-            <div class="config-grid" id="config-grid">
+            <div class="config-grid grid-stack" id="config-grid">
                 <!-- Config modules will be included here -->
                 {% include "config_modules.html" %}
             </div>

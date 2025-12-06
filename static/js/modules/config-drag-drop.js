@@ -47,7 +47,7 @@ export const ConfigDragDrop = {
             float: true, // Allow compact arrangement
             staticGrid: false, // Allow grid updates
             animate: true,
-            margin: '1rem',
+            margin: 25,
             columnOpts: {
                 breakpoints: [
                     {w: 2200, c: 4},
@@ -68,19 +68,16 @@ export const ConfigDragDrop = {
             // Add grid-stack-item class
             module.classList.add('grid-stack-item');
 
-            // Calculate grid position to prevent overlap
+            // Calculate width (full-width spans all columns)
             const isFullWidth = module.classList.contains('full-width');
             const width = isFullWidth ? currentColumns : 1;
-            const x = isFullWidth ? 0 : (index % currentColumns);
-            const y = Math.floor(index / currentColumns) * 2; // spread vertically
 
-            // Set position attributes
-            module.setAttribute('gs-x', x.toString());
-            module.setAttribute('gs-y', y.toString());
+            // Set position/size attributes
             module.setAttribute('gs-w', width.toString());
             module.setAttribute('gs-h', '1');
             module.setAttribute('gs-no-resize', 'true');
             module.setAttribute('gs-no-move', 'true'); // Start locked
+            module.setAttribute('gs-auto-position', 'true');
 
             // Initialize drag state to false (locked/docked)
             const moduleName = module.getAttribute('data-module');
@@ -93,7 +90,7 @@ export const ConfigDragDrop = {
                 toggle.classList.remove('undocked');
             }
 
-            // Make widget with these attributes
+            // Make widget with auto-positioning
             this.grid.makeWidget(module);
         });
         
@@ -109,9 +106,10 @@ export const ConfigDragDrop = {
                     const allModules = document.querySelectorAll('.config-module');
                     allModules.forEach(module => {
                         if (module.classList.contains('full-width')) {
-                            this.grid.update(module, {w: newColumns});
+                            this.grid.update(module, {w: newColumns, autoPosition: true});
                         }
                     });
+                    this.grid.compact();
                 }
             }, 250);
         });
@@ -157,6 +155,7 @@ export const ConfigDragDrop = {
                     const gridItem = module.closest('.grid-stack-item');
                     if (gridItem) {
                         this.grid.enableMove(gridItem, true);
+                        gridItem.removeAttribute('gs-no-move');
                         gridItem.style.cursor = 'move';
                     }
                 } else {
@@ -171,6 +170,7 @@ export const ConfigDragDrop = {
                     const gridItem = module.closest('.grid-stack-item');
                     if (gridItem) {
                         this.grid.enableMove(gridItem, false);
+                        gridItem.setAttribute('gs-no-move', 'true');
                         gridItem.style.cursor = 'default';
                     }
                 }
@@ -220,26 +220,19 @@ export const ConfigDragDrop = {
             const layout = JSON.parse(saved);
             console.log('[ConfigDragDrop] Loading saved layout:', layout);
             
-            layout.forEach(item => {
-                const module = document.querySelector(`.config-module[data-module="${item.module}"]`);
-                if (module) {
-                    module.setAttribute('gs-x', item.x);
-                    module.setAttribute('gs-y', item.y);
-                    module.setAttribute('gs-w', item.w);
-                    module.setAttribute('gs-h', item.h);
-                }
-            });
-            
-            // Refresh grid after loading layout
-            if (this.grid) {
-                this.grid.load(layout.map(item => ({
-                    x: item.x,
-                    y: item.y,
-                    w: item.w,
-                    h: item.h,
-                    id: item.module
-                })));
-            }
+                layout.forEach(item => {
+                    const module = document.querySelector(`.config-module[data-module="${item.module}"]`);
+                    if (module) {
+                        this.grid.update(module, {
+                            x: item.x,
+                            y: item.y,
+                            w: item.w,
+                            h: item.h,
+                            autoPosition: false
+                        });
+                    }
+                });
+                this.grid.compact();
         } catch (e) {
             console.error('[ConfigDragDrop] Error loading layout:', e);
         }
