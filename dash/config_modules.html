@@ -319,18 +319,19 @@
       <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
-      <div class="input-group mb-2">
-        <input type="text" class="form-control" id="watch-folder-input" placeholder="Add folder path (e.g., C:/Users/you/Downloads)">
-        <button class="btn btn-primary" type="button" onclick="addWatchFolder()"><i class="bi bi-plus"></i> Add</button>
-        <button class="btn btn-success" type="button" onclick="saveWatchFolders()"><i class="bi bi-save"></i> Save</button>
-        <button class="btn btn-secondary" type="button" onclick="testSelectedWatchFolder()"><i class="bi bi-check2-circle"></i> Test Selected</button>
-        <button class="btn btn-info" type="button" onclick="openConfigActions()"><i class="bi bi-journal-text"></i> View Config Actions</button>
-      </div>
+      <label for="watch-folder-input" class="form-label mb-1"><small><b>Add Watched Folder</b></small></label>
+      <input type="text" class="form-control mb-2" id="watch-folder-input" placeholder="Add folder path (e.g., C:/Users/you/Downloads)">
       <div class="form-check mb-2">
         <input class="form-check-input" type="checkbox" id="wf-create-missing">
         <label class="form-check-label" for="wf-create-missing"><small>Create folder if missing (with confirmation)</small></label>
       </div>
       <ul class="list-group" id="watch-folders-config-list"></ul>
+      <div class="d-flex flex-wrap gap-2 mt-2">
+        <button class="btn btn-primary" type="button" onclick="addWatchFolder()"><i class="bi bi-plus"></i> Add</button>
+        <button class="btn btn-success" type="button" onclick="saveWatchFolders()"><i class="bi bi-save"></i> Save</button>
+        <button class="btn btn-secondary" type="button" onclick="testSelectedWatchFolder()"><i class="bi bi-check2-circle"></i> Test Selected</button>
+        <button class="btn btn-info" type="button" onclick="openConfigActions()"><i class="bi bi-journal-text"></i> View Config Actions</button>
+      </div>
       <small class="text-muted d-block mt-1">These folders will be monitored and organized into category subfolders.</small>
       <br class="text-muted d-block">Accepted formats:<br> 
         UNC (`\\\\server\\share\\path`)<br> 
@@ -360,17 +361,23 @@
           <button type="button" class="btn btn-success preset-theme-btn" data-theme="forest" title="Forest Green Theme">
             <i class="bi bi-tree"></i> Forest
           </button>
-          <button type="button" class="btn btn-danger preset-theme-btn" data-theme="sunset" title="Sunset Orange Theme">
-            <i class="bi bi-sunset"></i> Sunset
-          </button>
           <button type="button" class="btn btn-warning preset-theme-btn" data-theme="ocean" title="Ocean Blue Theme">
             <i class="bi bi-water"></i> Ocean
           </button>
           <button type="button" class="btn btn-info preset-theme-btn" data-theme="mint" title="Mint Fresh Theme">
             <i class="bi bi-leaf"></i> Mint
           </button>
-          <button type="button" class="btn btn-secondary preset-theme-btn" data-theme="cyberpunk" title="Cyberpunk Neon Theme">
-            <i class="bi bi-lightning"></i> Cyberpunk
+          <button type="button" class="btn btn-dark preset-theme-btn" data-theme="halloween" title="Halloween Night Theme">
+            <i class="bi bi-moon-stars"></i> Halloween
+          </button>
+          <button type="button" class="btn btn-success preset-theme-btn" data-theme="christmas" title="Christmas Cozy Theme">
+            <i class="bi bi-tree"></i> Christmas
+          </button>
+          <button type="button" class="btn btn-warning preset-theme-btn" data-theme="easter" title="Easter Pastels Theme">
+            <i class="bi bi-egg"></i> Easter
+          </button>
+          <button type="button" class="btn btn-primary preset-theme-btn" data-theme="independence" title="Independence Day Theme">
+            <i class="bi bi-flag"></i> Independence
           </button>
         </div>
       </div>

@@ -1,6 +1,18 @@
 {% extends "dashboard_base.html" %}
 {% block extra_head %}
 <style>
+    /* Keep Role Rights table readable on strong themes */
+    .config-module[data-module="role-rights"] table,
+    .config-module[data-module="role-rights"] th,
+    .config-module[data-module="role-rights"] td {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+    .config-module[data-module="role-rights"] thead th {
+      background: var(--card-header-bg);
+    }
+
     #config-grid {
       width: 100%;
       padding: 1.25rem;
@@ -149,6 +161,31 @@
     {% endblock %}
     {% block dashboard_content %}
 <div class="mb-3 d-flex justify-content-between align-items-center" style="max-width: 1200px; margin: 0 auto; width: 100%;">
+
+    /* Pushpin state styling for drag toggle */
+    .drag-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      user-select: none;
+      padding: 4px;
+      border-radius: 4px;
+      border: 2px solid transparent;
+    }
+
+    .drag-toggle.docked {
+      color: #fff !important;
+      background: #dc3545;
+      border-color: #dc3545;
+    }
+
+    .drag-toggle.undocked {
+      color: #dc3545 !important;
+      background: transparent;
+      border-color: #dc3545;
+      border-style: dotted;
+    }
   <h5 class="mb-0">Dashboard Configuration</h5>
   <div>
     <button class="btn btn-sm btn-primary me-2" onclick="exportConfig()" data-right="manage_config" title="Download complete configuration backup">
@@ -564,17 +601,23 @@
             <button type="button" class="btn btn-success preset-theme-btn" data-theme="forest" title="Forest Green Theme">
               <i class="bi bi-tree"></i> Forest
             </button>
-            <button type="button" class="btn btn-danger preset-theme-btn" data-theme="sunset" title="Sunset Orange Theme">
-              <i class="bi bi-sunset"></i> Sunset
-            </button>
             <button type="button" class="btn btn-warning preset-theme-btn" data-theme="ocean" title="Ocean Blue Theme">
               <i class="bi bi-water"></i> Ocean
             </button>
             <button type="button" class="btn btn-info preset-theme-btn" data-theme="mint" title="Mint Fresh Theme">
               <i class="bi bi-leaf"></i> Mint
             </button>
-            <button type="button" class="btn btn-secondary preset-theme-btn" data-theme="cyberpunk" title="Cyberpunk Neon Theme">
-              <i class="bi bi-lightning"></i> Cyberpunk
+            <button type="button" class="btn btn-dark preset-theme-btn" data-theme="halloween" title="Halloween Night Theme">
+              <i class="bi bi-moon-stars"></i> Halloween
+            </button>
+            <button type="button" class="btn btn-success preset-theme-btn" data-theme="christmas" title="Christmas Cozy Theme">
+              <i class="bi bi-tree"></i> Christmas
+            </button>
+            <button type="button" class="btn btn-warning preset-theme-btn" data-theme="easter" title="Easter Pastels Theme">
+              <i class="bi bi-egg"></i> Easter
+            </button>
+            <button type="button" class="btn btn-primary preset-theme-btn" data-theme="independence" title="Independence Day Theme">
+              <i class="bi bi-flag"></i> Independence
             </button>
           </div>
         </div>

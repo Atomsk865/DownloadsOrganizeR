@@ -29,9 +29,19 @@ export const ConfigDragDrop = {
         const gutterPx = 16; // grid margin
         const minColumnWidth = 320; // target width to avoid squish but allow more columns
 
+        // Ensure the grid container has an explicit width to avoid zero-width measurements
+        const ensureContainerWidth = () => {
+            const parent = gridContainer.parentElement;
+            const available = (parent && parent.clientWidth) || window.innerWidth || 1200;
+            // Leave a small inset for padding
+            const target = Math.max(available - 24, 640);
+            gridContainer.style.width = `${target}px`;
+            return target;
+        };
+
         // Determine responsive column count based on container width and min column width
         const getColumnCount = () => {
-            const width = gridContainer.clientWidth || window.innerWidth;
+            const width = ensureContainerWidth();
             const cols = Math.max(1, Math.floor((width + gutterPx) / (minColumnWidth + gutterPx)));
             return Math.min(cols, 4);
         };
@@ -81,9 +91,9 @@ export const ConfigDragDrop = {
             // Mark module as content
             module.classList.add('grid-stack-item-content');
 
-            // Calculate width (full-width spans all columns)
+            // Calculate width (full-width spans all columns, otherwise at least half the grid when possible)
             const isFullWidth = module.classList.contains('full-width');
-            const width = isFullWidth ? currentColumns : 1;
+            const width = isFullWidth ? currentColumns : Math.min(currentColumns, Math.max(2, Math.ceil(currentColumns / 2)));
 
             // Derive required rows from actual content height
             const contentHeight = module.scrollHeight || module.offsetHeight || cellHeight;
@@ -107,12 +117,21 @@ export const ConfigDragDrop = {
             this.grid.addWidget(wrapper, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true, minW: 1 });
         });
         this.grid.compact();
+
+        // Re-evaluate columns once the DOM has painted to avoid zero-width measurements
+        setTimeout(() => {
+            if (!this.grid) return;
+            const cols = getColumnCount();
+            this.grid.column(cols);
+            this.grid.compact();
+        }, 50);
         
         // Update column count on window resize
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
+                ensureContainerWidth();
                 const newColumns = getColumnCount();
                 if (this.grid && this.grid.getColumn() !== newColumns) {
                     this.grid.column(newColumns);
@@ -237,21 +256,28 @@ export const ConfigDragDrop = {
             const layout = JSON.parse(saved);
             console.log('[ConfigDragDrop] Loading saved layout:', layout);
             
+                const cols = this.grid.getColumn();
                 layout.forEach(item => {
                     const module = document.querySelector(`.config-module[data-module="${item.module}"]`);
-                        if (module) {
-                            const wrapper = module.closest('.grid-stack-item');
-                            if (!wrapper) return;
-                            this.grid.update(wrapper, {
-                            x: item.x,
-                            y: item.y,
-                            w: item.w,
-                            h: item.h,
-                            autoPosition: false,
-                            noResize: true,
-                            noMove: !this.dragEnabled.get(item.module)
-                        });
-                    }
+                    if (!module) return;
+                    const wrapper = module.closest('.grid-stack-item');
+                    if (!wrapper) return;
+
+                    // If we previously saved narrow widths, broaden to at least half the grid (or full when flagged)
+                    const isFullWidth = module.classList.contains('full-width');
+                    const desiredWidth = isFullWidth ? cols : Math.min(cols, Math.max(2, Math.ceil(cols / 2)));
+                    const safeWidth = Math.max(1, Math.min(cols, item.w || desiredWidth));
+                    const width = Math.max(safeWidth, desiredWidth);
+
+                    this.grid.update(wrapper, {
+                        x: item.x,
+                        y: item.y,
+                        w: width,
+                        h: item.h,
+                        autoPosition: false,
+                        noResize: true,
+                        noMove: !this.dragEnabled.get(item.module)
+                    });
                 });
                 this.grid.compact();
         } catch (e) {

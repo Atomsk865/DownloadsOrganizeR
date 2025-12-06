@@ -180,7 +180,8 @@
         
         .config-grid {
             position: relative;
-            display: block; /* GridStack handles layout */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
             width: 100%;
             gap: 1rem;
             margin-top: 1.5rem;
@@ -398,20 +399,22 @@
             user-select: none;
             padding: 4px;
             border-radius: 4px;
+            border: 2px solid transparent;
         }
         
         /* Docked state (locked, not draggable) - Solid red fill */
         .drag-toggle.docked {
-            color: #dc3545 !important;
-            background: rgba(220, 53, 69, 0.1);
-            border: 2px solid #dc3545;
+            color: #fff !important;
+            background: #dc3545;
+            border-color: #dc3545;
         }
         
         /* Undocked state (unlocked, draggable) - Dotted outline */
         .drag-toggle.undocked {
-            color: var(--bs-primary, #0d6efd) !important;
-            background: rgba(13, 110, 253, 0.1);
-            border: 2px dashed var(--bs-primary, #0d6efd);
+            color: #dc3545 !important;
+            background: transparent;
+            border-color: #dc3545;
+            border-style: dotted;
         }
         
         .drag-toggle:hover {
@@ -430,8 +433,10 @@
         }
         
         .grid-stack-item {
+            position: static !important; /* override GridStack absolute positioning */
+            width: 100% !important;
+            min-width: 260px;
             transition: transform 0.3s ease, opacity 0.2s ease;
-            min-width: 120px;
         }
         
         .grid-stack-item.ui-draggable-dragging {
@@ -445,7 +450,41 @@
             inset: 0 !important;
             padding: 0;
             margin: 0;
-            min-width: 120px;
+            width: 100%;
+            min-width: 260px;
+        }
+
+        /* CSS drag/drop helpers */
+        .config-module {
+            transition: transform 180ms ease;
+        }
+        .config-module.dragging {
+            opacity: 0.8;
+            transform: scale(0.98);
+            z-index: 10;
+        }
+        .config-placeholder {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background: rgba(13, 110, 253, 0.06);
+            margin: 4px 0;
+            min-height: 140px;
+        }
+
+        /* Improve readability for Role Rights table under strong themed backgrounds */
+        .config-module[data-module="role-rights"] table {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        .config-module[data-module="role-rights"] th,
+        .config-module[data-module="role-rights"] td {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        .config-module[data-module="role-rights"] thead th {
+            background: var(--card-header-bg);
         }
         
         /* Ensure cards fill grid items properly */
@@ -555,42 +594,40 @@
         }
         
         window.ThemeBuilder = ThemeBuilder;
-    </script>
-
-    <!-- Config Drag/Drop Module -->
-    <script type="module">
-        import { ConfigDragDrop } from '{{ url_for("static", filename="js/modules/config-drag-drop.js") }}';
-        window.ConfigDragDrop = ConfigDragDrop;
-
-        const startConfigGrid = () => {
-            if (window.ConfigDragDrop && typeof window.ConfigDragDrop.init === 'function') {
-                window.ConfigDragDrop.init();
-            }
-        };
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                if (typeof GridStack !== 'undefined') return startConfigGrid();
-                const wait = setInterval(() => {
-                    if (typeof GridStack !== 'undefined') {
-                        clearInterval(wait);
-                        startConfigGrid();
-                    }
-                }, 100);
-            });
-        } else {
-            if (typeof GridStack !== 'undefined') {
-                startConfigGrid();
-            } else {
-                const wait = setInterval(() => {
-                    if (typeof GridStack !== 'undefined') {
-                        clearInterval(wait);
-                        startConfigGrid();
-                    }
-                }, 100);
-            }
+        // Expose extractColorsFromLogo globally for inline onclick
+        if (ThemeBuilder?.extractColorsFromLogo) {
+            window.extractColorsFromLogo = ThemeBuilder.extractColorsFromLogo;
         }
     </script>
+
+        <!-- Fallback: ensure extractColorsFromLogo is bound even if module loads late -->
+        <script>
+            if (typeof window.extractColorsFromLogo === 'undefined') {
+                window.extractColorsFromLogo = async function() {
+                    try {
+                        const module = await import('{{ url_for("static", filename="js/modules/theme-builder.js") }}');
+                        const TB = module.ThemeBuilder || module.default;
+                        if (TB?.init) TB.init();
+                        if (TB?.extractColorsFromLogo) {
+                            window.ThemeBuilder = TB;
+                            window.extractColorsFromLogo = TB.extractColorsFromLogo;
+                            return TB.extractColorsFromLogo();
+                        }
+                        console.warn('extractColorsFromLogo not available after dynamic import');
+                    } catch (e) {
+                        console.error('Failed to load theme builder for extractColorsFromLogo', e);
+                    }
+                };
+            }
+        </script>
+
+    <!-- CSS Grid Drag/Drop Module (animated panels) -->
+    <script type="module">
+        import './{{ url_for("static", filename="js/modules/config-css-dnd.js") }}';
+    </script>
+
+    <!-- Config actions (handlers for module buttons) -->
+    <script type="module" src="{{ url_for('static', filename='js/modules/config-actions.js') }}"></script>
 
     <!-- Config initialization -->
     <script>

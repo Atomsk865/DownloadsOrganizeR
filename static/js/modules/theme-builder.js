@@ -31,14 +31,6 @@ const PRESET_THEMES = {
     shadow: 'medium',
     css: ''
   },
-  sunset: {
-    name: 'Sunset Orange',
-    colors: { primary: '#ff7f50', secondary: '#ff6347', success: '#ff8c00', danger: '#d2691e', warning: '#ffa500', info: '#ff69b4' },
-    borderRadius: '4px',
-    fontSize: '110%',
-    shadow: 'light',
-    css: '.card{border:1px solid #ff7f50}'
-  },
   ocean: {
     name: 'Ocean Blue',
     colors: { primary: '#006994', secondary: '#0096c7', success: '#00b4d8', danger: '#0077b6', warning: '#00b4d8', info: '#03045e' },
@@ -55,15 +47,74 @@ const PRESET_THEMES = {
     shadow: 'light',
     css: '.btn{border-radius:20px;font-weight:500}'
   },
-  cyberpunk: {
-    name: 'Cyberpunk Neon',
-    colors: { primary: '#ff006e', secondary: '#8338ec', success: '#3a86ff', danger: '#fb5607', warning: '#ffbe0b', info: '#ff006e' },
-    borderRadius: '4px',
-    fontSize: '110%',
+  halloween: {
+    name: 'Halloween Night',
+    colors: { primary: '#ff7518', secondary: '#1c1c1c', success: '#5cb85c', danger: '#d7263d', warning: '#f4d35e', info: '#6b5b95' },
+    borderRadius: '8px',
+    fontSize: '100%',
     shadow: 'strong',
-    css: '.card{border:2px solid currentColor;background:rgba(0,0,0,0.9)}.btn{text-transform:uppercase;font-weight:bold;letter-spacing:1px}'
+    css: '.card{background:linear-gradient(180deg,#1c1c1c 0%,#242424 100%);color:#f8f9fa;border:1px solid #ff7518}.btn-primary{background:linear-gradient(135deg,#ff7518,#ff9f1c);color:#1c1c1c}'
+  },
+  christmas: {
+    name: 'Christmas Cozy',
+    colors: { primary: '#0b6e4f', secondary: '#b22222', success: '#2e8b57', danger: '#c1121f', warning: '#f6c177', info: '#5fa8d3' },
+    borderRadius: '12px',
+    fontSize: '102%',
+    shadow: 'medium',
+    css: '.card{background:linear-gradient(180deg,rgba(11,110,79,0.08),rgba(178,34,34,0.06));border:1px solid rgba(11,110,79,0.25)}.btn-primary{background:linear-gradient(135deg,#0b6e4f,#0f915f)}'
+  },
+  easter: {
+    name: 'Easter Pastels',
+    colors: { primary: '#f7a9a8', secondary: '#a0c4ff', success: '#bde0fe', danger: '#ffadad', warning: '#ffd6a5', info: '#cdb4db' },
+    borderRadius: '18px',
+    fontSize: '104%',
+    shadow: 'light',
+    css: '.card{border:1px solid #f7a9a8;background:linear-gradient(180deg,rgba(205,180,219,0.15),rgba(255,214,165,0.15))}.btn{border-radius:18px;font-weight:600}'
+  },
+  independence: {
+    name: 'Independence Day',
+    colors: { primary: '#0a3161', secondary: '#b31942', success: '#145da0', danger: '#c1121f', warning: '#f5d547', info: '#256eff' },
+    borderRadius: '6px',
+    fontSize: '101%',
+    shadow: 'medium',
+    css: '.card{border:1px solid rgba(10,49,97,0.4);background:linear-gradient(180deg,rgba(10,49,97,0.12),rgba(179,25,66,0.08))}.btn-primary{background:linear-gradient(135deg,#0a3161,#256eff);color:#f8f9fa}'
   }
 };
+
+// Local persistence bridge for pages that don't load dashboard_scripts helpers
+function persistThemeLocalFallback(theme) {
+  if (!theme || typeof window === 'undefined') return;
+
+  // Write to the shared dashboard key so the main dashboard can pick it up
+  try {
+    const payload = { timestamp: Date.now(), theme, version: 1 };
+    window.localStorage.setItem('dashboard_theme_v1', JSON.stringify(payload));
+  } catch (e) {
+    console.warn('Could not persist theme locally:', e);
+  }
+
+  // Sync into ThemeSystem so CSS variables apply across pages
+  try {
+    const customTheme = {
+      active: true,
+      colors: theme.colors || {},
+      borderRadius: theme.borderRadius,
+      fontSize: theme.fontSize,
+      shadow: theme.shadow,
+      css: theme.css || theme.customCss,
+      title: theme.title,
+      logo: theme.logo
+    };
+    if (window.ThemeSystem?.saveCustomTheme) {
+      window.ThemeSystem.saveCustomTheme(customTheme);
+    }
+    if (window.ThemeSystem?.applyCustomTheme) {
+      window.ThemeSystem.applyCustomTheme(customTheme);
+    }
+  } catch (e) {
+    console.warn('Could not sync theme to ThemeSystem:', e);
+  }
+}
 
 const ThemeBuilder = (() => {
   let initialized = false;
@@ -205,6 +256,21 @@ const ThemeBuilder = (() => {
     // Persist to localStorage for preview
     if (typeof persistThemeLocally === 'function') {
       persistThemeLocally(theme);
+    } else {
+      persistThemeLocalFallback(theme);
+    }
+
+    // Re-apply current light/dark mode so CSS variables and mode stay in sync
+    try {
+      const mode = document.documentElement.getAttribute('data-theme') || 'light';
+      if (window.ThemeSystem?.applyTheme) {
+        window.ThemeSystem.applyTheme(mode);
+      } else {
+        document.documentElement.setAttribute('data-theme', mode);
+      }
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: mode, type: 'mode-refresh' } }));
+    } catch (e) {
+      console.warn('Could not refresh theme mode after preview', e);
     }
 
     // Enable custom theme override
@@ -598,9 +664,24 @@ const ThemeBuilder = (() => {
         // Persist theme locally and apply it across the dashboard
         if (typeof persistThemeLocally === 'function') {
           persistThemeLocally(savedTheme);
+        } else {
+          persistThemeLocalFallback(savedTheme);
         }
         if (typeof applyThemeStyles === 'function') {
           applyThemeStyles(savedTheme);
+        }
+
+        // Refresh light/dark mode so the new custom theme honors current mode
+        try {
+          const mode = document.documentElement.getAttribute('data-theme') || 'light';
+          if (window.ThemeSystem?.applyTheme) {
+            window.ThemeSystem.applyTheme(mode);
+          } else {
+            document.documentElement.setAttribute('data-theme', mode);
+          }
+          window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: mode, type: 'mode-refresh' } }));
+        } catch (e) {
+          console.warn('Could not refresh theme mode after save', e);
         }
       } else {
         const error = await response.json().catch(() => ({ message: response.statusText }));
@@ -642,6 +723,11 @@ const ThemeBuilder = (() => {
         applyThemeToForm(theme);
         applyThemeStyles(theme);
         Store.set('theme:current', theme);
+
+        // Keep local storage in sync when the page lacks dashboard scripts
+        if (typeof persistThemeLocally !== 'function') {
+          persistThemeLocalFallback(theme);
+        }
       }
     } catch (e) {
       console.error('Error loading branding:', e);
@@ -746,6 +832,12 @@ const ThemeBuilder = (() => {
       console.error('Error extracting colors:', e);
       showNotification(`Error: ${e.message}`, 'danger');
     }
+  }
+
+  // Export for external callers
+  ThemeBuilder.extractColorsFromLogo = extractColorsFromLogo;
+  if (typeof window !== 'undefined') {
+    window.extractColorsFromLogo = extractColorsFromLogo;
   }
 
   /**
