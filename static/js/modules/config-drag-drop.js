@@ -26,17 +26,17 @@ export const ConfigDragDrop = {
             return;
         }
 
-        // Determine responsive column count based on viewport width
-        // More columns = less vertical scrolling, adjusted to prevent horizontal scrolling
+        const gutterPx = 20; // grid margin
+        const minColumnWidth = 360; // target width to avoid squish
+
+        // Determine responsive column count based on container width and min column width
         const getColumnCount = () => {
-            const width = window.innerWidth;
-            if (width >= 2200) return 4;
-            if (width >= 1600) return 3;
-            if (width >= 1100) return 2;
-            return 1;
+            const width = gridContainer.clientWidth || window.innerWidth;
+            const cols = Math.max(1, Math.floor((width + gutterPx) / (minColumnWidth + gutterPx)));
+            return Math.min(cols, 4);
         };
 
-        const cellHeight = 140; // base row height for auto height calc
+        const cellHeight = 180; // base row height for auto height calc
 
         // Initialize GridStack with responsive options
         this.grid = GridStack.init({
@@ -49,7 +49,7 @@ export const ConfigDragDrop = {
             float: true, // Allow compact arrangement
             staticGrid: false, // Allow grid updates
             animate: true,
-            margin: 25,
+            margin: gutterPx,
             columnOpts: {
                 breakpoints: [
                     {w: 2200, c: 4},
@@ -67,6 +67,9 @@ export const ConfigDragDrop = {
         const currentColumns = getColumnCount();
         
         modules.forEach((module) => {
+            // Skip if already wrapped (avoid double-wrapping)
+            if (module.closest('.grid-stack-item')) return;
+
             // Wrap module in a grid-stack-item per GridStack guidelines
             const wrapper = document.createElement('div');
             wrapper.classList.add('grid-stack-item');
@@ -101,7 +104,7 @@ export const ConfigDragDrop = {
             wrapper.appendChild(module);
 
             // Add widget with auto-positioning and measured height
-            this.grid.addWidget(wrapper, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true });
+            this.grid.addWidget(wrapper, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true, minW: 1 });
         });
         this.grid.compact();
         
@@ -117,12 +120,15 @@ export const ConfigDragDrop = {
                     const allModules = document.querySelectorAll('.config-module');
                     allModules.forEach(module => {
                         if (module.classList.contains('full-width')) {
-                            this.grid.update(module, {w: newColumns, autoPosition: true});
+                            const wrapper = module.closest('.grid-stack-item');
+                            if (wrapper) {
+                                this.grid.update(wrapper, {w: newColumns, autoPosition: true});
+                            }
                         }
                     });
                     this.grid.compact();
                 }
-            }, 250);
+            }, 200);
         });
 
         // Setup pushpin click handlers
