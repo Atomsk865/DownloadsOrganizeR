@@ -177,39 +177,10 @@
         }
         
         .config-grid {
-            display: grid;
+            position: relative;
+            display: block; /* GridStack handles layout */
             gap: 1rem;
             margin-top: 2rem;
-        }
-        
-        /* Responsive grid columns - maximize horizontal space to minimize vertical scrolling */
-        @media (min-width: 2200px) {
-            .config-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        
-        @media (min-width: 1600px) and (max-width: 2199px) {
-            .config-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        @media (min-width: 1100px) and (max-width: 1599px) {
-            .config-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 1099px) {
-            .config-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* Full-width modules always span all columns */
-        .config-module.full-width {
-            grid-column: 1 / -1;
         }
         
         /* Config Card */
@@ -220,6 +191,7 @@
             overflow: hidden;
             box-shadow: var(--card-shadow);
             transition: box-shadow 0.3s;
+            min-height: 240px;
         }
         
         .config-card:hover {

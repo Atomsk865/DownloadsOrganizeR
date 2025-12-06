@@ -67,31 +67,35 @@ export const ConfigDragDrop = {
         modules.forEach((module, index) => {
             // Add grid-stack-item class
             module.classList.add('grid-stack-item');
-            
+
             // Calculate grid position to prevent overlap
             const isFullWidth = module.classList.contains('full-width');
             const width = isFullWidth ? currentColumns : 1;
-            
+            const x = isFullWidth ? 0 : (index % currentColumns);
+            const y = Math.floor(index / currentColumns) * 2; // spread vertically
+
             // Set position attributes
+            module.setAttribute('gs-x', x.toString());
+            module.setAttribute('gs-y', y.toString());
             module.setAttribute('gs-w', width.toString());
             module.setAttribute('gs-h', '1');
             module.setAttribute('gs-no-resize', 'true');
             module.setAttribute('gs-no-move', 'true'); // Start locked
-            
+
             // Initialize drag state to false (locked/docked)
             const moduleName = module.getAttribute('data-module');
             this.dragEnabled.set(moduleName, false);
-            
+
             // Set initial pushpin state to docked (red, solid)
             const toggle = module.querySelector('.drag-toggle');
             if (toggle) {
                 toggle.classList.add('docked');
                 toggle.classList.remove('undocked');
             }
+
+            // Make widget with these attributes
+            this.grid.makeWidget(module);
         });
-        
-        // Let GridStack auto-arrange the items
-        this.grid.makeWidget(modules);
         
         // Update column count on window resize
         let resizeTimer;
