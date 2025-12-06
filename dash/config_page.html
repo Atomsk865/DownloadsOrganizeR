@@ -442,5 +442,60 @@
         
         window.ThemeBuilder = ThemeBuilder;
     </script>
+
+    <!-- Config initialization -->
+    <script>
+        // Initialize auth headers function if not already defined
+        if (!window.getAuthHeaders) {
+            window.getAuthHeaders = function() {
+                const headers = {};
+                try {
+                    const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+                    if (match) {
+                        headers['Authorization'] = decodeURIComponent(match[1]);
+                    }
+                } catch (e) {}
+                return headers;
+            };
+        }
+
+        // Fetch and populate roles on page load
+        function initializeRoles() {
+            const sel = document.getElementById('new-role');
+            if (!sel) return;
+
+            fetch('/api/dashboard/config', { headers: window.getAuthHeaders() })
+                .then(r => r.ok ? r.json() : Promise.reject('Failed to load config'))
+                .then(data => {
+                    let roleNames = [];
+                    try {
+                        if (data && data.roles) {
+                            roleNames = Object.keys(data.roles || {});
+                        }
+                    } catch(e) {}
+                    
+                    if (!roleNames || roleNames.length === 0) {
+                        roleNames = ['admin', 'operator', 'viewer'];
+                    }
+                    
+                    sel.innerHTML = roleNames.map(r => `<option value='${r}'>${r}</option>`).join('');
+                })
+                .catch(err => {
+                    // Fallback to default roles
+                    sel.innerHTML = `
+                        <option value="admin">admin</option>
+                        <option value="operator">operator</option>
+                        <option value="viewer">viewer</option>
+                    `;
+                });
+        }
+
+        // Call on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeRoles);
+        } else {
+            initializeRoles();
+        }
+    </script>
 </body>
 </html>
