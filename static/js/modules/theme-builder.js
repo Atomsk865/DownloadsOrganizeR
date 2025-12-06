@@ -370,7 +370,7 @@ const ThemeBuilder = (() => {
       .bg-warning { background-color: ${colors.warning} !important; }
       .bg-info { background-color: ${colors.info} !important; }
 
-      /* Navbar styling - Secondary background with primary accents */
+      /* Navbar and header links - Secondary background with primary accents */
       .navbar {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
@@ -379,6 +379,17 @@ const ThemeBuilder = (() => {
 
       .navbar-brand {
         color: ${colors.primary} !important;
+      }
+
+      /* Dashboard back button */
+      .config-header-left a {
+        border-color: ${colors.primary} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+      }
+
+      .config-header-left a:hover {
+        border-color: ${colors.primary} !important;
+        background-color: ${colors.primary}20 !important;
       }
 
       /* Module headers and titles - Apply primary color */
