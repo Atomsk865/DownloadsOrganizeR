@@ -450,6 +450,14 @@ def requires_auth(f):
     """Decorator to require authentication for a route."""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # During first-time setup, allow unauthenticated access so the wizard can run without prompting.
+        try:
+            from SortNStoreDashboard.config_runtime import get_dashboard_config
+            dash_cfg = get_dashboard_config()
+            if not dash_cfg.get('setup_completed', False):
+                return f(*args, **kwargs)
+        except Exception:
+            pass
         auth = request.authorization
         # First, accept Basic auth if provided
         if auth and check_auth(auth.username or '', auth.password or ''):
