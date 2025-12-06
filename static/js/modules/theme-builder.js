@@ -23,6 +23,22 @@ const PRESET_THEMES = {
     shadow: 'medium',
     css: ''
   },
+  'high-contrast-carbon': {
+    name: 'High Contrast - Carbon',
+    colors: { primary: '#111827', secondary: '#fbbf24', success: '#22c55e', danger: '#ef4444', warning: '#facc15', info: '#38bdf8' },
+    borderRadius: '8px',
+    fontSize: '100%',
+    shadow: 'strong',
+    css: '.card{background:linear-gradient(180deg,#0b0f19 0%,#111827 100%);color:#f8f9fa;border:1px solid #fbbf24}.btn-primary{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#111827}'
+  },
+  'high-contrast-royal': {
+    name: 'High Contrast - Royal',
+    colors: { primary: '#0b3d91', secondary: '#f4b400', success: '#0f766e', danger: '#b91c1c', warning: '#f59e0b', info: '#2563eb' },
+    borderRadius: '10px',
+    fontSize: '101%',
+    shadow: 'medium',
+    css: '.card{background:linear-gradient(180deg,rgba(11,61,145,0.12),rgba(244,180,0,0.12));border:1px solid rgba(11,61,145,0.35)}.btn-primary{background:linear-gradient(135deg,#0b3d91,#2563eb);color:#ffffff}'
+  },
   forest: {
     name: 'Forest Green',
     colors: { primary: '#2d6a4f', secondary: '#52b788', success: '#40916c', danger: '#d62828', warning: '#f77f00', info: '#06a77d' },
@@ -78,6 +94,22 @@ const PRESET_THEMES = {
     fontSize: '101%',
     shadow: 'medium',
     css: '.card{border:1px solid rgba(10,49,97,0.4);background:linear-gradient(180deg,rgba(10,49,97,0.12),rgba(179,25,66,0.08))}.btn-primary{background:linear-gradient(135deg,#0a3161,#256eff);color:#f8f9fa}'
+  },
+  'soft-sand': {
+    name: 'Soft Sand',
+    colors: { primary: '#c2a46d', secondary: '#e6d5b8', success: '#9bbf9b', danger: '#d88c8c', warning: '#eacb8f', info: '#b7c8d6' },
+    borderRadius: '10px',
+    fontSize: '102%',
+    shadow: 'light',
+    css: '.card{background:linear-gradient(180deg,rgba(226,210,182,0.35),rgba(194,164,109,0.2));border:1px solid rgba(194,164,109,0.45)}.btn-primary{background:linear-gradient(135deg,#c2a46d,#d9c5a0);color:#111}'
+  },
+  'soft-sky': {
+    name: 'Soft Sky',
+    colors: { primary: '#7ab8f5', secondary: '#c9ddff', success: '#8ad8e0', danger: '#e9a7a7', warning: '#f3e0a2', info: '#a6c8ff' },
+    borderRadius: '12px',
+    fontSize: '103%',
+    shadow: 'light',
+    css: '.card{background:linear-gradient(180deg,rgba(122,184,245,0.18),rgba(201,221,255,0.25));border:1px solid rgba(122,184,245,0.35)}.btn-primary{background:linear-gradient(135deg,#7ab8f5,#8ad8e0);color:#0b2540}'
   }
 };
 
@@ -177,8 +209,18 @@ const ThemeBuilder = (() => {
       }
     });
 
-    // Bind theme option changes for live preview
+    // Bind theme option changes for live preview and preset dropdowns
     document.addEventListener('change', (e) => {
+      const presetSelect = e.target.closest('.preset-theme-select');
+      if (presetSelect) {
+        const themeName = presetSelect.value;
+        if (themeName) {
+          applyPresetTheme(themeName);
+          presetSelect.value = '';
+        }
+        return;
+      }
+
       if (
         e.target.id === 'brand-border-radius' ||
         e.target.id === 'brand-font-size' ||
@@ -326,8 +368,10 @@ const ThemeBuilder = (() => {
     
     // Determine text color for contrast (light text on dark bg, dark text on light bg)
     const isLightBg = isLightColor(colors.primary);
-    const textColor = isLightBg ? '#000000' : '#FFFFFF';
-    const textColorInverted = isLightBg ? '#FFFFFF' : '#000000';
+    const primaryTextColor = isLightBg ? '#000000' : '#FFFFFF';
+    const primaryTextInverted = isLightBg ? '#FFFFFF' : '#000000';
+    const baseTextColor = isDarkMode ? '#ffffff' : '#000000';
+    const strokeColor = isDarkMode ? '#ffffff' : '#000000';
 
     const css = `
       /* Root theme variables */
@@ -339,7 +383,8 @@ const ThemeBuilder = (() => {
         --bs-warning: ${colors.warning};
         --bs-info: ${colors.info};
         --theme-primary-rgb: ${hexToRgb(colors.primary)};
-        --theme-text-color: ${isDarkMode ? '#e0e0e0' : '#212529'};
+        --theme-text-color: ${baseTextColor};
+        --theme-text-stroke: ${strokeColor};
         --theme-bg-color: ${isDarkMode ? '#1a1d23' : '#ffffff'};
       }
 
@@ -356,8 +401,24 @@ const ThemeBuilder = (() => {
 
       /* Page text and sizing - NOT background (controlled by theme toggle) */
       body {
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         font-size: calc(1rem * ${fontSize}) !important;
+        -webkit-text-stroke: 1px ${strokeColor};
+        text-shadow: 0 0.6px 0 ${strokeColor};
+      }
+
+      /* Apply readable stroke to primary text elements */
+      h1, h2, h3, h4, h5, h6,
+      p, label, small, span,
+      .form-label, .card, .card-header, .card-body,
+      .config-module, .config-main,
+      .table, .table th, .table td,
+      .btn, .nav-link, .dropdown-item,
+      .modal-title, .modal-body, .modal-footer,
+      .badge, .alert, .list-group-item {
+        color: ${baseTextColor} !important;
+        -webkit-text-stroke: 0.8px ${strokeColor};
+        text-shadow: 0 0.5px 0 ${strokeColor};
       }
 
       /* Config main background stays with theme toggle, not custom themes */
@@ -368,7 +429,7 @@ const ThemeBuilder = (() => {
       /* Primary color elements */
       .btn-primary {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: none !important;
       }
@@ -376,7 +437,7 @@ const ThemeBuilder = (() => {
       .btn-primary:hover,
       .btn-primary:focus {
         background-color: ${colors.primary}dd !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: 3px solid ${colors.primary}60 !important;
         box-shadow: 0 0 0 0.25rem ${colors.primary}30 !important;
@@ -387,7 +448,7 @@ const ThemeBuilder = (() => {
       .nav-link.active,
       .text-primary {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
       }
 
       a {
@@ -397,7 +458,7 @@ const ThemeBuilder = (() => {
       /* Secondary color elements */
       .btn-secondary, .badge-secondary, .alert-secondary {
         background-color: ${colors.secondary} !important;
-        color: ${textColorInverted} !important;
+        color: ${isLightColor(colors.secondary) ? '#000000' : '#ffffff'} !important;
       }
 
       /* Success color elements */
@@ -425,7 +486,7 @@ const ThemeBuilder = (() => {
       }
 
       /* Background color classes */
-      .bg-primary { background-color: ${colors.primary} !important; color: ${textColor} !important; }
+      .bg-primary { background-color: ${colors.primary} !important; color: ${primaryTextColor} !important; }
       .bg-secondary { background-color: ${colors.secondary} !important; }
       .bg-success { background-color: ${colors.success} !important; }
       .bg-danger { background-color: ${colors.danger} !important; }
@@ -435,7 +496,7 @@ const ThemeBuilder = (() => {
       /* Navbar and header links - Secondary background with primary accents */
       .navbar {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         border-bottom: 3px solid ${colors.primary} !important;
       }
 
@@ -446,7 +507,7 @@ const ThemeBuilder = (() => {
       /* Dashboard back button */
       .config-header-left a {
         border-color: ${colors.primary} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
       }
 
       .config-header-left a:hover {
@@ -457,7 +518,7 @@ const ThemeBuilder = (() => {
       /* Module headers and titles - Apply primary color */
       .module-header, .card-header, .modal-header {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
         border: 2px solid ${colors.primary} !important;
       }
 
@@ -468,13 +529,13 @@ const ThemeBuilder = (() => {
       /* Tables - Apply theme colors to headers and borders */
       table, .table {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
       }
 
       .table thead th {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
         border-bottom: 2px solid ${colors.primary} !important;
       }
 
@@ -493,37 +554,37 @@ const ThemeBuilder = (() => {
       /* Role rights table specific styling */
       #roles-table, #roles-table thead th, #roles-table tbody td {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         border: 1px solid ${colors.primary} !important;
       }
 
       #roles-table thead th {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
       }
 
       /* Cards - Secondary background with primary border */
       .card {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
         border: 2px solid ${colors.primary} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
       }
 
       .card-body {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
       }
 
       /* Module body text - ensure visibility in dark mode */
       .card-body p, .card-body div, .card-body span, 
       .card-body label, .card-body small, .card-body b, .card-body strong {
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
       }
 
       /* Forms and inputs - Primary color borders and outlines */
       .form-control, .form-select, textarea, input[type="text"], input[type="password"], input[type="email"] {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: none !important;
       }
@@ -538,7 +599,7 @@ const ThemeBuilder = (() => {
       .form-control:focus, .form-select:focus, textarea:focus, 
       input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: 3px solid ${colors.primary}60 !important;
         box-shadow: 0 0 0 0.25rem ${colors.primary}30 !important;
@@ -547,7 +608,7 @@ const ThemeBuilder = (() => {
       /* Input groups */
       .input-group-text {
         background-color: ${colors.primary} !important;
-        color: ${textColor} !important;
+        color: ${primaryTextColor} !important;
         border: 2px solid ${colors.primary} !important;
       }
 
@@ -560,12 +621,12 @@ const ThemeBuilder = (() => {
       ${isDarkMode ? `
         [data-theme="dark"] { color-scheme: dark; }
         .dropdown-menu { background-color: #23262d !important; }
-        .dropdown-item { color: #e0e0e0 !important; }
-        .dropdown-item:hover { background-color: ${colors.primary} !important; color: ${textColor} !important; }
+        .dropdown-item { color: ${baseTextColor} !important; }
+        .dropdown-item:hover { background-color: ${colors.primary} !important; color: ${primaryTextColor} !important; }
         .modal-content { background-color: #23262d !important; }
         .modal-header { border-bottom-color: ${colors.primary} !important; }
         .nav-tabs { border-bottom-color: ${colors.primary} !important; }
-        .nav-tabs .nav-link.active { background-color: ${colors.primary} !important; color: ${textColor} !important; }
+        .nav-tabs .nav-link.active { background-color: ${colors.primary} !important; color: ${primaryTextColor} !important; }
       ` : ''}
     `;
 
@@ -634,59 +695,35 @@ const ThemeBuilder = (() => {
    */
   async function saveBranding() {
     const theme = getThemeObject();
-
     try {
-      const headers = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      };
+      // Pure client-side persistence (no server roundtrip)
+      Store.set('theme:current', theme);
+      EventBus.emit('theme:updated', theme);
 
-      // Get auth headers from cookies if available
-      const authHeaders = getAuthHeadersFromCookie();
-      Object.assign(headers, authHeaders);
-
-      const response = await fetch('/api/dashboard/branding', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(theme),
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        showNotification('Theme saved successfully', 'success');
-        
-        // Update the returned branding data with timestamp
-        const savedTheme = data.branding || theme;
-        Store.set('theme:current', savedTheme);
-        EventBus.emit('theme:updated', savedTheme);
-        
-        // Persist theme locally and apply it across the dashboard
-        if (typeof persistThemeLocally === 'function') {
-          persistThemeLocally(savedTheme);
-        } else {
-          persistThemeLocalFallback(savedTheme);
-        }
-        if (typeof applyThemeStyles === 'function') {
-          applyThemeStyles(savedTheme);
-        }
-
-        // Refresh light/dark mode so the new custom theme honors current mode
-        try {
-          const mode = document.documentElement.getAttribute('data-theme') || 'light';
-          if (window.ThemeSystem?.applyTheme) {
-            window.ThemeSystem.applyTheme(mode);
-          } else {
-            document.documentElement.setAttribute('data-theme', mode);
-          }
-          window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: mode, type: 'mode-refresh' } }));
-        } catch (e) {
-          console.warn('Could not refresh theme mode after save', e);
-        }
+      if (typeof persistThemeLocally === 'function') {
+        persistThemeLocally(theme);
       } else {
-        const error = await response.json().catch(() => ({ message: response.statusText }));
-        showNotification(`Save failed: ${error.message}`, 'warning');
+        persistThemeLocalFallback(theme);
       }
+
+      if (typeof applyThemeStyles === 'function') {
+        applyThemeStyles(theme);
+      }
+
+      // Refresh light/dark mode so the new custom theme honors current mode
+      try {
+        const mode = document.documentElement.getAttribute('data-theme') || 'light';
+        if (window.ThemeSystem?.applyTheme) {
+          window.ThemeSystem.applyTheme(mode);
+        } else {
+          document.documentElement.setAttribute('data-theme', mode);
+        }
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: mode, type: 'mode-refresh' } }));
+      } catch (e) {
+        console.warn('Could not refresh theme mode after save', e);
+      }
+
+      showNotification('Theme saved locally (client-side only)', 'success');
     } catch (e) {
       console.error('Error saving branding:', e);
       showNotification(`Save error: ${e.message}`, 'danger');
@@ -714,20 +751,45 @@ const ThemeBuilder = (() => {
    */
   async function loadBranding() {
     try {
-      const response = await fetch('/api/dashboard/branding', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const theme = await response.json();
-        applyThemeToForm(theme);
-        applyThemeStyles(theme);
-        Store.set('theme:current', theme);
-
-        // Keep local storage in sync when the page lacks dashboard scripts
-        if (typeof persistThemeLocally !== 'function') {
-          persistThemeLocalFallback(theme);
+      // Prefer locally persisted dashboard theme; fallback to custom theme from ThemeSystem
+      let theme = null;
+      try {
+        const saved = localStorage.getItem('dashboard_theme_v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          theme = parsed.theme || parsed;
         }
+      } catch (e) {
+        console.warn('Failed to parse local dashboard theme', e);
+      }
+
+      if (!theme && window.ThemeSystem?.getCustomTheme) {
+        const custom = window.ThemeSystem.getCustomTheme();
+        if (custom) {
+          theme = {
+            colors: custom.colors,
+            borderRadius: custom.borderRadius,
+            fontSize: custom.fontSize,
+            shadow: custom.shadow,
+            css: custom.css || custom.customCss,
+            title: custom.title,
+            logo: custom.logo
+          };
+        }
+      }
+
+      if (!theme) {
+        // Default to a neutral theme if nothing stored
+        theme = getThemeObject();
+      }
+
+      applyThemeToForm(theme);
+      applyThemeStyles(theme);
+      Store.set('theme:current', theme);
+
+      // Keep local storage in sync when the page lacks dashboard scripts
+      if (typeof persistThemeLocally !== 'function') {
+        persistThemeLocalFallback(theme);
       }
     } catch (e) {
       console.error('Error loading branding:', e);

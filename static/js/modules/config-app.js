@@ -37,15 +37,20 @@ export class ConfigApp extends BaseModule {
      */
     setupThemeIntegration() {
         const html = document.documentElement;
-        
-        // Apply saved theme on load
-        const savedTheme = this.themeSystem?.getSavedTheme() || 'light';
-        html.setAttribute('data-theme', savedTheme);
+
+        // Apply current theme without forcing a reset (prefer existing state → localStorage → ThemeSystem)
+        const existing = html.getAttribute('data-theme');
+        const stored = localStorage.getItem('theme');
+        const savedTheme = this.themeSystem?.getSavedTheme?.();
+        const theme = existing || stored || savedTheme || 'light';
+        html.setAttribute('data-theme', theme);
 
         // Listen for theme changes
         window.addEventListener('themeChanged', (e) => {
             const theme = e.detail?.theme || 'light';
             html.setAttribute('data-theme', theme);
+            // keep lightweight client-side persistence for config page
+            localStorage.setItem('theme', theme);
         });
     }
 
