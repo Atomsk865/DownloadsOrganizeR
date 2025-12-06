@@ -1,501 +1,355 @@
-{% extends "dashboard_base.html" %}
-{% block dashboard_content %}
-<style>
-  .dashboard-root { padding-left: 0 !important; }
-  #sidebar, .sidebar-resizer { display: none !important; }
-</style>
-<div class="container mt-3 config-module" style="max-width: 900px; margin-left: auto; margin-right: auto;">
-  <div class="card">
-    <div class="card-header"><b>Initial Dashboard Setup</b></div>
-    <div class="card-body p-3">
-      <p class="text-muted"><small>Welcome! Complete this one-time setup to secure and configure your dashboard. After completion you will be redirected to the main dashboard and this wizard will be disabled.</small></p>
-      <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center gap-2" role="alert">
-        <div>
-          <strong>Need the Organizer running first?</strong>
-          <div class="small text-muted">Start the background service to recreate downloads metadata before continuing.</div>
-        </div>
-        <div class="ms-md-auto d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-start-organizer-setup">Start Organizer</button>
-          <small id="start-organizer-status-setup" class="text-muted"></small>
-        </div>
+{# Standalone setup page intentionally avoids shared templates to prevent protected asset loads triggering Basic Auth #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DownloadsOrganizeR Setup</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    body { background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+    .card { background: #111827; border: 1px solid #1f2937; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+    .form-control, .form-select { background: #0b1220; color: #e2e8f0; border: 1px solid #1f2937; }
+    .form-control:focus, .form-select:focus { border-color: #38bdf8; box-shadow: 0 0 0 0.15rem rgba(56,189,248,0.25); }
+    code { color: #93c5fd; }
+    .btn-primary { background: linear-gradient(90deg, #22d3ee, #6366f1); border: none; }
+    .btn-primary:hover, .btn-primary:focus { filter: brightness(1.06); box-shadow: 0 10px 40px rgba(99,102,241,0.3); }
+    .divider { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, #1f2937, transparent); margin: 1.25rem 0; }
+    .watch-chip { background: #0b1220; border: 1px dashed #1f2937; color: #cbd5e1; padding: 0.4rem 0.6rem; border-radius: 999px; display: inline-flex; gap: 0.35rem; align-items: center; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-4 mb-4">
+      <div>
+        <div class="badge bg-secondary text-uppercase mb-2">One-Time Setup</div>
+        <h2 class="fw-bold mb-1 text-light">DownloadsOrganizeR</h2>
+        <p class="text-muted mb-0">Authentication is intentionally disabled on this page to avoid any Basic Auth prompt during first run.</p>
       </div>
-      <form id="setup-form" onsubmit="return false;">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="admin-username" class="form-label mb-1"><small><b>Admin Username</b></small></label>
-            <input class="form-control form-control-sm" id="admin-username" placeholder="admin" value="admin" required>
-          </div>
-          <div class="col-md-6">
-            <label for="admin-password" class="form-label mb-1 d-flex align-items-center justify-content-between">
-              <small><b>Admin Password</b></small>
-              <div class="d-flex align-items-center gap-2">
-                <a href="/docs/authentication" target="_blank" class="text-decoration-none"><small><i class="bi bi-book"></i> Docs</small></a>
-                <span class="badge bg-secondary rounded-circle ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Password must be at least 12 characters and include uppercase, lowercase, a digit, and a special character." style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">i</span>
+      <div class="ms-lg-auto text-lg-end text-muted small">
+        <div>1) Admin account</div>
+        <div>2) Auth method</div>
+        <div>3) Folders & features</div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="card p-4">
+          <form id="setup-form" onsubmit="return false;" autocomplete="off">
+            <div class="mb-3">
+              <div class="badge bg-secondary text-uppercase mb-2">Step 1</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">Admin credentials</h5>
+                <small class="text-muted">Default username <code>admin</code>; password blank</small>
               </div>
-            </label>
-            <div class="input-group input-group-sm">
-              <input type="password" class="form-control" id="admin-password" placeholder="Strong password" required oninput="evaluatePassword()">
-              <button class="btn btn-secondary" type="button" id="toggle-password" onclick="togglePasswordVisibility()" title="Show/Hide" data-bs-toggle="tooltip" data-bs-placement="top">
-                <span id="toggle-password-icon" aria-hidden="true">👁️</span>
-              </button>
-              <button class="btn btn-success" type="button" id="generate-password" onclick="generateStrongPassword()" title="Generate a strong password" data-bs-toggle="tooltip" data-bs-placement="top">
-                Generate
-              </button>
             </div>
-            <div class="progress mt-1" style="height:6px;">
-              <div id="pw-strength-bar" class="progress-bar bg-danger" style="width:5%"></div>
-            </div>
-            <small id="pw-feedback" class="text-muted"></small>
-          </div>
-        </div>
-        <hr/>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="auth-method" class="form-label mb-1"><small><b>Authentication Method</b></small></label>
-            <select class="form-select form-select-sm" id="auth-method" onchange="toggleAuthSections()">
-              {% for m in available_methods %}
-                <option value="{{ m }}">{{ m|capitalize }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label for="fallback-enabled" class="form-label mb-1"><small><b>Enable Fallback (Basic)</b></small></label>
-            <select class="form-select form-select-sm" id="fallback-enabled">
-              <option value="true" selected>Yes</option>
-              <option value="false">No</option>
-            </select>
-          </div>
-        </div>
-        <hr/>
-        <!-- Optional Integrations & Features -->
-        <div id="features-section" class="mt-2">
-          <div class="border rounded p-2">
-            <div class="mb-2 d-flex align-items-center justify-content-between">
-              <small><b>Optional Integrations & Feature Toggles</b></small>
-              <small class="text-muted">Configure non-essential features and API keys</small>
-            </div>
-            <div class="row g-2">
-              <div class="col-md-8">
-                <label for="vt-api-key" class="form-label mb-1"><small><b>VirusTotal API Key</b> (optional)</small></label>
-                <input class="form-control form-control-sm" id="vt-api-key" placeholder="Paste your VirusTotal API key" value="{{ vt_api_key }}">
-                <small class="text-muted">Used for hash lookups in Recent Files. If empty, VT features are disabled.</small>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Admin username</label>
+                <input id="admin-username" class="form-control" value="admin" required>
               </div>
-              <div class="col-md-4">
-                <label class="form-label mb-1"><small><b>Feature Toggles</b></small></label>
+              <div class="col-md-6">
+                <label class="form-label">Admin password</label>
+                <div class="input-group">
+                  <input id="admin-password" type="password" class="form-control" placeholder="Leave blank to set later">
+                  <button class="btn btn-outline-secondary" type="button" id="toggle-pass">Show</button>
+                </div>
+                <small class="text-muted">You will be forced to change it on first login.</small>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="mb-3">
+              <div class="badge bg-secondary text-uppercase mb-2">Step 2</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">Authentication</h5>
+                <small class="text-muted">No auth applied on this page</small>
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Method</label>
+                <select id="auth-method" class="form-select">
+                  {% for m in available_methods %}
+                  <option value="{{ m }}">{{ m|capitalize }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Fallback to Basic</label>
+                <select id="fallback-enabled" class="form-select">
+                  <option value="true" selected>Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              </div>
+            </div>
+            <div id="ldap-block" class="mt-3" style="display:none;">
+              <div class="p-3 rounded border border-secondary-subtle">
+                <div class="fw-semibold mb-2">LDAP / AD</div>
+                <div class="row g-2">
+                  <div class="col-md-6"><input id="ldap-server" class="form-control" placeholder="ldap://server:389"></div>
+                  <div class="col-md-6"><input id="ldap-base-dn" class="form-control" placeholder="dc=example,dc=com"></div>
+                  <div class="col-md-6"><input id="ldap-user-template" class="form-control" value="uid={username},{base_dn}"></div>
+                  <div class="col-md-6"><input id="ldap-search-filter" class="form-control" value="(uid={username})"></div>
+                  <div class="col-md-6"><input id="ldap-bind-dn" class="form-control" placeholder="Bind DN (optional)"></div>
+                  <div class="col-md-6"><input id="ldap-bind-password" type="password" class="form-control" placeholder="Bind password (optional)"></div>
+                  <div class="col-md-6"><input id="ldap-allowed-groups" class="form-control" placeholder="Group DNs, comma separated"></div>
+                  <div class="col-md-6 form-check ms-2 mt-1">
+                    <input id="ldap-use-ssl" class="form-check-input" type="checkbox" checked>
+                    <label class="form-check-label" for="ldap-use-ssl">Use SSL/TLS</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="windows-block" class="mt-3" style="display:none;">
+              <div class="p-3 rounded border border-secondary-subtle">
+                <div class="fw-semibold mb-2">Windows Auth</div>
+                <div class="row g-2">
+                  <div class="col-md-6"><input id="win-domain" class="form-control" placeholder="DOMAIN (optional)"></div>
+                  <div class="col-md-6"><input id="win-allowed-groups" class="form-control" placeholder="Groups, comma separated"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="mb-3">
+              <div class="badge bg-secondary text-uppercase mb-2">Step 3</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">Folders & features</h5>
+                <small class="text-muted">Auto-selects by OS; change anytime</small>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="mb-2 text-muted">Recommended watch folders</div>
+              <div class="d-flex flex-wrap gap-3 mb-2">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="feat-virustotal" {% if features.virustotal_enabled %}checked{% endif %}>
-                  <label for="feat-virustotal" class="form-check-label"><small>Enable VirusTotal integration</small></label>
+                  <input class="form-check-input" type="checkbox" id="wf-win" value="C:/Users/%USERNAME%/Downloads">
+                  <label class="form-check-label" for="wf-win"><small>Windows Downloads</small></label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="feat-duplicates" {% if features.duplicates_enabled %}checked{% endif %}>
-                  <label for="feat-duplicates" class="form-check-label"><small>Enable Duplicate Detection</small></label>
+                  <input class="form-check-input" type="checkbox" id="wf-linux" value="/home/%USER%/Downloads">
+                  <label class="form-check-label" for="wf-linux"><small>Linux Downloads</small></label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="wf-shared" value="/mnt/shared/incoming">
+                  <label class="form-check-label" for="wf-shared"><small>Shared Incoming</small></label>
+                </div>
+              </div>
+              <div class="input-group mb-2">
+                <input id="wf-custom" class="form-control" placeholder="Add custom folder (absolute path)">
+                <button class="btn btn-outline-info" type="button" id="btn-add-folder">Add</button>
+                <button class="btn btn-outline-secondary" type="button" id="btn-prefill-default">Use Default</button>
+              </div>
+              <div class="small text-muted mb-2">Detected default: <code id="default-path">{{ default_download_path }}</code></div>
+              <div id="selected-folders" class="d-flex flex-wrap gap-2"></div>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">VirusTotal API key (optional)</label>
+                <input id="vt-api-key" class="form-control" value="{{ vt_api_key }}" placeholder="Paste API key or leave blank">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Feature toggles</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="feat-vt" {% if features.virustotal_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feat-vt">VirusTotal</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="feat-dup" {% if features.duplicates_enabled %}checked{% endif %}>
+                  <label class="form-check-label" for="feat-dup">Duplicate Detection</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="feat-reports" {% if features.reports_enabled %}checked{% endif %}>
-                  <label for="feat-reports" class="form-check-label"><small>Enable Reports & Analytics</small></label>
+                  <label class="form-check-label" for="feat-reports">Reports</label>
                 </div>
               </div>
             </div>
-          </div>
+
+            <div class="divider"></div>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-primary w-100" type="button" id="btn-complete">Complete Setup</button>
+              <a class="btn btn-outline-light" href="/docs/readme" target="_blank">Docs</a>
+            </div>
+          </form>
         </div>
-        <hr/>
-        <!-- Recommended Watch Folders -->
-        <div id="watch-folders-section" class="mt-2">
-          <div class="border rounded p-2">
-            <div class="mb-2 d-flex align-items-center justify-content-between">
-              <small><b>Recommended Watch Folders</b></small>
-              <small class="text-muted">Detected host OS: {{ host_os|capitalize }} — select folders to monitor</small>
-            </div>
-            <div class="row g-2">
-              <div class="col-12">
-                <!-- Show both OS options to avoid container/codespace mismatch -->
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="wf-win-downloads" value="C:/Users/%USERNAME%/Downloads">
-                  <label class="form-check-label" for="wf-win-downloads"><small>Windows Downloads (`C:/Users/%USERNAME%/Downloads`)</small></label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="wf-linux-downloads" value="/home/%USER%/Downloads">
-                  <label class="form-check-label" for="wf-linux-downloads"><small>Linux Downloads (`/home/%USER%/Downloads`)</small></label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="wf-shared-incoming" value="/mnt/shared/incoming">
-                  <label class="form-check-label" for="wf-shared-incoming"><small>Shared Incoming (`/mnt/shared/incoming`)</small></label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="wf-custom-enable">
-                  <label class="form-check-label" for="wf-custom-enable"><small>Add a custom folder</small></label>
-                </div>
-                <div class="input-group input-group-sm mt-1">
-                  <input type="text" class="form-control" id="wf-custom-path" placeholder="Enter path (e.g., C:/Incoming or /data/downloads)" disabled value="{{ default_download_path }}">
-                  <button class="btn btn-secondary" type="button" onclick="addCustomWatchFolder()" id="wf-custom-add" disabled>Add</button>
-                  <button class="btn btn-info" type="button" onclick="prefillDefaultDownload()" id="wf-custom-prefill" disabled>Use Default</button>
-                  <button class="btn btn-success" type="button" onclick="addDefaultToSelection()" id="wf-custom-add-default" disabled>Add Default to Selection</button>
-                </div>
-                <div class="mt-1">
-                  <small class="text-muted">Default detected: <code id="wf-default-hint">{{ default_download_path }}</code></small>
-                </div>
-                <div class="mt-2">
-                  <small class="text-muted">You can change these anytime in Configuration → Watched Folders.</small>
-                </div>
-                <div id="wf-selected" class="mt-2"></div>
-              </div>
-            </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card p-3 mb-3">
+          <div class="d-flex align-items-center mb-2">
+            <span class="status-dot"></span><span class="fw-semibold">Why no login?</span>
           </div>
+          <p class="text-muted small mb-0">This standalone page does not load shared templates or protected assets, preventing any Basic Auth challenge during first-run setup. Auth is enforced everywhere else after completion.</p>
         </div>
-        <!-- LDAP Section -->
-        <div id="ldap-section" class="mt-3" style="display:none;">
-          <div class="border rounded p-2">
-            <div class="mb-2"><small><b>LDAP / Active Directory Settings</b></small></div>
-            <div class="row g-2">
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-server" placeholder="ldap://server:389">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-base-dn" placeholder="dc=example,dc=com">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-user-template" placeholder="uid={username},{base_dn}" value="uid={username},{base_dn}">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-search-filter" placeholder="(uid={username})" value="(uid={username})">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-bind-dn" placeholder="Service bind DN (optional)">
-              </div>
-              <div class="col-md-6">
-                <input type="password" class="form-control form-control-sm" id="ldap-bind-password" placeholder="Bind password (optional)">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="ldap-allowed-groups" placeholder="Group DNs (comma separated)">
-              </div>
-              <div class="col-md-6 form-check ms-2">
-                <input class="form-check-input" type="checkbox" id="ldap-use-ssl" checked>
-                <label for="ldap-use-ssl" class="form-check-label"><small>Use SSL/TLS</small></label>
-              </div>
-            </div>
-          </div>
+        <div class="card p-3">
+          <div class="fw-semibold mb-2">Quick checks</div>
+          <ul class="list-unstyled mb-0 small text-muted">
+            <li class="mb-2"><span class="badge bg-secondary me-2">1</span>Service running? Optional but recommended.</li>
+            <li class="mb-2"><span class="badge bg-secondary me-2">2</span>Pick auth method; fallback keeps Basic available.</li>
+            <li class="mb-2"><span class="badge bg-secondary me-2">3</span>Select at least one watch folder.</li>
+            <li class="mb-2"><span class="badge bg-secondary me-2">4</span>Finish to redirect to config.</li>
+          </ul>
         </div>
-        <!-- Windows Auth Section -->
-        <div id="windows-section" class="mt-3" style="display:none;">
-          <div class="border rounded p-2">
-            <div class="mb-2"><small><b>Windows Authentication Settings</b></small></div>
-            <div class="row g-2">
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="win-domain" placeholder="DOMAIN (optional)">
-              </div>
-              <div class="col-md-6">
-                <input class="form-control form-control-sm" id="win-allowed-groups" placeholder="Group names (comma separated)">
-              </div>
-            </div>
-          </div>
-        </div>
-        <hr/>
-        <!-- Complete Setup Button at Bottom -->
-        <div class="row g-3">
-          <div class="col-12">
-            <div class="d-flex w-100 align-items-center gap-2">
-              <button type="button" class="btn btn-primary flex-grow-1" onclick="submitSetup()">Complete Setup</button>
-              <a href="/docs/readme" target="_blank" class="btn btn-dark"><i class="bi bi-book"></i> Docs</a>
-            </div>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
-</div>
-<script>
-function toggleAuthSections(){
-  const method = document.getElementById('auth-method').value;
-  document.getElementById('ldap-section').style.display = method === 'ldap' ? 'block' : 'none';
-  document.getElementById('windows-section').style.display = method === 'windows' ? 'block' : 'none';
-}
-function evaluatePassword(){
-  const pw = document.getElementById('admin-password').value;
-  let score = 0;
-  if(pw.length >= 12) score += 25;
-  if(/[A-Z]/.test(pw)) score += 15;
-  if(/[a-z]/.test(pw)) score += 15;
-  if(/\d/.test(pw)) score += 15;
-  if(/[^A-Za-z0-9]/.test(pw)) score += 30;
-  const bar = document.getElementById('pw-strength-bar');
-  bar.style.width = Math.min(score,100) + '%';
-  bar.className = 'progress-bar ' + (score<40?'bg-danger':score<70?'bg-warning':'bg-success');
-  const fb = document.getElementById('pw-feedback');
-  fb.textContent = score<40?'Weak password':score<70?'Moderate password':'Strong password';
-}
-function togglePasswordVisibility(){
-  const input = document.getElementById('admin-password');
-  const icon = document.getElementById('toggle-password-icon');
-  const isPassword = input.type === 'password';
-  input.type = isPassword ? 'text' : 'password';
-  icon.textContent = isPassword ? '🙈' : '👁️';
-}
-function generateStrongPassword(){
-  // Generates a 20-char password with upper, lower, digits, specials
-  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const lower = 'abcdefghijklmnopqrstuvwxyz';
-  const digits = '0123456789';
-  const specials = '!@#$%^&*()-_=+[]{};:,.<>/?';
-  const all = upper + lower + digits + specials;
-  function pick(str){ return str[Math.floor(Math.random()*str.length)]; }
-  let pw = [pick(upper), pick(lower), pick(digits), pick(specials)];
-  for(let i=0; i<16; i++){ pw.push(pick(all)); }
-  // Shuffle
-  for(let i=pw.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [pw[i],pw[j]]=[pw[j],pw[i]]; }
-  const val = pw.join('');
-  const input = document.getElementById('admin-password');
-  input.value = val;
-  evaluatePassword();
-}
-function submitSetup(){
-  const adminUsername = document.getElementById('admin-username').value.trim();
-  const adminPassword = document.getElementById('admin-password').value;
-  const authMethod = document.getElementById('auth-method').value;
-  const fallbackEnabled = document.getElementById('fallback-enabled').value === 'true';
-  if(!adminUsername || !adminPassword){
-    showNotification('Admin username and password required', 'danger');
-    return;
-  }
-  // Basic client-side validation mirroring server rules
-  const unameRegex = /^[A-Za-z0-9_-]{3,32}$/;
-  if(!unameRegex.test(adminUsername)){
-    showNotification('Username must be 3-32 chars (letters, numbers, _ -)', 'danger'); return;
-  }
-  const pwIssues = [];
-  if(adminPassword.length < 12) pwIssues.push('>=12 chars');
-  if(!/[A-Z]/.test(adminPassword)) pwIssues.push('uppercase');
-  if(!/[a-z]/.test(adminPassword)) pwIssues.push('lowercase');
-  if(!/\d/.test(adminPassword)) pwIssues.push('digit');
-  if(!/[^A-Za-z0-9]/.test(adminPassword)) pwIssues.push('special');
-  if(pwIssues.length){
-    showNotification('Password needs: ' + pwIssues.join(', '), 'danger'); return;
-  }
-  const payload = {
-    admin_username: adminUsername,
-    admin_password: adminPassword,
-    auth_method: authMethod,
-    auth_fallback_enabled: fallbackEnabled
-  };
-  if(authMethod === 'ldap'){
-    payload.server = document.getElementById('ldap-server').value.trim();
-    payload.base_dn = document.getElementById('ldap-base-dn').value.trim();
-    payload.user_dn_template = document.getElementById('ldap-user-template').value.trim();
-    payload.search_filter = document.getElementById('ldap-search-filter').value.trim();
-    payload.bind_dn = document.getElementById('ldap-bind-dn').value.trim();
-    payload.bind_password = document.getElementById('ldap-bind-password').value;
-    payload.allowed_groups = document.getElementById('ldap-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
-    payload.use_ssl = document.getElementById('ldap-use-ssl').checked;
-    if(!payload.server || !payload.base_dn){
-      showNotification('LDAP server and base DN are required', 'danger'); return;
+
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="toast-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script>
+    const toastContainer = document.getElementById('toast-container');
+    function showToast(message, variant='info'){
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-bg-${variant} border-0 show`;
+      toast.setAttribute('role','alert');
+      toast.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+      toastContainer.appendChild(toast);
+      setTimeout(()=> toast.remove(), 4500);
     }
-  }
-  if(authMethod === 'windows'){
-    payload.domain = document.getElementById('win-domain').value.trim();
-    payload.allowed_groups = document.getElementById('win-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
-  }
-  showNotification('Applying setup...', 'info');
-  fetch('/api/setup/initialize', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
-    .then(async r => {
-      const text = await r.text();
+
+    function currentFolders(){
+      const base = ['wf-win','wf-linux','wf-shared'].map(id=>{
+        const el = document.getElementById(id);
+        return el && el.checked ? el.value : null;
+      }).filter(Boolean);
+      document.querySelectorAll('[data-folder]').forEach(chip=> base.push(chip.getAttribute('data-folder')));
+      return Array.from(new Set(base));
+    }
+
+    function renderFolderChips(){
+      const container = document.getElementById('selected-folders');
+      container.innerHTML = '';
+      currentFolders().forEach(f=>{
+        const pill = document.createElement('span');
+        pill.className = 'watch-chip';
+        pill.setAttribute('data-folder', f);
+        pill.innerHTML = `<code>${f}</code> <button type="button" class="btn-close btn-close-white" aria-label="Remove"></button>`;
+        pill.querySelector('button').onclick = () => { pill.remove(); renderFolderChips(); };
+        container.appendChild(pill);
+      });
+      if(!container.children.length){
+        container.innerHTML = '<small class="text-muted">Nothing selected yet.</small>';
+      }
+    }
+
+    function addCustomFolder(path){
+      const val = (path || document.getElementById('wf-custom').value || '').trim();
+      if(!val){ showToast('Enter a folder path', 'warning'); return; }
+      const isWin = /^[A-Za-z]:\//.test(val);
+      const isUnix = val.startsWith('/');
+      if(!(isWin || isUnix)){ showToast('Use an absolute path (e.g., C:/Incoming or /data/downloads)', 'danger'); return; }
+      if(currentFolders().includes(val)){ showToast('Already added', 'info'); return; }
+      const pill = document.createElement('span');
+      pill.className = 'watch-chip';
+      pill.setAttribute('data-folder', val);
+      pill.innerHTML = `<code>${val}</code> <button type="button" class="btn-close btn-close-white" aria-label="Remove"></button>`;
+      pill.querySelector('button').onclick = () => { pill.remove(); renderFolderChips(); };
+      document.getElementById('selected-folders').appendChild(pill);
+      renderFolderChips();
+    }
+
+    document.getElementById('auth-method').addEventListener('change', () => {
+      const method = document.getElementById('auth-method').value;
+      document.getElementById('ldap-block').style.display = method === 'ldap' ? 'block' : 'none';
+      document.getElementById('windows-block').style.display = method === 'windows' ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-add-folder').onclick = () => addCustomFolder();
+    document.getElementById('btn-prefill-default').onclick = () => {
+      const def = {{ default_download_path|tojson }};
+      addCustomFolder(def || '');
+    };
+    ['wf-win','wf-linux','wf-shared'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('change', renderFolderChips);
+    });
+
+    document.getElementById('toggle-pass').onclick = () => {
+      const input = document.getElementById('admin-password');
+      const isPw = input.type === 'password';
+      input.type = isPw ? 'text' : 'password';
+      document.getElementById('toggle-pass').textContent = isPw ? 'Hide' : 'Show';
+    };
+
+    (function autoSelect(){
+      const recommended = {{ recommended_watch_folders|tojson }} || [];
+      recommended.forEach(path => {
+        if(typeof path !== 'string') return;
+        if(path.startsWith('C:/')){ const el = document.getElementById('wf-win'); if(el) el.checked = true; }
+        if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux'); if(el) el.checked = true; }
+      });
+      const ua = (navigator.userAgent || '').toLowerCase();
+      if(ua.includes('windows')){ const el = document.getElementById('wf-win'); if(el) el.checked = true; }
+      if(ua.includes('linux')){ const el = document.getElementById('wf-linux'); if(el) el.checked = true; }
+      renderFolderChips();
+    })();
+
+    async function submitSetup(){
+      const admin_username = document.getElementById('admin-username').value.trim();
+      const admin_password = document.getElementById('admin-password').value;
+      const auth_method = document.getElementById('auth-method').value;
+      const auth_fallback_enabled = document.getElementById('fallback-enabled').value === 'true';
+      if(!admin_username){ showToast('Username required', 'danger'); return; }
+
+      const payload = { admin_username, admin_password, auth_method, auth_fallback_enabled };
+      if(auth_method === 'ldap'){
+        payload.server = document.getElementById('ldap-server').value.trim();
+        payload.base_dn = document.getElementById('ldap-base-dn').value.trim();
+        payload.user_dn_template = document.getElementById('ldap-user-template').value.trim();
+        payload.search_filter = document.getElementById('ldap-search-filter').value.trim();
+        payload.bind_dn = document.getElementById('ldap-bind-dn').value.trim();
+        payload.bind_password = document.getElementById('ldap-bind-password').value;
+        payload.allowed_groups = document.getElementById('ldap-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
+        payload.use_ssl = document.getElementById('ldap-use-ssl').checked;
+      }
+      if(auth_method === 'windows'){
+        payload.domain = document.getElementById('win-domain').value.trim();
+        payload.allowed_groups = document.getElementById('win-allowed-groups').value.split(',').map(s=>s.trim()).filter(Boolean);
+      }
+
+      showToast('Applying setup...', 'info');
+      let resp;
       try {
-        const json = JSON.parse(text);
-        return {ok: r.ok, j: json};
-      } catch (e) {
-        console.error('Response not JSON:', text);
-        return {ok: false, j: {error: 'Server returned invalid response: ' + text.substring(0, 200)}};
-      } finally {
-        // no-op: ensure try has companion block
+        resp = await fetch('/api/setup/initialize', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      } catch (err){ showToast('Network error: ' + err.message, 'danger'); return; }
+      let data;
+      try { data = await resp.json(); } catch { data = {}; }
+      if(!resp.ok || !data.success){
+        showToast(data.error || ('Setup failed (' + resp.status + ')'), 'danger');
+        return;
       }
-    })
-    .then(async ({ok,j})=>{
-      if(ok && j.success){
-        // Persist selected watch folders
-        const selected = getSelectedWatchFolders();
-        const vtApiKey = document.getElementById('vt-api-key').value.trim();
-        const features = {
-          virustotal_enabled: document.getElementById('feat-virustotal').checked,
-          duplicates_enabled: document.getElementById('feat-duplicates').checked,
-          reports_enabled: document.getElementById('feat-reports').checked
-        };
-        try{
-          const r2 = await fetch('/api/setup/save', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ watch_folders: selected, vt_api_key: vtApiKey, features })
-          });
-          if(r2.ok){
-            showNotification('Setup preferences saved', 'success');
-          } else {
-            const err2 = await r2.json().catch(()=>({}));
-            showNotification('Failed to save setup preferences: ' + (err2.message||r2.status), 'warning');
-          }
-        } catch(e){
-          showNotification('Error saving setup preferences: ' + e.message, 'warning');
+
+      const features = {
+        virustotal_enabled: document.getElementById('feat-vt').checked,
+        duplicates_enabled: document.getElementById('feat-dup').checked,
+        reports_enabled: document.getElementById('feat-reports').checked
+      };
+      const savePayload = {
+        watch_folders: currentFolders(),
+        vt_api_key: document.getElementById('vt-api-key').value.trim(),
+        features
+      };
+      try {
+        const saveResp = await fetch('/api/setup/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(savePayload) });
+        if(!saveResp.ok){
+          const err = await saveResp.json().catch(()=>({}));
+          showToast('Saved auth, but failed to persist preferences: ' + (err.message || saveResp.status), 'warning');
         }
-        const dest = '/config';
-        // Optional improvement: set Basic auth header for subsequent API calls
-        try {
-          const u = adminUsername;
-          const p = adminPassword;
-          if (u && p && window.btoa) {
-            window.__authHeader = 'Basic ' + btoa(u + ':' + p);
-            // Persist auth to sessionStorage so config page can use it
-            try {
-              sessionStorage.setItem('authHeader', window.__authHeader);
-            } catch (storageErr) {
-              console.warn('Could not save auth to sessionStorage:', storageErr);
-            }
-          }
-        } catch (e) { /* no-op */ }
-        showNotification('Setup complete! Redirecting to configuration…', 'success');
-        // Backend attempts auto-login via session cookie; navigate directly to config
-        setTimeout(()=>{ window.location.href=dest; },1200);
-      } else {
-        showNotification(j.error||'Setup failed','danger');
-      }
-    })
-    .catch(err=> showNotification('Setup error: '+ err.message, 'danger'));
-}
-// Minimal notification helper fallback if dashboard_scripts not loaded yet
-function showNotification(msg, type){
-  let alert = document.createElement('div');
-  alert.className = 'alert alert-' + (type||'info') + ' alert-dismissible fade show';
-  alert.role = 'alert';
-  alert.innerHTML = '<small>' + msg + '</small><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-  const container = document.getElementById('notification-container');
-  if (container) {
-    container.appendChild(alert);
-  } else {
-    document.querySelector('.card-body').prepend(alert);
-  }
-  setTimeout(() => { alert.remove(); }, 5000);
-}
-// Initialize Bootstrap tooltips if available
-document.addEventListener('DOMContentLoaded', function(){
-  if(window.bootstrap && typeof bootstrap.Tooltip === 'function'){
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-      new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-  }
-  const customEnable = document.getElementById('wf-custom-enable');
-  const customInput = document.getElementById('wf-custom-path');
-  const customAdd = document.getElementById('wf-custom-add');
-  const prefillBtn = document.getElementById('wf-custom-prefill');
-  const addDefaultBtn = document.getElementById('wf-custom-add-default');
-  customEnable.addEventListener('change', function(){
-    const en = customEnable.checked;
-    customInput.disabled = !en;
-    customAdd.disabled = !en;
-    if(prefillBtn) prefillBtn.disabled = !en;
-    if(addDefaultBtn) addDefaultBtn.disabled = !en;
-  });
-  // Initialize button states on page load
-  const initiallyEnabled = customEnable.checked;
-  customInput.disabled = !initiallyEnabled;
-  customAdd.disabled = !initiallyEnabled;
-  if(prefillBtn) prefillBtn.disabled = !initiallyEnabled;
-  if(addDefaultBtn) addDefaultBtn.disabled = !initiallyEnabled;
-  ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.addEventListener('change', renderSelectedWatchFolders);
-  });
-  // Auto-select based on server OS recommendations
-  const recommended = {{ recommended_watch_folders|tojson }} || [];
-  if (Array.isArray(recommended)) {
-    recommended.forEach(path => {
-      if(typeof path === 'string'){
-        if(path.startsWith('C:/')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
-        if(path.startsWith('/home/')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
-      }
-    });
-  }
-  // Additionally auto-select based on client user agent
-  const ua = (navigator.userAgent || '').toLowerCase();
-  if(ua.includes('windows')){ const el = document.getElementById('wf-win-downloads'); if(el) el.checked = true; }
-  if(ua.includes('linux')){ const el = document.getElementById('wf-linux-downloads'); if(el) el.checked = true; }
-  renderSelectedWatchFolders();
-});
+      } catch (err){ showToast('Preferences save error: ' + err.message, 'warning'); }
 
-function prefillDefaultDownload(){
-  const input = document.getElementById('wf-custom-path');
-  const def = {{ default_download_path|tojson }};
-  if(def){ input.value = def; }
-}
+      try {
+        if(window.btoa){
+          const header = 'Basic ' + btoa(`${admin_username}:${admin_password}`);
+          sessionStorage.setItem('authHeader', header);
+        }
+      } catch (err){ /* ignore storage errors */ }
 
-function addDefaultToSelection(){
-  const def = {{ default_download_path|tojson }};
-  if(!def){ showNotification('No default path available', 'warning'); return; }
-  const input = document.getElementById('wf-custom-path');
-  input.value = def;
-  addCustomWatchFolder();
-}
+      showToast('Setup complete! Redirecting...', 'success');
+      setTimeout(()=> { window.location.href = '/config'; }, 900);
+    }
 
-function getSelectedWatchFolders(){
-  const ids = ['wf-win-downloads','wf-linux-downloads','wf-shared-incoming'];
-  const selected = ids.map(id=>{
-    const el = document.getElementById(id);
-    return (el && el.checked) ? el.value : null;
-  }).filter(Boolean);
-  // Collect custom entries listed in wf-selected list items with data-path
-  document.querySelectorAll('#wf-selected li[data-path]').forEach(li=>{
-    selected.push(li.getAttribute('data-path'));
-  });
-  // Deduplicate
-  return Array.from(new Set(selected));
-}
-
-function renderSelectedWatchFolders(){
-  const list = document.getElementById('wf-selected');
-  const selected = getSelectedWatchFolders();
-  if(!selected.length){
-    list.innerHTML = '<small class="text-muted">No folders selected yet.</small>';
-    return;
-  }
-  list.innerHTML = '<small><b>Selected:</b></small>\n<ul class="mt-1 mb-0">' + selected.map(p=>
-    `<li data-path="${p}"><code>${p}</code> <button class="btn btn-sm btn-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${p}')">Remove</button></li>`
-  ).join('') + '</ul>';
-}
-
-function addCustomWatchFolder(){
-  const input = document.getElementById('wf-custom-path');
-  const val = input.value.trim();
-  if(!val){ showNotification('Enter a folder path', 'danger'); return; }
-  // Basic validation: must be absolute path
-  const isWin = /^[A-Za-z]:\//.test(val);
-  const isUnix = val.startsWith('/');
-  if(!(isWin||isUnix)){
-    showNotification('Please enter an absolute path (e.g., C:/Incoming or /data/downloads)', 'danger');
-    return;
-  }
-  // Add to selected list
-  const list = document.getElementById('wf-selected');
-  const current = getSelectedWatchFolders();
-  if(current.includes(val)){
-    showNotification('Folder already selected', 'warning'); return;
-  }
-  const li = document.createElement('li');
-  li.setAttribute('data-path', val);
-  li.innerHTML = `<code>${val}</code> <button class="btn btn-sm btn-danger ms-1" type="button" onclick="removeSelectedWatchFolder('${val}')">Remove</button>`;
-  const ul = list.querySelector('ul');
-  if(ul){ ul.appendChild(li); }
-  else {
-    list.innerHTML = '<small><b>Selected:</b></small>\n<ul class="mt-1 mb-0"></ul>';
-    list.querySelector('ul').appendChild(li);
-  }
-}
-
-function removeSelectedWatchFolder(path){
-  const list = document.getElementById('wf-selected');
-  const li = Array.from(list.querySelectorAll('li')).find(el=> el.getAttribute('data-path') === path);
-  if(li){ li.remove(); }
-  renderSelectedWatchFolders();
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  if (window.attachStartOrganizerButton) {
-    window.attachStartOrganizerButton('btn-start-organizer-setup', 'start-organizer-status-setup');
-  }
-});
-</script>
-{# Removed OS-specific tips for a cleaner setup footer #}
-{% endblock %}
+    document.getElementById('btn-complete').onclick = submitSetup;
+  </script>
+</body>
+</html>
