@@ -172,15 +172,19 @@
         }
         
         .config-container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
+            padding: 0 1.25rem;
         }
         
         .config-grid {
             position: relative;
             display: block; /* GridStack handles layout */
+            width: 100%;
             gap: 1rem;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
+            padding: 0 0 1.5rem 0;
         }
         
         /* Config Card */
@@ -557,6 +561,35 @@
     <script type="module">
         import { ConfigDragDrop } from '{{ url_for("static", filename="js/modules/config-drag-drop.js") }}';
         window.ConfigDragDrop = ConfigDragDrop;
+
+        const startConfigGrid = () => {
+            if (window.ConfigDragDrop && typeof window.ConfigDragDrop.init === 'function') {
+                window.ConfigDragDrop.init();
+            }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof GridStack !== 'undefined') return startConfigGrid();
+                const wait = setInterval(() => {
+                    if (typeof GridStack !== 'undefined') {
+                        clearInterval(wait);
+                        startConfigGrid();
+                    }
+                }, 100);
+            });
+        } else {
+            if (typeof GridStack !== 'undefined') {
+                startConfigGrid();
+            } else {
+                const wait = setInterval(() => {
+                    if (typeof GridStack !== 'undefined') {
+                        clearInterval(wait);
+                        startConfigGrid();
+                    }
+                }, 100);
+            }
+        }
     </script>
 
     <!-- Config initialization -->

@@ -26,8 +26,8 @@ export const ConfigDragDrop = {
             return;
         }
 
-        const gutterPx = 20; // grid margin
-        const minColumnWidth = 360; // target width to avoid squish
+        const gutterPx = 16; // grid margin
+        const minColumnWidth = 320; // target width to avoid squish but allow more columns
 
         // Determine responsive column count based on container width and min column width
         const getColumnCount = () => {
