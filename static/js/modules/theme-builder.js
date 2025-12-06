@@ -834,12 +834,6 @@ const ThemeBuilder = (() => {
     }
   }
 
-  // Export for external callers
-  ThemeBuilder.extractColorsFromLogo = extractColorsFromLogo;
-  if (typeof window !== 'undefined') {
-    window.extractColorsFromLogo = extractColorsFromLogo;
-  }
-
   /**
    * Extract dominant colors from image
    */
@@ -908,6 +902,11 @@ const ThemeBuilder = (() => {
     getPresetThemes: () => PRESET_THEMES
   };
 })();
+
+// Expose helper for callers that rely on global function binding
+if (typeof window !== 'undefined' && ThemeBuilder?.extractColorsFromLogo) {
+  window.extractColorsFromLogo = ThemeBuilder.extractColorsFromLogo;
+}
 
 // Register as module
 if (typeof ModuleSystem !== 'undefined') {
