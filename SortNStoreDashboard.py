@@ -407,6 +407,8 @@ def create_app():
     csrf.exempt(routes_env)
     # Exempt batch organize endpoints
     csrf.exempt(batch_organize_bp)
+    # Exempt branding API endpoints (protected by @requires_auth)
+    csrf.exempt(routes_branding)
     # Exempt Phase 4 API blueprints (CSRF protected via @requires_right)
     csrf.exempt(routes_api_users)
     csrf.exempt(routes_api_network_targets)
