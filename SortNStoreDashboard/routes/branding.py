@@ -55,33 +55,15 @@ def get_branding():
     branding = load_branding()
     return jsonify(branding)
 
-@routes_branding.route("/api/dashboard/branding/test", methods=["POST"])
-def test_post():
-    """Test endpoint to verify POST requests work"""
-    import sys
-    print("=== TEST POST ENDPOINT HIT ===", file=sys.stderr, flush=True)
-    return jsonify({"status": "test endpoint works"}), 200
-
 @routes_branding.route("/api/dashboard/branding", methods=["POST"])
 def update_branding():
     """Update branding configuration"""
     import time
-    import sys
-    
-    print("=== BRANDING POST HANDLER CALLED ===", file=sys.stderr, flush=True)
-    print(f"Content-Type: {request.content_type}", file=sys.stderr, flush=True)
-    print(f"Content-Length: {request.content_length}", file=sys.stderr, flush=True)
-    print(f"request.data length: {len(request.data)}", file=sys.stderr, flush=True)
-    print(f"request.data: {request.data}", file=sys.stderr, flush=True)
     
     data = request.json
-    print(f"request.json: {data}", file=sys.stderr, flush=True)
     
     if not data:
-        print("ERROR: No JSON data", file=sys.stderr, flush=True)
         return jsonify({"error": "No JSON data provided"}), 400
-    
-    print("SUCCESS: Got JSON data", file=sys.stderr, flush=True)
     
     # Support both old and new branding format
     branding = {

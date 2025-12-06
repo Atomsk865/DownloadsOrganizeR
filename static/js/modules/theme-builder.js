@@ -300,12 +300,6 @@ const ThemeBuilder = (() => {
    */
   async function saveBranding() {
     const theme = getThemeObject();
-    const jsonBody = JSON.stringify(theme);
-
-    console.log('🔵 saveBranding() called');
-    console.log('Theme object:', theme);
-    console.log('JSON body:', jsonBody);
-    console.log('Body size:', jsonBody.length, 'bytes');
 
     try {
       const headers = {
@@ -315,34 +309,26 @@ const ThemeBuilder = (() => {
 
       // Get auth headers from cookies if available
       const authHeaders = getAuthHeadersFromCookie();
-      console.log('Auth headers:', authHeaders);
       Object.assign(headers, authHeaders);
-      console.log('Final headers:', headers);
 
-      console.log('📤 Sending POST to /api/dashboard/branding');
       const response = await fetch('/api/dashboard/branding', {
         method: 'POST',
         headers,
-        body: jsonBody,
+        body: JSON.stringify(theme),
         credentials: 'include'
       });
 
-      console.log('📥 Response status:', response.status, response.statusText);
-      console.log('Response headers:', Array.from(response.headers.entries()));
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Success:', data);
         showNotification('Theme saved successfully', 'success');
         Store.set('theme:current', theme);
         EventBus.emit('theme:updated', theme);
       } else {
         const error = await response.json().catch(() => ({ message: response.statusText }));
-        console.error('❌ Error response:', error);
         showNotification(`Save failed: ${error.message}`, 'warning');
       }
     } catch (e) {
-      console.error('❌ Exception:', e);
+      console.error('Error saving branding:', e);
       showNotification(`Save error: ${e.message}`, 'danger');
     }
   }
