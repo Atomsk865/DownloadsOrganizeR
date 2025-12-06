@@ -178,9 +178,32 @@
         
         .config-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 2rem;
+            gap: 1rem;
             margin-top: 2rem;
+        }
+        
+        /* Responsive grid columns based on viewport */
+        @media (min-width: 1800px) {
+            .config-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 1200px) and (max-width: 1799px) {
+            .config-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 1199px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Full-width modules always span all columns */
+        .config-module.full-width {
+            grid-column: 1 / -1;
         }
         
         /* Config Card */
@@ -433,9 +456,15 @@
             pointer-events: none;
         }
         
+        /* Mobile responsive */
         @media (max-width: 768px) {
+            .config-main {
+                padding: 1rem;
+            }
+            
             .config-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
             }
             
             .config-header {

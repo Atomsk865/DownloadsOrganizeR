@@ -26,9 +26,17 @@ export const ConfigDragDrop = {
             return;
         }
 
-        // Initialize GridStack with proper options
+        // Determine responsive column count based on viewport width
+        const getColumnCount = () => {
+            const width = window.innerWidth;
+            if (width >= 1800) return 3;
+            if (width >= 1200) return 2;
+            return 1;
+        };
+
+        // Initialize GridStack with responsive options
         this.grid = GridStack.init({
-            column: 2,
+            column: getColumnCount(),
             cellHeight: 'auto',
             acceptWidgets: false,
             disableDrag: true, // Disabled by default, enabled per module
@@ -36,25 +44,52 @@ export const ConfigDragDrop = {
             float: false,
             staticGrid: true, // Start as static, modules opt-in via pushpin
             animate: true,
-            margin: '1rem'
+            margin: '1rem',
+            columnOpts: {
+                breakpoints: [
+                    {w: 1800, c: 3},
+                    {w: 1200, c: 2},
+                    {w: 0, c: 1}
+                ]
+            }
         }, gridContainer);
 
         console.log('[ConfigDragDrop] GridStack initialized:', this.grid);
 
         // Add grid-stack-item class to all modules
         const modules = document.querySelectorAll('.config-module');
+        const currentColumns = getColumnCount();
+        
         modules.forEach((module, index) => {
             module.classList.add('grid-stack-item');
             
             // Set grid attributes based on full-width class
             const isFullWidth = module.classList.contains('full-width');
-            module.setAttribute('gs-w', isFullWidth ? '2' : '1');
+            module.setAttribute('gs-w', isFullWidth ? currentColumns.toString() : '1');
             module.setAttribute('gs-h', '1');
             module.setAttribute('gs-auto-position', 'true');
             
             // Initialize drag state to false
             const moduleName = module.getAttribute('data-module');
             this.dragEnabled.set(moduleName, false);
+        });
+        
+        // Update column count on window resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const newColumns = getColumnCount();
+                if (this.grid && this.grid.getColumn() !== newColumns) {
+                    this.grid.column(newColumns);
+                    // Update full-width modules
+                    modules.forEach(module => {
+                        if (module.classList.contains('full-width')) {
+                            module.setAttribute('gs-w', newColumns.toString());
+                        }
+                    });
+                }
+            }, 250);
         });
 
         // Setup pushpin click handlers
