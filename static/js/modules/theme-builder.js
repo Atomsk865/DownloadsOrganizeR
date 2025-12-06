@@ -384,7 +384,6 @@ const ThemeBuilder = (() => {
         --bs-info: ${colors.info};
         --theme-primary-rgb: ${hexToRgb(colors.primary)};
         --theme-text-color: ${baseTextColor};
-        --theme-text-stroke: ${strokeColor};
         --theme-bg-color: ${isDarkMode ? '#1a1d23' : '#ffffff'};
       }
 
@@ -403,8 +402,6 @@ const ThemeBuilder = (() => {
       body {
         color: ${baseTextColor} !important;
         font-size: calc(1rem * ${fontSize}) !important;
-        -webkit-text-stroke: 1px ${strokeColor};
-        text-shadow: 0 0.6px 0 ${strokeColor};
       }
 
       /* Apply readable stroke to primary text elements */
@@ -417,8 +414,6 @@ const ThemeBuilder = (() => {
       .modal-title, .modal-body, .modal-footer,
       .badge, .alert, .list-group-item {
         color: ${baseTextColor} !important;
-        -webkit-text-stroke: 0.8px ${strokeColor};
-        text-shadow: 0 0.5px 0 ${strokeColor};
       }
 
       /* Config main background stays with theme toggle, not custom themes */
