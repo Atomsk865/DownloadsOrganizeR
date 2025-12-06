@@ -36,10 +36,12 @@ export const ConfigDragDrop = {
             return 1;
         };
 
+        const cellHeight = 140; // base row height for auto height calc
+
         // Initialize GridStack with responsive options
         this.grid = GridStack.init({
             column: getColumnCount(),
-            cellHeight: 220, // consistent row height to avoid squish/overlap
+            cellHeight,
             minRow: 1,
             acceptWidgets: false,
             disableDrag: false, // Enable drag capability, controlled per-item
@@ -68,9 +70,17 @@ export const ConfigDragDrop = {
             // Add grid-stack-item class
             module.classList.add('grid-stack-item');
 
+            // Clear any stale manual positioning to allow auto layout
+            module.removeAttribute('gs-x');
+            module.removeAttribute('gs-y');
+
             // Calculate width (full-width spans all columns)
             const isFullWidth = module.classList.contains('full-width');
             const width = isFullWidth ? currentColumns : 1;
+
+            // Derive required rows from actual content height
+            const contentHeight = module.scrollHeight || module.offsetHeight || cellHeight;
+            const rows = Math.max(1, Math.ceil(contentHeight / cellHeight));
 
             // Lock by default
             module.setAttribute('gs-no-resize', 'true');
@@ -87,8 +97,8 @@ export const ConfigDragDrop = {
                 toggle.classList.remove('undocked');
             }
 
-            // Add widget with auto-positioning
-            this.grid.addWidget(module, { w: width, h: 1, autoPosition: true, noResize: true, noMove: true });
+            // Add widget with auto-positioning and measured height
+            this.grid.addWidget(module, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true });
         });
         this.grid.compact();
         
