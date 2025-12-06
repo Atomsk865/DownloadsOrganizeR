@@ -60,10 +60,19 @@ def get_branding():
 def update_branding():
     """Update branding configuration"""
     import time
+    import sys
     
     data = request.json
+    
+    # Debug logging
+    print(f"DEBUG: Content-Type: {request.content_type}", file=sys.stderr)
+    print(f"DEBUG: request.data: {request.data}", file=sys.stderr)
+    print(f"DEBUG: request.json: {data}", file=sys.stderr)
+    
     if not data:
-        return jsonify({"error": "No data provided"}), 400
+        error_msg = f"No JSON data provided. Content-Type: {request.content_type}, Data: {request.data}"
+        print(f"ERROR: {error_msg}", file=sys.stderr)
+        return jsonify({"error": error_msg}), 400
     
     # Support both old and new branding format
     branding = {
