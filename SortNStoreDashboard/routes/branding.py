@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
+from flask_wtf.csrf import csrf_exempt
 import json
 import os
 from SortNStoreDashboard.auth.auth import requires_auth
-from flask_wtf.csrf import csrf
 
 routes_branding = Blueprint('routes_branding', __name__)
 
@@ -57,7 +57,7 @@ def get_branding():
     return jsonify(branding)
 
 @routes_branding.route("/api/dashboard/branding/test", methods=["POST"])
-@csrf.exempt
+@csrf_exempt
 def test_post():
     """Test endpoint to verify POST requests work"""
     import sys
@@ -65,7 +65,7 @@ def test_post():
     return jsonify({"status": "test endpoint works"}), 200
 
 @routes_branding.route("/api/dashboard/branding", methods=["POST"])
-@csrf.exempt
+@csrf_exempt
 def update_branding():
     """Update branding configuration"""
     import time
