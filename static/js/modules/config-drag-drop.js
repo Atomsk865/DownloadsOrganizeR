@@ -27,10 +27,12 @@ export const ConfigDragDrop = {
         }
 
         // Determine responsive column count based on viewport width
+        // More columns = less vertical scrolling, adjusted to prevent horizontal scrolling
         const getColumnCount = () => {
             const width = window.innerWidth;
-            if (width >= 1800) return 3;
-            if (width >= 1200) return 2;
+            if (width >= 2200) return 4;
+            if (width >= 1600) return 3;
+            if (width >= 1100) return 2;
             return 1;
         };
 
@@ -47,8 +49,9 @@ export const ConfigDragDrop = {
             margin: '1rem',
             columnOpts: {
                 breakpoints: [
-                    {w: 1800, c: 3},
-                    {w: 1200, c: 2},
+                    {w: 2200, c: 4},
+                    {w: 1600, c: 3},
+                    {w: 1100, c: 2},
                     {w: 0, c: 1}
                 ]
             }
