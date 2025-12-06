@@ -39,7 +39,7 @@ export const ConfigDragDrop = {
         // Initialize GridStack with responsive options
         this.grid = GridStack.init({
             column: getColumnCount(),
-            cellHeight: 'auto',
+            cellHeight: 220, // consistent row height to avoid squish/overlap
             minRow: 1,
             acceptWidgets: false,
             disableDrag: false, // Enable drag capability, controlled per-item
@@ -64,7 +64,7 @@ export const ConfigDragDrop = {
         const modules = document.querySelectorAll('.config-module');
         const currentColumns = getColumnCount();
         
-        modules.forEach((module, index) => {
+        modules.forEach((module) => {
             // Add grid-stack-item class
             module.classList.add('grid-stack-item');
 
@@ -72,12 +72,9 @@ export const ConfigDragDrop = {
             const isFullWidth = module.classList.contains('full-width');
             const width = isFullWidth ? currentColumns : 1;
 
-            // Set position/size attributes
-            module.setAttribute('gs-w', width.toString());
-            module.setAttribute('gs-h', '1');
+            // Lock by default
             module.setAttribute('gs-no-resize', 'true');
-            module.setAttribute('gs-no-move', 'true'); // Start locked
-            module.setAttribute('gs-auto-position', 'true');
+            module.setAttribute('gs-no-move', 'true');
 
             // Initialize drag state to false (locked/docked)
             const moduleName = module.getAttribute('data-module');
@@ -90,9 +87,10 @@ export const ConfigDragDrop = {
                 toggle.classList.remove('undocked');
             }
 
-            // Make widget with auto-positioning
-            this.grid.makeWidget(module);
+            // Add widget with auto-positioning
+            this.grid.addWidget(module, { w: width, h: 1, autoPosition: true, noResize: true, noMove: true });
         });
+        this.grid.compact();
         
         // Update column count on window resize
         let resizeTimer;
@@ -228,7 +226,9 @@ export const ConfigDragDrop = {
                             y: item.y,
                             w: item.w,
                             h: item.h,
-                            autoPosition: false
+                            autoPosition: false,
+                            noResize: true,
+                            noMove: !this.dragEnabled.get(item.module)
                         });
                     }
                 });
