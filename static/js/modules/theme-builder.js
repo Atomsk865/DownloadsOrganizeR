@@ -370,6 +370,11 @@ const ThemeBuilder = (() => {
     const isLightBg = isLightColor(colors.primary);
     const primaryTextColor = isLightBg ? '#000000' : '#FFFFFF';
     const primaryTextInverted = isLightBg ? '#FFFFFF' : '#000000';
+    const secondaryTextColor = isLightColor(colors.secondary) ? '#000000' : '#ffffff';
+    const successTextColor = isLightColor(colors.success) ? '#000000' : '#ffffff';
+    const dangerTextColor = isLightColor(colors.danger) ? '#000000' : '#ffffff';
+    const warningTextColor = isLightColor(colors.warning) ? '#000000' : '#ffffff';
+    const infoTextColor = isLightColor(colors.info) ? '#000000' : '#ffffff';
     const baseTextColor = isDarkMode ? '#ffffff' : '#000000';
     const strokeColor = isDarkMode ? '#ffffff' : '#000000';
 
@@ -453,40 +458,40 @@ const ThemeBuilder = (() => {
       /* Secondary color elements */
       .btn-secondary, .badge-secondary, .alert-secondary {
         background-color: ${colors.secondary} !important;
-        color: ${isLightColor(colors.secondary) ? '#000000' : '#ffffff'} !important;
+        color: ${secondaryTextColor} !important;
       }
 
       /* Success color elements */
       .btn-success, .badge-success, .alert-success {
         background-color: ${colors.success} !important;
-        color: ${isLightColor(colors.success) ? '#000000' : '#ffffff'} !important;
+        color: ${successTextColor} !important;
       }
 
       /* Danger color elements */
       .btn-danger, .badge-danger, .alert-danger {
         background-color: ${colors.danger} !important;
-        color: ${isLightColor(colors.danger) ? '#000000' : '#ffffff'} !important;
+        color: ${dangerTextColor} !important;
       }
 
       /* Warning color elements */
       .btn-warning, .badge-warning, .alert-warning {
         background-color: ${colors.warning} !important;
-        color: ${isLightColor(colors.warning) ? '#000000' : '#ffffff'} !important;
+        color: ${warningTextColor} !important;
       }
 
       /* Info color elements */
       .btn-info, .badge-info, .alert-info {
         background-color: ${colors.info} !important;
-        color: ${isLightColor(colors.info) ? '#000000' : '#ffffff'} !important;
+        color: ${infoTextColor} !important;
       }
 
       /* Background color classes */
       .bg-primary { background-color: ${colors.primary} !important; color: ${primaryTextColor} !important; }
-      .bg-secondary { background-color: ${colors.secondary} !important; }
-      .bg-success { background-color: ${colors.success} !important; }
-      .bg-danger { background-color: ${colors.danger} !important; }
-      .bg-warning { background-color: ${colors.warning} !important; }
-      .bg-info { background-color: ${colors.info} !important; }
+      .bg-secondary { background-color: ${colors.secondary} !important; color: ${secondaryTextColor} !important; }
+      .bg-success { background-color: ${colors.success} !important; color: ${successTextColor} !important; }
+      .bg-danger { background-color: ${colors.danger} !important; color: ${dangerTextColor} !important; }
+      .bg-warning { background-color: ${colors.warning} !important; color: ${warningTextColor} !important; }
+      .bg-info { background-color: ${colors.info} !important; color: ${infoTextColor} !important; }
 
       /* Navbar and header links - Secondary background with primary accents */
       .navbar {
