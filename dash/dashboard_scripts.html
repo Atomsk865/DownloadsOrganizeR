@@ -4688,16 +4688,22 @@ function toggleDrawer() {
 // Close drawer when clicking on links inside it
 function closeDrawerOnLinkClick() {
     const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('drawer-backdrop');
+    if (!sidebar || !backdrop) return;
+
+    // Only bind when drawer is open to avoid null classList errors
     if (!sidebar.classList.contains('drawer-open')) return;
     
     const links = sidebar.querySelectorAll('a, button');
     links.forEach(link => {
-        link.addEventListener('click', (e) => {
+        // Ensure we don't double-bind
+        if (link.__drawerBound) return;
+        link.__drawerBound = true;
+        link.addEventListener('click', () => {
             // Don't close if it's a button that doesn't navigate
             if (link.tagName === 'BUTTON' && !link.getAttribute('onclick')?.includes('location')) {
                 return;
             }
-            // Check if it's an external link or config page
             const href = link.getAttribute('href');
             if (href && !href.startsWith('#')) {
                 setTimeout(toggleDrawer, 100);
