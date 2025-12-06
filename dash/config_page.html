@@ -124,16 +124,22 @@
         }
         
         .theme-toggle-btn i {
-            font-size: 1.1rem;
-            transition: transform 0.3s;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
         }
         
         .theme-toggle-btn:hover i {
-            transform: rotate(20deg);
+            transform: scale(1.15);
         }
-        
-        [data-theme="dark"] .bi-sun-fill { display: none; }
-        [data-theme="light"] .bi-moon-stars-fill { display: none; }
+
+        /* Lightbulb changes color based on theme */
+        [data-theme="light"] .theme-toggle-btn i {
+            color: #ffc107;
+        }
+
+        [data-theme="dark"] .theme-toggle-btn i {
+            color: #6c757d;
+        }
         
         /* Main Content */
         .config-main {
@@ -394,10 +400,8 @@
             <h1>Configuration</h1>
         </div>
         <div class="config-header-right">
-            <button class="theme-toggle-btn" onclick="ConfigApp.toggleTheme()" title="Toggle dark/light mode">
-                <i class="bi bi-sun-fill"></i>
-                <i class="bi bi-moon-stars-fill"></i>
-                <span>Theme</span>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle dark/light mode">
+                <i class="bi bi-lightbulb-fill"></i>
             </button>
         </div>
     </header>
@@ -459,6 +463,27 @@
             };
         }
 
+        // Theme toggle functionality
+        function initializeThemeToggle() {
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            if (!themeToggleBtn) return;
+
+            themeToggleBtn.addEventListener('click', function() {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                console.log(`Theme toggled: ${currentTheme} → ${newTheme}`);
+            });
+
+            // Restore saved theme on page load
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
         // Fetch and populate roles on page load
         function initializeRoles() {
             const sel = document.getElementById('new-role');
@@ -492,8 +517,12 @@
 
         // Call on DOM ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeRoles);
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeThemeToggle();
+                initializeRoles();
+            });
         } else {
+            initializeThemeToggle();
             initializeRoles();
         }
     </script>

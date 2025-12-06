@@ -296,23 +296,40 @@ const ThemeBuilder = (() => {
         --bs-info: ${colors.info};
       }
 
-      /* Page background and text */
+      /* Page background and text - Use secondary color for backgrounds */
       body {
-        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        background-color: ${isDarkMode ? colors.secondary : '#f8f9fa'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
         font-size: calc(1rem * ${fontSize}) !important;
       }
 
       /* Primary color elements */
-      .btn-primary, 
+      .btn-primary {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+        border: 2px solid ${colors.primary} !important;
+        outline: none !important;
+      }
+
       .btn-primary:hover,
+      .btn-primary:focus {
+        background-color: ${colors.primary}dd !important;
+        color: ${textColor} !important;
+        border: 2px solid ${colors.primary} !important;
+        outline: 3px solid ${colors.primary}60 !important;
+        box-shadow: 0 0 0 0.25rem ${colors.primary}30 !important;
+      }
+
       .badge-primary,
       .alert-primary,
       .nav-link.active,
-      a,
       .text-primary {
         background-color: ${colors.primary} !important;
         color: ${textColor} !important;
+      }
+
+      a {
+        color: ${colors.primary} !important;
       }
 
       /* Secondary color elements */
@@ -353,61 +370,86 @@ const ThemeBuilder = (() => {
       .bg-warning { background-color: ${colors.warning} !important; }
       .bg-info { background-color: ${colors.info} !important; }
 
-      /* Navbar styling */
-      .navbar, .navbar-brand {
-        background-color: ${isDarkMode ? '#0a0c10' : '#f8f9fa'} !important;
+      /* Navbar styling - Secondary background with primary accents */
+      .navbar {
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border-bottom: 3px solid ${colors.primary} !important;
       }
 
       .navbar-brand {
         color: ${colors.primary} !important;
       }
 
-      /* Module headers and titles */
-      .module-header, .card-header, .modal-header, h1, h2, h3, h4, h5, h6 {
-        background-color: ${isDarkMode ? '#23262d' : '#f8f9fa'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
-        border-bottom-color: ${colors.primary} !important;
+      /* Module headers and titles - Apply primary color */
+      .module-header, .card-header, .modal-header {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+        border: 2px solid ${colors.primary} !important;
       }
 
-      /* Tables */
+      h1, h2, h3, h4, h5, h6 {
+        color: ${colors.primary} !important;
+      }
+
+      /* Tables - Apply theme colors to headers and borders */
       table, .table {
-        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border: 2px solid ${colors.primary} !important;
       }
 
       .table thead th {
         background-color: ${colors.primary} !important;
         color: ${textColor} !important;
+        border-bottom: 2px solid ${colors.primary} !important;
       }
 
       .table tbody tr {
-        border-color: ${isDarkMode ? '#2d3139' : '#dee2e6'} !important;
+        border-color: ${colors.primary}40 !important;
       }
 
       .table tbody tr:hover {
-        background-color: ${isDarkMode ? '#23262d' : '#f8f9fa'} !important;
+        background-color: ${colors.primary}20 !important;
       }
 
-      /* Cards */
+      .table tbody td {
+        border-color: ${colors.primary}30 !important;
+      }
+
+      /* Cards - Secondary background with primary border */
       .card {
-        background-color: ${isDarkMode ? '#23262d' : '#ffffff'} !important;
-        border-color: ${colors.primary} !important;
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        border: 2px solid ${colors.primary} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
       }
 
-      /* Forms and inputs */
-      .form-control, .form-select, textarea, input {
-        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
-        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
-        border-color: ${colors.primary} !important;
+      .card-body {
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
       }
 
-      .form-control:focus, .form-select:focus, textarea:focus, input:focus {
-        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+      /* Forms and inputs - Primary color borders and outlines */
+      .form-control, .form-select, textarea, input[type="text"], input[type="password"], input[type="email"] {
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
-        border-color: ${colors.primary} !important;
-        box-shadow: 0 0 0 0.25rem ${colors.primary}40 !important;
+        border: 2px solid ${colors.primary} !important;
+        outline: none !important;
+      }
+
+      .form-control:focus, .form-select:focus, textarea:focus, 
+      input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border: 2px solid ${colors.primary} !important;
+        outline: 3px solid ${colors.primary}60 !important;
+        box-shadow: 0 0 0 0.25rem ${colors.primary}30 !important;
+      }
+
+      /* Input groups */
+      .input-group-text {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+        border: 2px solid ${colors.primary} !important;
       }
 
       /* Border radius global */
