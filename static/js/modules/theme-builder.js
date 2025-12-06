@@ -321,8 +321,19 @@ const ThemeBuilder = (() => {
       if (response.ok) {
         const data = await response.json();
         showNotification('Theme saved successfully', 'success');
-        Store.set('theme:current', theme);
-        EventBus.emit('theme:updated', theme);
+        
+        // Update the returned branding data with timestamp
+        const savedTheme = data.branding || theme;
+        Store.set('theme:current', savedTheme);
+        EventBus.emit('theme:updated', savedTheme);
+        
+        // Persist theme locally and apply it across the dashboard
+        if (typeof persistThemeLocally === 'function') {
+          persistThemeLocally(savedTheme);
+        }
+        if (typeof applyThemeStyles === 'function') {
+          applyThemeStyles(savedTheme);
+        }
       } else {
         const error = await response.json().catch(() => ({ message: response.statusText }));
         showNotification(`Save failed: ${error.message}`, 'warning');
