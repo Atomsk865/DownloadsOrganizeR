@@ -302,12 +302,18 @@ const ThemeBuilder = (() => {
     const theme = getThemeObject();
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      };
+
+      // Get auth headers from cookies if available
+      const authHeaders = getAuthHeadersFromCookie();
+      Object.assign(headers, authHeaders);
+
       const response = await fetch('/api/dashboard/branding', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers,
         body: JSON.stringify(theme),
         credentials: 'include'
       });
@@ -324,6 +330,22 @@ const ThemeBuilder = (() => {
       console.error('Error saving branding:', e);
       showNotification(`Save error: ${e.message}`, 'danger');
     }
+  }
+
+  /**
+   * Get auth headers from cookies
+   */
+  function getAuthHeadersFromCookie() {
+    const headers = {};
+    try {
+      const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
+      if (match) {
+        headers['Authorization'] = decodeURIComponent(match[1]);
+      }
+    } catch (e) {
+      console.warn('Failed to get auth headers:', e);
+    }
+    return headers;
   }
 
   /**
