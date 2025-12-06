@@ -61,18 +61,20 @@ def update_branding():
     import time
     import sys
     
-    data = request.json
+    print("=== BRANDING POST HANDLER CALLED ===", file=sys.stderr, flush=True)
+    print(f"Content-Type: {request.content_type}", file=sys.stderr, flush=True)
+    print(f"Content-Length: {request.content_length}", file=sys.stderr, flush=True)
+    print(f"request.data length: {len(request.data)}", file=sys.stderr, flush=True)
+    print(f"request.data: {request.data}", file=sys.stderr, flush=True)
     
-    # Debug logging
-    print(f"DEBUG: Content-Type: {request.content_type}", file=sys.stderr)
-    print(f"DEBUG: request.data: {request.data}", file=sys.stderr)
-    print(f"DEBUG: request.json: {data}", file=sys.stderr)
-    print(f"DEBUG: request.headers: {dict(request.headers)}", file=sys.stderr)
+    data = request.json
+    print(f"request.json: {data}", file=sys.stderr, flush=True)
     
     if not data:
-        error_msg = f"No JSON data provided. Content-Type: {request.content_type}, Data: {request.data}"
-        print(f"ERROR: {error_msg}", file=sys.stderr)
-        return jsonify({"error": error_msg}), 400
+        print("ERROR: No JSON data", file=sys.stderr, flush=True)
+        return jsonify({"error": "No JSON data provided"}), 400
+    
+    print("SUCCESS: Got JSON data", file=sys.stderr, flush=True)
     
     # Support both old and new branding format
     branding = {
