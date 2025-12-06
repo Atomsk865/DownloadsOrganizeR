@@ -288,11 +288,15 @@ const ThemeBuilder = (() => {
         --bs-info: ${colors.info};
       }
 
-      /* Page background and text - Use secondary color for backgrounds */
+      /* Page text and sizing - NOT background (controlled by theme toggle) */
       body {
-        background-color: ${isDarkMode ? colors.secondary : '#f8f9fa'} !important;
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
         font-size: calc(1rem * ${fontSize}) !important;
+      }
+
+      /* Config main background stays with theme toggle, not custom themes */
+      .config-main {
+        background: ${isDarkMode ? '#1a1d23' : '#f8f9fa'} !important;
       }
 
       /* Primary color elements */

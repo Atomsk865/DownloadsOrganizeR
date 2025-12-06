@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- GridStack CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.min.css">
     <style>
         :root {
             --bg-primary: #f8f9fa;
@@ -152,11 +154,21 @@
             color: #6c757d;
         }
         
-        /* Main Content */
+        /* Main Content - Light/dark mode backgrounds */
         .config-main {
             flex: 1;
             overflow-y: auto;
             padding: 2rem;
+            background: var(--bg-primary);
+        }
+
+        /* Ensure config-main background follows theme toggle */
+        [data-theme="dark"] .config-main {
+            background: #1a1d23 !important;
+        }
+
+        [data-theme="light"] .config-main {
+            background: #f8f9fa !important;
         }
         
         .config-container {
@@ -372,6 +384,49 @@
             }
         }
         
+        /* Drag Toggle (Pushpin) Styling */
+        .drag-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .drag-toggle:hover {
+            transform: scale(1.1);
+            color: var(--bs-primary, #0d6efd) !important;
+        }
+        
+        .drag-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* GridStack Integration */
+        .grid-stack {
+            background: transparent;
+        }
+        
+        .grid-stack-item {
+            transition: transform 0.3s ease, opacity 0.2s ease;
+        }
+        
+        .grid-stack-item.ui-draggable-dragging {
+            opacity: 0.7;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .grid-stack-item-content {
+            overflow: visible !important;
+            inset: 0 !important;
+        }
+        
+        /* Prevent text selection during drag */
+        .grid-stack.grid-stack-dragging {
+            user-select: none;
+        }
+        
         /* Loading State */
         .loading {
             opacity: 0.6;
@@ -433,6 +488,9 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     
+    <!-- GridStack JS -->
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack-all.js" defer></script>
+    
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
     
@@ -456,6 +514,12 @@
         }
         
         window.ThemeBuilder = ThemeBuilder;
+    </script>
+
+    <!-- Config Drag/Drop Module -->
+    <script type="module">
+        import { ConfigDragDrop } from '{{ url_for("static", filename="js/modules/config-drag-drop.js") }}';
+        window.ConfigDragDrop = ConfigDragDrop;
     </script>
 
     <!-- Config initialization -->

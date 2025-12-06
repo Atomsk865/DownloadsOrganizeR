@@ -1,11 +1,11 @@
 <!-- Config Modules - Reusable Include for Config Page -->
 
 <!-- Features & Integrations -->
-<div class="config-module" data-module="features-integrations" draggable="true">
+<div class="config-module" data-module="features-integrations">
   <div class="card">
     <div class="card-header d-flex align-items-center">
       <b>Features & Integrations</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="row g-2">
@@ -43,11 +43,11 @@
 </div>
 
 <!-- Users & Roles -->
-<div class="config-module" data-module="users-roles" draggable="true">
+<div class="config-module" data-module="users-roles">
   <div class="card">
     <div class="card-header d-flex align-items-center">
       <b>Users & Roles</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
@@ -86,11 +86,11 @@
 </div>
 
 <!-- Role Rights -->
-<div class="config-module" data-module="role-rights" draggable="true">
+<div class="config-module" data-module="role-rights">
   <div class="card">
     <div class="card-header d-flex align-items-center">
       <b>Role Rights</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
@@ -127,11 +127,11 @@
 </div>
 
 <!-- Service Installation -->
-<div class="config-module" data-module="service-install" draggable="true">
+<div class="config-module" data-module="service-install">
   <div class="card" data-right="manage_service">
     <div class="card-header d-flex align-items-center">
       <b>Service Installation</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
@@ -173,11 +173,11 @@
 </div>
 
 <!-- Network Targets -->
-<div class="config-module" data-module="network-targets" draggable="true">
+<div class="config-module" data-module="network-targets">
   <div class="card" data-right="manage_config">
     <div class="card-header d-flex align-items-center">
       <b>Network Targets (NAS/SMB)</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
@@ -236,11 +236,11 @@
 </div>
 
 <!-- SMTP & Credentials -->
-<div class="config-module" data-module="smtp-creds" draggable="true">
+<div class="config-module" data-module="smtp-creds">
   <div class="card" data-right="manage_config">
     <div class="card-header d-flex align-items-center">
       <b>SMTP & Credentials</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
@@ -312,11 +312,11 @@
 </div>
 
 <!-- Watched Folders -->
-<div class="config-module" data-module="watched-folders" draggable="true">
+<div class="config-module" data-module="watched-folders">
   <div class="card" data-right="manage_config">
     <div class="card-header d-flex align-items-center">
       <b>Watched Folders</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="input-group mb-2">
@@ -332,17 +332,22 @@
       </div>
       <ul class="list-group" id="watch-folders-config-list"></ul>
       <small class="text-muted d-block mt-1">These folders will be monitored and organized into category subfolders.</small>
-      <small class="text-muted d-block">Accepted formats: UNC (`\\\\server\\share\\path`), Windows absolute (`C:/path` or `C:\\path`), Unix absolute (`/path`). Placeholders `%USERNAME%` and `%USER%` are supported and resolved at runtime.</small>
+      <br class="text-muted d-block">Accepted formats:<br> 
+        UNC (`\\\\server\\share\\path`)<br> 
+        Windows absolute (`C:/path` or `C:\\path`)<br> 
+        Unix absolute (`/path`)<br>
+        Placeholders `%USERNAME%` and `%USER%` are supported and resolved at runtime.
+      </small>
     </div>
   </div>
 </div>
 
 <!-- Custom Branding & Styles -->
-<div class="config-module full-width" data-module="branding" draggable="true">
+<div class="config-module full-width" data-module="branding">
   <div class="card" data-right="manage_config">
     <div class="card-header d-flex align-items-center">
       <b>Custom Branding & Themes</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <!-- Preset Themes -->
@@ -490,11 +495,11 @@
 </div>
 
 <!-- Logs (Real-time) -->
-<div class="config-module full-width" data-module="logs" draggable="true">
+<div class="config-module full-width" data-module="logs">
   <div class="card">
     <div class="card-header d-flex align-items-center">
       <b>Logs (Real-time)</b>
-      <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      <span class="drag-toggle ms-auto" style="cursor: pointer; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;" title="Click to enable/disable dragging"><i class="bi bi-pin-angle"></i></span>
     </div>
     <div class="card-body p-2">
       <div class="mb-2">
