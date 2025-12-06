@@ -245,24 +245,60 @@ const ThemeBuilder = (() => {
   }
 
   /**
-   * Apply theme styles to page
+   * Apply theme styles to page - Simple direct CSS injection
    */
   function applyThemeStyles(theme) {
-    const root = document.documentElement;
+    // Create or update a style element for theme colors
+    let themeStyleEl = document.getElementById('theme-colors-styles');
+    if (!themeStyleEl) {
+      themeStyleEl = document.createElement('style');
+      themeStyleEl.id = 'theme-colors-styles';
+      document.head.appendChild(themeStyleEl);
+    }
 
-    // Apply CSS variables for colors
-    root.style.setProperty('--bs-primary', theme.colors.primary);
-    root.style.setProperty('--bs-secondary', theme.colors.secondary);
-    root.style.setProperty('--bs-success', theme.colors.success);
-    root.style.setProperty('--bs-danger', theme.colors.danger);
-    root.style.setProperty('--bs-warning', theme.colors.warning);
-    root.style.setProperty('--bs-info', theme.colors.info);
+    // Generate CSS rules for Bootstrap color classes
+    const colors = theme.colors;
+    const css = `
+      :root {
+        --bs-primary: ${colors.primary};
+        --bs-secondary: ${colors.secondary};
+        --bs-success: ${colors.success};
+        --bs-danger: ${colors.danger};
+        --bs-warning: ${colors.warning};
+        --bs-info: ${colors.info};
+      }
 
-    // Apply border radius and font size
-    root.style.setProperty('--border-radius', theme.borderRadius);
-    root.style.setProperty('--font-size-base', theme.fontSize);
+      /* Direct color application for buttons and elements */
+      .btn-primary, .badge-primary { background-color: ${colors.primary} !important; }
+      .btn-secondary, .badge-secondary { background-color: ${colors.secondary} !important; }
+      .btn-success, .badge-success { background-color: ${colors.success} !important; }
+      .btn-danger, .badge-danger { background-color: ${colors.danger} !important; }
+      .btn-warning, .badge-warning { background-color: ${colors.warning} !important; }
+      .btn-info, .badge-info { background-color: ${colors.info} !important; }
 
-    // Apply custom CSS
+      /* Primary color for headers, links, accents */
+      .navbar-brand, .text-primary, a, .nav-link.active {
+        color: ${colors.primary} !important;
+      }
+
+      /* Background colors */
+      .bg-primary { background-color: ${colors.primary} !important; }
+      .bg-secondary { background-color: ${colors.secondary} !important; }
+      .bg-success { background-color: ${colors.success} !important; }
+      .bg-danger { background-color: ${colors.danger} !important; }
+      .bg-warning { background-color: ${colors.warning} !important; }
+      .bg-info { background-color: ${colors.info} !important; }
+
+      /* Border radius */
+      * { border-radius: ${theme.borderRadius} !important; }
+
+      /* Font size scaling */
+      body { font-size: calc(1rem * ${theme.fontSize.replace('%', '') / 100}) !important; }
+    `;
+
+    themeStyleEl.textContent = css;
+
+    // Apply custom CSS if provided
     let customStyleEl = document.getElementById('custom-theme-styles');
     if (!customStyleEl) {
       customStyleEl = document.createElement('style');
