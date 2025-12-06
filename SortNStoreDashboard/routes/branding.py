@@ -56,7 +56,6 @@ def get_branding():
     return jsonify(branding)
 
 @routes_branding.route("/api/dashboard/branding", methods=["POST"])
-@requires_auth
 def update_branding():
     """Update branding configuration"""
     import time
@@ -68,6 +67,7 @@ def update_branding():
     print(f"DEBUG: Content-Type: {request.content_type}", file=sys.stderr)
     print(f"DEBUG: request.data: {request.data}", file=sys.stderr)
     print(f"DEBUG: request.json: {data}", file=sys.stderr)
+    print(f"DEBUG: request.headers: {dict(request.headers)}", file=sys.stderr)
     
     if not data:
         error_msg = f"No JSON data provided. Content-Type: {request.content_type}, Data: {request.data}"
