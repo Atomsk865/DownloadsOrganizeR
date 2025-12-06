@@ -245,10 +245,16 @@ const ThemeBuilder = (() => {
   }
 
   /**
-   * Apply theme styles to page - Simple direct CSS injection
+   * Apply theme styles to page - Comprehensive theme application
    */
   function applyThemeStyles(theme) {
-    // Create or update a style element for theme colors
+    const isDarkMode = theme.themeName && theme.themeName.toLowerCase().includes('dark');
+    const html = document.documentElement;
+
+    // Update data-theme attribute for light/dark mode styling
+    html.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+
+    // Create comprehensive theme CSS with all necessary overrides
     let themeStyleEl = document.getElementById('theme-colors-styles');
     if (!themeStyleEl) {
       themeStyleEl = document.createElement('style');
@@ -256,10 +262,32 @@ const ThemeBuilder = (() => {
       document.head.appendChild(themeStyleEl);
     }
 
-    // Generate CSS rules for Bootstrap color classes
     const colors = theme.colors;
+    const borderRadius = theme.borderRadius || '6px';
+    const fontSize = theme.fontSize ? (theme.fontSize.replace('%', '') / 100) : 1;
+    
+    // Determine text color for contrast (light text on dark bg, dark text on light bg)
+    const isLightBg = isLightColor(colors.primary);
+    const textColor = isLightBg ? '#000000' : '#FFFFFF';
+    const textColorInverted = isLightBg ? '#FFFFFF' : '#000000';
+
     const css = `
+      /* Root theme variables */
       :root {
+        --bs-primary: ${colors.primary};
+        --bs-secondary: ${colors.secondary};
+        --bs-success: ${colors.success};
+        --bs-danger: ${colors.danger};
+        --bs-warning: ${colors.warning};
+        --bs-info: ${colors.info};
+        --theme-primary-rgb: ${hexToRgb(colors.primary)};
+        --theme-text-color: ${isDarkMode ? '#e0e0e0' : '#212529'};
+        --theme-bg-color: ${isDarkMode ? '#1a1d23' : '#ffffff'};
+      }
+
+      /* HTML element theme attribute */
+      html[data-theme="dark"],
+      html[data-theme="light"] {
         --bs-primary: ${colors.primary};
         --bs-secondary: ${colors.secondary};
         --bs-success: ${colors.success};
@@ -268,32 +296,136 @@ const ThemeBuilder = (() => {
         --bs-info: ${colors.info};
       }
 
-      /* Direct color application for buttons and elements */
-      .btn-primary, .badge-primary { background-color: ${colors.primary} !important; }
-      .btn-secondary, .badge-secondary { background-color: ${colors.secondary} !important; }
-      .btn-success, .badge-success { background-color: ${colors.success} !important; }
-      .btn-danger, .badge-danger { background-color: ${colors.danger} !important; }
-      .btn-warning, .badge-warning { background-color: ${colors.warning} !important; }
-      .btn-info, .badge-info { background-color: ${colors.info} !important; }
-
-      /* Primary color for headers, links, accents */
-      .navbar-brand, .text-primary, a, .nav-link.active {
-        color: ${colors.primary} !important;
+      /* Page background and text */
+      body {
+        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        font-size: calc(1rem * ${fontSize}) !important;
       }
 
-      /* Background colors */
-      .bg-primary { background-color: ${colors.primary} !important; }
+      /* Primary color elements */
+      .btn-primary, 
+      .btn-primary:hover,
+      .badge-primary,
+      .alert-primary,
+      .nav-link.active,
+      a,
+      .text-primary {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+      }
+
+      /* Secondary color elements */
+      .btn-secondary, .badge-secondary, .alert-secondary {
+        background-color: ${colors.secondary} !important;
+        color: ${textColorInverted} !important;
+      }
+
+      /* Success color elements */
+      .btn-success, .badge-success, .alert-success {
+        background-color: ${colors.success} !important;
+        color: ${isLightColor(colors.success) ? '#000000' : '#ffffff'} !important;
+      }
+
+      /* Danger color elements */
+      .btn-danger, .badge-danger, .alert-danger {
+        background-color: ${colors.danger} !important;
+        color: ${isLightColor(colors.danger) ? '#000000' : '#ffffff'} !important;
+      }
+
+      /* Warning color elements */
+      .btn-warning, .badge-warning, .alert-warning {
+        background-color: ${colors.warning} !important;
+        color: ${isLightColor(colors.warning) ? '#000000' : '#ffffff'} !important;
+      }
+
+      /* Info color elements */
+      .btn-info, .badge-info, .alert-info {
+        background-color: ${colors.info} !important;
+        color: ${isLightColor(colors.info) ? '#000000' : '#ffffff'} !important;
+      }
+
+      /* Background color classes */
+      .bg-primary { background-color: ${colors.primary} !important; color: ${textColor} !important; }
       .bg-secondary { background-color: ${colors.secondary} !important; }
       .bg-success { background-color: ${colors.success} !important; }
       .bg-danger { background-color: ${colors.danger} !important; }
       .bg-warning { background-color: ${colors.warning} !important; }
       .bg-info { background-color: ${colors.info} !important; }
 
-      /* Border radius */
-      * { border-radius: ${theme.borderRadius} !important; }
+      /* Navbar styling */
+      .navbar, .navbar-brand {
+        background-color: ${isDarkMode ? '#0a0c10' : '#f8f9fa'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+      }
 
-      /* Font size scaling */
-      body { font-size: calc(1rem * ${theme.fontSize.replace('%', '') / 100}) !important; }
+      .navbar-brand {
+        color: ${colors.primary} !important;
+      }
+
+      /* Module headers and titles */
+      .module-header, .card-header, .modal-header, h1, h2, h3, h4, h5, h6 {
+        background-color: ${isDarkMode ? '#23262d' : '#f8f9fa'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border-bottom-color: ${colors.primary} !important;
+      }
+
+      /* Tables */
+      table, .table {
+        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+      }
+
+      .table thead th {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+      }
+
+      .table tbody tr {
+        border-color: ${isDarkMode ? '#2d3139' : '#dee2e6'} !important;
+      }
+
+      .table tbody tr:hover {
+        background-color: ${isDarkMode ? '#23262d' : '#f8f9fa'} !important;
+      }
+
+      /* Cards */
+      .card {
+        background-color: ${isDarkMode ? '#23262d' : '#ffffff'} !important;
+        border-color: ${colors.primary} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+      }
+
+      /* Forms and inputs */
+      .form-control, .form-select, textarea, input {
+        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border-color: ${colors.primary} !important;
+      }
+
+      .form-control:focus, .form-select:focus, textarea:focus, input:focus {
+        background-color: ${isDarkMode ? '#1a1d23' : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border-color: ${colors.primary} !important;
+        box-shadow: 0 0 0 0.25rem ${colors.primary}40 !important;
+      }
+
+      /* Border radius global */
+      .btn, .card, .modal-content, .form-control, .alert, .badge {
+        border-radius: ${borderRadius} !important;
+      }
+
+      /* Additional dark mode styles */
+      ${isDarkMode ? `
+        [data-theme="dark"] { color-scheme: dark; }
+        .dropdown-menu { background-color: #23262d !important; }
+        .dropdown-item { color: #e0e0e0 !important; }
+        .dropdown-item:hover { background-color: ${colors.primary} !important; color: ${textColor} !important; }
+        .modal-content { background-color: #23262d !important; }
+        .modal-header { border-bottom-color: ${colors.primary} !important; }
+        .nav-tabs { border-bottom-color: ${colors.primary} !important; }
+        .nav-tabs .nav-link.active { background-color: ${colors.primary} !important; color: ${textColor} !important; }
+      ` : ''}
     `;
 
     themeStyleEl.textContent = css;
@@ -306,6 +438,42 @@ const ThemeBuilder = (() => {
       document.head.appendChild(customStyleEl);
     }
     customStyleEl.textContent = theme.css || '';
+
+    // Update theme toggle button display
+    updateThemeToggleDisplay(isDarkMode);
+  }
+
+  /**
+   * Helper: Check if color is light
+   */
+  function isLightColor(hex) {
+    const rgb = parseInt(hex.slice(1), 16);
+    const r = (rgb >> 16) & 255;
+    const g = (rgb >> 8) & 255;
+    const b = rgb & 255;
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155;
+  }
+
+  /**
+   * Helper: Convert hex color to RGB string
+   */
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 0, 0';
+  }
+
+  /**
+   * Update theme toggle button to show correct icon
+   */
+  function updateThemeToggleDisplay(isDark) {
+    const themeToggle = document.querySelector('.theme-toggle-btn');
+    if (themeToggle) {
+      const sunIcon = themeToggle.querySelector('.bi-sun-fill');
+      const moonIcon = themeToggle.querySelector('.bi-moon-stars-fill');
+      if (sunIcon) sunIcon.style.display = isDark ? 'inline' : 'none';
+      if (moonIcon) moonIcon.style.display = isDark ? 'none' : 'inline';
+    }
   }
 
   /**
@@ -319,17 +487,6 @@ const ThemeBuilder = (() => {
     }
   }
 
-  /**
-   * Check if color is light
-   */
-  function isLightColor(hex) {
-    const rgb = parseInt(hex.slice(1), 16);
-    const r = (rgb >> 16) & 255;
-    const g = (rgb >> 8) & 255;
-    const b = rgb & 255;
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 155;
-  }
 
   /**
    * Save branding configuration to server
