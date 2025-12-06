@@ -67,12 +67,16 @@ export const ConfigDragDrop = {
         const currentColumns = getColumnCount();
         
         modules.forEach((module) => {
-            // Add grid-stack-item class
-            module.classList.add('grid-stack-item');
+            // Wrap module in a grid-stack-item per GridStack guidelines
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('grid-stack-item');
 
             // Clear any stale manual positioning to allow auto layout
-            module.removeAttribute('gs-x');
-            module.removeAttribute('gs-y');
+            wrapper.removeAttribute('gs-x');
+            wrapper.removeAttribute('gs-y');
+
+            // Mark module as content
+            module.classList.add('grid-stack-item-content');
 
             // Calculate width (full-width spans all columns)
             const isFullWidth = module.classList.contains('full-width');
@@ -81,10 +85,6 @@ export const ConfigDragDrop = {
             // Derive required rows from actual content height
             const contentHeight = module.scrollHeight || module.offsetHeight || cellHeight;
             const rows = Math.max(1, Math.ceil(contentHeight / cellHeight));
-
-            // Lock by default
-            module.setAttribute('gs-no-resize', 'true');
-            module.setAttribute('gs-no-move', 'true');
 
             // Initialize drag state to false (locked/docked)
             const moduleName = module.getAttribute('data-module');
@@ -97,8 +97,11 @@ export const ConfigDragDrop = {
                 toggle.classList.remove('undocked');
             }
 
+            // Assemble wrapper
+            wrapper.appendChild(module);
+
             // Add widget with auto-positioning and measured height
-            this.grid.addWidget(module, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true });
+            this.grid.addWidget(wrapper, { w: width, h: rows, autoPosition: true, noResize: true, noMove: true });
         });
         this.grid.compact();
         
@@ -230,8 +233,10 @@ export const ConfigDragDrop = {
             
                 layout.forEach(item => {
                     const module = document.querySelector(`.config-module[data-module="${item.module}"]`);
-                    if (module) {
-                        this.grid.update(module, {
+                        if (module) {
+                            const wrapper = module.closest('.grid-stack-item');
+                            if (!wrapper) return;
+                            this.grid.update(wrapper, {
                             x: item.x,
                             y: item.y,
                             w: item.w,
