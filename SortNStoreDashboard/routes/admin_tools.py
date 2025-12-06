@@ -21,12 +21,14 @@ def repair_auth():
         # Use existing hash or default
         existing_hash = cfg.get('dashboard_pass_hash')
         if not existing_hash:
-            # Create a temporary hash for default password
-            default_pw = 'change_this_password'
+            # Create a temporary hash for default (blank) password
+            default_pw = ''
             existing_hash = bcrypt.hashpw(default_pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         cfg['dashboard_pass_hash'] = existing_hash
+        cfg['password_change_required'] = True
     else:
         cfg['dashboard_pass_hash'] = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cfg['password_change_required'] = False
 
     cfg['dashboard_user'] = target_user
 
@@ -49,6 +51,8 @@ def repair_auth():
             'role': 'admin',
             'password_hash': cfg['dashboard_pass_hash']
         })
+
+    dash['password_change_required'] = cfg.get('password_change_required', False)
 
     dash['setup_completed'] = True
 

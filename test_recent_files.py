@@ -63,11 +63,11 @@ def test_api_endpoints():
     print("\n1. Start the dashboard:")
     print("   python OrganizerDashboard.py")
     print("\n2. Open browser to http://localhost:5000")
-    print("\n3. Login with credentials (default: admin / change_this_password)")
+    print("\n3. Login with credentials (default: admin / <blank password>)")
     print("\n4. Look for 'Recent File Movements' card")
     print("\n5. Click 'Open' or 'Show' buttons to test file interaction")
     print("\n6. Test API directly with curl:")
-    print("   curl -u admin:change_this_password http://localhost:5000/api/recent_files")
+    print("   curl -u admin: http://localhost:5000/api/recent_files")
 
 
 def create_test_file():

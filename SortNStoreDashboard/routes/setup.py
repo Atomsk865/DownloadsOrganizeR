@@ -256,6 +256,7 @@ def setup_initialize():
     config['dashboard_pass_hash'] = password_hash
     config['auth_method'] = auth_method
     config['auth_fallback_enabled'] = fallback_enabled
+    config['password_change_required'] = False
 
     # LDAP specifics
     if auth_method == 'ldap':
@@ -285,6 +286,7 @@ def setup_initialize():
         'password_hash': password_hash
     }]
     dash_cfg['setup_completed'] = True
+    dash_cfg['password_change_required'] = False
     # Increment config version
     dash_cfg['config_version'] = int(dash_cfg.get('config_version', 1)) + 1
     

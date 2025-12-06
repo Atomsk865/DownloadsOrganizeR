@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 BASE_URL = 'http://localhost:5000'
-AUTH = ('admin', 'change_this_password')
+AUTH = ('admin', '')
 
 def print_header(title):
     print(f"\n{'='*70}")

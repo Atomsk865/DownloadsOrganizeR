@@ -24,7 +24,8 @@ DEFAULT_CONFIG = {
     },
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
-    "logs_dir": r"C:\Scripts\service-logs"
+    "logs_dir": r"C:\Scripts\service-logs",
+    "password_change_required": False
 }
 
 config = DEFAULT_CONFIG.copy()
@@ -38,7 +39,7 @@ if os.path.exists(CONFIG_FILE):
 
 # --- Authentication Globals ---
 ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
-ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "change_this_password")
+ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "")
 ADMIN_PASS_HASH = None
 
 # If credentials are stored in the config file, prefer them

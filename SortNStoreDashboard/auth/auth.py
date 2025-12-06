@@ -111,10 +111,20 @@ class BasicAuthProvider(AuthProvider):
                     if not any(u.get('username') == self.admin_user for u in dash.get('users', [])):
                         dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': stored_hash})
                         updated = True
+                    if dash.get('password_change_required'):
+                        dash['password_change_required'] = False
+                        updated = True
                     if updated:
                         save_dashboard_config()
                 except Exception:
                     pass
+            try:
+                cfg = get_config()
+                if cfg.get('password_change_required'):
+                    cfg['password_change_required'] = False
+                    save_config()
+            except Exception:
+                pass
             return
         
         plain = get_config().get("dashboard_pass")
@@ -125,6 +135,7 @@ class BasicAuthProvider(AuthProvider):
                 cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
                 if 'dashboard_pass' in cfg:
                     del cfg['dashboard_pass']
+                cfg['password_change_required'] = False
                 save_config()
                 if main is not None:
                     try:
@@ -144,18 +155,22 @@ class BasicAuthProvider(AuthProvider):
                             break
                     if not found:
                         dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': cfg['dashboard_pass_hash']})
+                    if dash.get('password_change_required'):
+                        dash['password_change_required'] = False
                     save_dashboard_config()
             except Exception:
                 pass
             return
         
         # Use default password from environment
-        default_pass = getattr(main, 'ADMIN_PASS', 'change_this_password') if main is not None else 'change_this_password'
+        default_pass = getattr(main, 'ADMIN_PASS', '') if main is not None else ''
         self.admin_pass_hash = bcrypt.hashpw(default_pass.encode('utf-8'), bcrypt.gensalt())
         try:
             cfg = get_config()
             cfg['dashboard_user'] = self.admin_user
             cfg['dashboard_pass_hash'] = self.admin_pass_hash.decode('utf-8')
+            default_requires_change = (default_pass == '')
+            cfg['password_change_required'] = default_requires_change
             save_config()
             if main is not None:
                 try:
@@ -174,6 +189,7 @@ class BasicAuthProvider(AuthProvider):
                         break
                 if not found:
                     dash.setdefault('users', []).append({'username': self.admin_user, 'role': 'admin', 'password_hash': cfg['dashboard_pass_hash']})
+                dash['password_change_required'] = default_requires_change
                 save_dashboard_config()
         except Exception:
             pass

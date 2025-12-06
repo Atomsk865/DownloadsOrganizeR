@@ -26,7 +26,7 @@ import pytest
 
 BASE_URL = "http://localhost:5000"
 ADMIN_USER = "admin"
-ADMIN_PASS = "change_this_password"
+ADMIN_PASS = ""
 TEST_USER = "testuser123"
 TEST_USER_PASS = "testpass123"
 VIEWER_USER = "viewer123"

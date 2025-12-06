@@ -28,7 +28,7 @@ except Exception:
 # Configuration
 base_url = "http://localhost:5000"
 username = "admin"
-password = "change_this_password"
+password = ""
 
 # Create auth header
 credentials = base64.b64encode(f"{username}:{password}".encode()).decode()

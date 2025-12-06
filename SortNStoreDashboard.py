@@ -57,6 +57,7 @@ DEFAULT_CONFIG = {
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
     "logs_dir": r"C:\Scripts\service-logs",
+    "password_change_required": False,
     "auth_method": "basic",
     "auth_fallback_enabled": True,
     "ldap_config": {
@@ -83,7 +84,7 @@ config = get_config()
 
 # --- Authentication Globals ---
 ADMIN_USER = os.environ.get("DASHBOARD_USER", "admin")
-ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "change_this_password")
+ADMIN_PASS = os.environ.get("DASHBOARD_PASS", "")
 ADMIN_PASS_HASH = None
 
 # If credentials are stored in the config file, prefer them
@@ -110,6 +111,7 @@ update_log_paths()
 # --- Dashboard (Users/Roles/Layout) Config ---
 DASHBOARD_CONFIG_DEFAULT = {
     "config_version": 1,
+    "password_change_required": False,
     "users": [
         {"username": ADMIN_USER, "role": "admin"}
     ],

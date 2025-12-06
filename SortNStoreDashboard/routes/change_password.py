@@ -1,18 +1,16 @@
 from flask import Blueprint, jsonify, request
 from SortNStoreDashboard.auth.auth import requires_auth
 import bcrypt
-import json
 
 routes_change_password = Blueprint('routes_change_password', __name__)
-
-CONFIG_FILE = "organizer_config.json"
 
 @routes_change_password.route("/change_password", methods=["POST"])
 @requires_auth
 def change_password():
     import SortNStoreDashboard
+    from SortNStoreDashboard.config_runtime import get_config, get_dashboard_config, save_config, save_dashboard_config
     ADMIN_USER = SortNStoreDashboard.ADMIN_USER
-    config = SortNStoreDashboard.config
+    config = get_config()
     
     # Only works for basic auth
     if config.get('auth_method', 'basic') != 'basic':
@@ -32,16 +30,34 @@ def change_password():
         hashed = bcrypt.hashpw(new.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         config['dashboard_user'] = ADMIN_USER
         config['dashboard_pass_hash'] = hashed
+        config['password_change_required'] = False
         if 'dashboard_pass' in config:
             del config['dashboard_pass']
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=4)
+
+        dash_cfg = get_dashboard_config()
+        found = False
+        for u in dash_cfg.get('users', []):
+            if u.get('username') == ADMIN_USER:
+                u['password_hash'] = hashed
+                found = True
+                break
+        if not found:
+            dash_cfg.setdefault('users', []).append({
+                'username': ADMIN_USER,
+                'role': 'admin',
+                'password_hash': hashed
+            })
+        dash_cfg['password_change_required'] = False
+
+        save_config()
+        save_dashboard_config()
+
         SortNStoreDashboard.ADMIN_PASS_HASH = hashed.encode('utf-8')
-        
+
         # Reinitialize auth manager with new password
         from SortNStoreDashboard.auth.auth import initialize_auth_manager
         initialize_auth_manager()
-        
+
         return jsonify({"status": "success", "message": "Password changed"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"Failed to save password: {e}"}), 500

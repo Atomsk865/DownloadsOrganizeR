@@ -38,6 +38,12 @@ def dashboard():
     except Exception:
         return redirect('/login')
 
+    try:
+        if cfg.get('password_change_required'):
+            return redirect('/force-change-password')
+    except Exception:
+        pass
+
     dashboard_data = load_dashboard_json()
     
     # Get top processes by CPU

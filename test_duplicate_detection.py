@@ -79,7 +79,7 @@ def test_duplicate_detection():
         try:
             response = requests.get(
                 "http://127.0.0.1:5000/api/duplicates",
-                auth=("admin", "change_this_password")
+                auth=("admin", "")
             )
             
             assert response.status_code == 200, f"API returned status {response.status_code}"
