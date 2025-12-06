@@ -420,11 +420,26 @@
             justify-content: center;
             transition: all 0.2s ease;
             user-select: none;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        /* Docked state (locked, not draggable) - Solid red fill */
+        .drag-toggle.docked {
+            color: #dc3545 !important;
+            background: rgba(220, 53, 69, 0.1);
+            border: 2px solid #dc3545;
+        }
+        
+        /* Undocked state (unlocked, draggable) - Dotted outline */
+        .drag-toggle.undocked {
+            color: var(--bs-primary, #0d6efd) !important;
+            background: rgba(13, 110, 253, 0.1);
+            border: 2px dashed var(--bs-primary, #0d6efd);
         }
         
         .drag-toggle:hover {
-            transform: scale(1.1);
-            color: var(--bs-primary, #0d6efd) !important;
+            transform: scale(1.15);
         }
         
         .drag-toggle:active {
@@ -449,6 +464,17 @@
         .grid-stack-item-content {
             overflow: visible !important;
             inset: 0 !important;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Ensure cards fill grid items properly */
+        .grid-stack-item .config-module {
+            height: 100%;
+        }
+        
+        .grid-stack-item .card {
+            height: 100%;
         }
         
         /* Prevent text selection during drag */

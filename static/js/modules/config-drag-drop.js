@@ -40,11 +40,12 @@ export const ConfigDragDrop = {
         this.grid = GridStack.init({
             column: getColumnCount(),
             cellHeight: 'auto',
+            minRow: 1,
             acceptWidgets: false,
-            disableDrag: true, // Disabled by default, enabled per module
+            disableDrag: false, // Enable drag capability, controlled per-item
             disableResize: true,
-            float: false,
-            staticGrid: true, // Start as static, modules opt-in via pushpin
+            float: true, // Allow compact arrangement
+            staticGrid: false, // Allow grid updates
             animate: true,
             margin: '1rem',
             columnOpts: {
@@ -59,23 +60,38 @@ export const ConfigDragDrop = {
 
         console.log('[ConfigDragDrop] GridStack initialized:', this.grid);
 
-        // Add grid-stack-item class to all modules
+        // Prepare modules for GridStack
         const modules = document.querySelectorAll('.config-module');
         const currentColumns = getColumnCount();
         
         modules.forEach((module, index) => {
+            // Add grid-stack-item class
             module.classList.add('grid-stack-item');
             
-            // Set grid attributes based on full-width class
+            // Calculate grid position to prevent overlap
             const isFullWidth = module.classList.contains('full-width');
-            module.setAttribute('gs-w', isFullWidth ? currentColumns.toString() : '1');
-            module.setAttribute('gs-h', '1');
-            module.setAttribute('gs-auto-position', 'true');
+            const width = isFullWidth ? currentColumns : 1;
             
-            // Initialize drag state to false
+            // Set position attributes
+            module.setAttribute('gs-w', width.toString());
+            module.setAttribute('gs-h', '1');
+            module.setAttribute('gs-no-resize', 'true');
+            module.setAttribute('gs-no-move', 'true'); // Start locked
+            
+            // Initialize drag state to false (locked/docked)
             const moduleName = module.getAttribute('data-module');
             this.dragEnabled.set(moduleName, false);
+            
+            // Set initial pushpin state to docked (red, solid)
+            const toggle = module.querySelector('.drag-toggle');
+            if (toggle) {
+                toggle.classList.add('docked');
+                toggle.classList.remove('undocked');
+            }
         });
+        
+        // Let GridStack auto-arrange the items
+        this.grid.makeWidget(modules);
         
         // Update column count on window resize
         let resizeTimer;
@@ -86,9 +102,10 @@ export const ConfigDragDrop = {
                 if (this.grid && this.grid.getColumn() !== newColumns) {
                     this.grid.column(newColumns);
                     // Update full-width modules
-                    modules.forEach(module => {
+                    const allModules = document.querySelectorAll('.config-module');
+                    allModules.forEach(module => {
                         if (module.classList.contains('full-width')) {
-                            module.setAttribute('gs-w', newColumns.toString());
+                            this.grid.update(module, {w: newColumns});
                         }
                     });
                 }
@@ -125,25 +142,33 @@ export const ConfigDragDrop = {
                 this.dragEnabled.set(moduleName, newState);
                 
                 if (newState) {
-                    // Enable drag for this module
-                    icon.classList.remove('bi-pin-angle');
-                    icon.classList.add('bi-pin-angle-fill');
-                    toggle.style.color = 'var(--bs-primary, #0d6efd)';
-                    toggle.title = 'Click to disable dragging (pin module)';
-                    
-                    // Make this module draggable
-                    this.grid.enableMove(module, true);
-                    module.style.cursor = 'move';
-                } else {
-                    // Disable drag for this module
+                    // Enable drag for this module (UNDOCKED - dotted outline)
                     icon.classList.remove('bi-pin-angle-fill');
                     icon.classList.add('bi-pin-angle');
-                    toggle.style.color = '#6c757d';
-                    toggle.title = 'Click to enable dragging (unpin module)';
+                    toggle.classList.add('undocked');
+                    toggle.classList.remove('docked');
+                    toggle.title = 'Click to lock module (dock)';
+                    
+                    // Make this module draggable
+                    const gridItem = module.closest('.grid-stack-item');
+                    if (gridItem) {
+                        this.grid.enableMove(gridItem, true);
+                        gridItem.style.cursor = 'move';
+                    }
+                } else {
+                    // Disable drag for this module (DOCKED - solid red)
+                    icon.classList.remove('bi-pin-angle');
+                    icon.classList.add('bi-pin-angle-fill');
+                    toggle.classList.add('docked');
+                    toggle.classList.remove('undocked');
+                    toggle.title = 'Click to unlock module (undock)';
                     
                     // Make this module non-draggable
-                    this.grid.enableMove(module, false);
-                    module.style.cursor = 'default';
+                    const gridItem = module.closest('.grid-stack-item');
+                    if (gridItem) {
+                        this.grid.enableMove(gridItem, false);
+                        gridItem.style.cursor = 'default';
+                    }
                 }
                 
                 console.log(`[ConfigDragDrop] Module ${moduleName} drag ${newState ? 'enabled' : 'disabled'}`);
