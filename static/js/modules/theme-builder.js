@@ -23,14 +23,6 @@ const PRESET_THEMES = {
     shadow: 'medium',
     css: ''
   },
-  dark: {
-    name: 'Dark Mode',
-    colors: { primary: '#495057', secondary: '#212529', success: '#1a5c34', danger: '#8b1a1a', warning: '#997404', info: '#0b5563' },
-    borderRadius: '8px',
-    fontSize: '100%',
-    shadow: 'strong',
-    css: 'body{background:#1a1d23;color:#e9ecef}.card{background:#23262d}.btn{border-radius:8px}'
-  },
   forest: {
     name: 'Forest Green',
     colors: { primary: '#2d6a4f', secondary: '#52b788', success: '#40916c', danger: '#d62828', warning: '#f77f00', info: '#06a77d' },
@@ -248,11 +240,11 @@ const ThemeBuilder = (() => {
    * Apply theme styles to page - Comprehensive theme application
    */
   function applyThemeStyles(theme) {
-    const isDarkMode = theme.themeName && theme.themeName.toLowerCase().includes('dark');
     const html = document.documentElement;
-
-    // Update data-theme attribute for light/dark mode styling
-    html.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    
+    // Get current theme mode from HTML attribute (set by theme toggle button)
+    const currentDataTheme = html.getAttribute('data-theme') || 'light';
+    const isDarkMode = currentDataTheme === 'dark';
 
     // Create comprehensive theme CSS with all necessary overrides
     let themeStyleEl = document.getElementById('theme-colors-styles');
@@ -428,6 +420,18 @@ const ThemeBuilder = (() => {
         border-color: ${colors.primary}30 !important;
       }
 
+      /* Role rights table specific styling */
+      #roles-table, #roles-table thead th, #roles-table tbody td {
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+        border: 1px solid ${colors.primary} !important;
+      }
+
+      #roles-table thead th {
+        background-color: ${colors.primary} !important;
+        color: ${textColor} !important;
+      }
+
       /* Cards - Secondary background with primary border */
       .card {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
@@ -437,6 +441,13 @@ const ThemeBuilder = (() => {
 
       .card-body {
         background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
+      }
+
+      /* Module body text - ensure visibility in dark mode */
+      .card-body p, .card-body div, .card-body span, 
+      .card-body label, .card-body small, .card-body b, .card-body strong {
+        color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
       }
 
       /* Forms and inputs - Primary color borders and outlines */
@@ -445,6 +456,13 @@ const ThemeBuilder = (() => {
         color: ${isDarkMode ? '#e0e0e0' : '#212529'} !important;
         border: 2px solid ${colors.primary} !important;
         outline: none !important;
+      }
+
+      /* Placeholder text - readable in both light and dark modes */
+      .form-control::placeholder, .form-select::placeholder, 
+      textarea::placeholder, input::placeholder {
+        color: ${isDarkMode ? '#adb5bd' : '#6c757d'} !important;
+        opacity: 1 !important;
       }
 
       .form-control:focus, .form-select:focus, textarea:focus, 
