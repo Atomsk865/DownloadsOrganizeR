@@ -13,6 +13,12 @@ from pathlib import Path
 import json
 import logging
 
+# Windows-specific: Hide subprocess windows
+if sys.platform == 'win32':
+    CREATE_NO_WINDOW = 0x08000000
+else:
+    CREATE_NO_WINDOW = 0
+
 # Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -170,7 +176,8 @@ class OrganizerTrayApp:
                 ["nssm", "status", self.service_name],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
+                creationflags=CREATE_NO_WINDOW
             )
             
             status = result.stdout.strip()
@@ -208,7 +215,8 @@ class OrganizerTrayApp:
                 ["nssm", "start", self.service_name],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
+                creationflags=CREATE_NO_WINDOW
             )
             
             if result.returncode == 0:
@@ -228,7 +236,8 @@ class OrganizerTrayApp:
                 ["nssm", "stop", self.service_name],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
+                creationflags=CREATE_NO_WINDOW
             )
             
             if result.returncode == 0:
@@ -248,7 +257,8 @@ class OrganizerTrayApp:
                 ["nssm", "restart", self.service_name],
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=15,
+                creationflags=CREATE_NO_WINDOW
             )
             
             if result.returncode == 0:
@@ -291,7 +301,7 @@ class OrganizerTrayApp:
                 cwd=self.install_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+                creationflags=CREATE_NO_WINDOW
             )
             
             self.stop_dashboard_action.setEnabled(True)
@@ -348,7 +358,8 @@ class OrganizerTrayApp:
                     ["git", "fetch", "origin", "main"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
+                    creationflags=CREATE_NO_WINDOW
                 )
                 
                 if result.returncode != 0:
@@ -360,7 +371,8 @@ class OrganizerTrayApp:
                     ["git", "pull", "origin", "main"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
+                    creationflags=CREATE_NO_WINDOW
                 )
                 
                 if result.returncode != 0:
@@ -371,7 +383,8 @@ class OrganizerTrayApp:
                 subprocess.run(
                     ["nssm", "restart", self.service_name],
                     capture_output=True,
-                    timeout=15
+                    timeout=15,
+                    creationflags=CREATE_NO_WINDOW
                 )
                 
                 self.show_notification("Update Complete", 
