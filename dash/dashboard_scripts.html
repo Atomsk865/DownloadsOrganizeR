@@ -3401,7 +3401,8 @@ async function loadStatistics() {
         });
         
         if (overviewRes.ok) {
-            const overview = await overviewRes.json();
+            // clone to avoid "body stream already read" when cached/in-flight is reused
+            const overview = await overviewRes.clone().json();
             const setTextIfExists = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
