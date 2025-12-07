@@ -147,21 +147,6 @@ const ThemeSystem = (() => {
         }
     }
 
-    // Reload helper (opt-in from user actions only)
-    let reloadScheduled = false;
-    function scheduleReload() {
-        if (reloadScheduled) return;
-        reloadScheduled = true;
-        setTimeout(() => {
-            reloadScheduled = false;
-            try {
-                window.location.reload();
-            } catch (e) {
-                console.warn('Theme reload failed', e);
-            }
-        }, 50);
-    }
-
     /**
      * Toggle between light and dark themes
      */
@@ -169,7 +154,6 @@ const ThemeSystem = (() => {
         const current = getSavedTheme();
         const next = current === 'light' ? 'dark' : 'light';
         applyTheme(next);
-        scheduleReload();
         
         // Show brief notification if possible
         if (typeof showNotification === 'function') {
@@ -212,15 +196,10 @@ const ThemeSystem = (() => {
         customTheme.active = true;
         saveCustomTheme(customTheme);
         
-        // Dispatch event
+        // Dispatch event for other components to react to theme change
         window.dispatchEvent(new CustomEvent('themeChanged', {
             detail: { theme: customTheme, type: 'custom' }
         }));
-
-        // Ensure full refresh so all modules pick up CSS (skip during initial load)
-        if (!initializing) {
-            scheduleReload();
-        }
     }
 
     /**
