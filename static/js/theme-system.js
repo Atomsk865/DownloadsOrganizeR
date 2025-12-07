@@ -8,6 +8,7 @@ const ThemeSystem = (() => {
     const STORAGE_KEY = 'organizer_theme_v1';
     const CUSTOM_THEME_KEY = 'organizer_custom_theme_v1';
     const DEFAULT_THEME = 'light';
+    let initializing = true;
     
     // CSS variable mappings for custom themes
     const THEME_VARS = {
@@ -60,6 +61,9 @@ const ThemeSystem = (() => {
             toggleBtn.addEventListener('click', toggleTheme);
             toggleBtn.hasListener = true;
         }
+
+        // Mark init complete so reloads only happen on user-driven changes
+        initializing = false;
     }
 
     /**
@@ -211,8 +215,10 @@ const ThemeSystem = (() => {
             detail: { theme: customTheme, type: 'custom' }
         }));
 
-        // Ensure full refresh so all modules pick up CSS
-        scheduleReload();
+        // Ensure full refresh so all modules pick up CSS (skip during initial load)
+        if (!initializing) {
+            scheduleReload();
+        }
     }
 
     /**
