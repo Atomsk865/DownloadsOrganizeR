@@ -26,6 +26,7 @@
             <label class="form-label mb-1"><small><b>Add New Watch Folder</b></small></label>
             <div class="input-group input-group-sm">
               <input type="text" id="new-watch-folder" class="form-control form-control-sm" placeholder="Enter folder path..." />
+              <input type="file" id="folder-picker" style="display: none;" webkitdirectory directory multiple />
               <button class="btn btn-outline-primary btn-sm" onclick="browseForFolder()" title="Browse for folder">
                 <i class="bi bi-folder-open"></i>
               </button>
@@ -595,12 +596,57 @@ async function organizeAllWatchFolders() {
 }
 
 function browseForFolder() {
-  // Focus the text field so users can paste/type a path
   const input = document.getElementById('new-watch-folder');
-  if (input) {
-    input.focus();
-    input.select();
-    showNotification('Type or paste a folder path, then click + to add.', 'info');
+  // Try modern File System Access API first (works on Chromium/Edge in secure context)
+  if (window.showDirectoryPicker) {
+    window.showDirectoryPicker().then(handle => {
+      if (input) {
+        input.value = handle.name; // Browsers do not expose full absolute path for security
+        showNotification('Folder selected. Browser cannot share full path; please confirm the path is correct.', 'info');
+      }
+    }).catch(() => {
+      // User canceled or API not allowed; fallback to classic picker
+      triggerLegacyFolderPicker();
+    });
+  } else {
+    triggerLegacyFolderPicker();
   }
 }
+
+function triggerLegacyFolderPicker() {
+  const picker = document.getElementById('folder-picker');
+  if (picker) {
+    picker.click();
+  } else {
+    const input = document.getElementById('new-watch-folder');
+    if (input) {
+      input.focus();
+      input.select();
+      showNotification('Type or paste a folder path, then click + to add.', 'info');
+    }
+  }
+}
+
+// Legacy folder picker change handler (webkitdirectory)
+document.addEventListener('DOMContentLoaded', function() {
+  const folderPicker = document.getElementById('folder-picker');
+  if (folderPicker) {
+    folderPicker.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        const firstFile = e.target.files[0];
+        const relPath = firstFile.webkitRelativePath || firstFile.name;
+        const parts = relPath.split('/');
+        if (parts.length > 1) {
+          const folderName = parts[0];
+          const input = document.getElementById('new-watch-folder');
+          if (input) {
+            input.value = folderName;
+            showNotification('Folder selected. Browser cannot share full path; please confirm the path is correct.', 'info');
+          }
+        }
+        e.target.value = '';
+      }
+    });
+  }
+});
 </script>
