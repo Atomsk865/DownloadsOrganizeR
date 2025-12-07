@@ -296,6 +296,7 @@ def create_app():
     from OrganizerDashboard.routes.dev_reset import routes_dev_reset
     from OrganizerDashboard.routes.env_test import routes_env
     from OrganizerDashboard.routes.unc_credentials import routes_unc_creds
+    from OrganizerDashboard.routes.system_update import routes_system_update
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config, url_prefix='/api')
@@ -308,6 +309,7 @@ def create_app():
     app.register_blueprint(routes_tail)
     app.register_blueprint(routes_stream)
     app.register_blueprint(routes_clear_log)
+    app.register_blueprint(routes_system_update)
     app.register_blueprint(routes_change_password)
     app.register_blueprint(routes_drives)
     app.register_blueprint(routes_network)
