@@ -61,13 +61,34 @@ if not downloads_path_str:
 
 DOWNLOADS_PATH = Path(downloads_path_str)
 
-# Build watch folders list from config
-# Priority: watch_folders (plural, explicit list) > watch_folder (singular, legacy) > empty list
+# Build watch folders list from config with per-folder settings
+# Supports both simple list and advanced dict format:
+# Simple: ["C:/path1", "C:/path2"]
+# Advanced: {"C:/path1": {"auto_sort": true, "routes": {...}}, "C:/path2": {...}}
 WATCH_FOLDERS = []
+FOLDER_CONFIGS = {}  # Per-folder settings: auto_sort, routes
+
 wf = CONFIG.get("watch_folders")
-if isinstance(wf, list) and wf:
+if isinstance(wf, dict):
+    # Advanced format with per-folder configuration
     try:
-        WATCH_FOLDERS = [Path(p) for p in wf if p]
+        for folder_path, folder_config in wf.items():
+            if isinstance(folder_path, str) and folder_path.strip():
+                path_obj = Path(folder_path)
+                WATCH_FOLDERS.append(path_obj)
+                # Store per-folder config (auto_sort, routes)
+                FOLDER_CONFIGS[str(path_obj)] = {
+                    "auto_sort": folder_config.get("auto_sort", True) if isinstance(folder_config, dict) else True,
+                    "routes": folder_config.get("routes") if isinstance(folder_config, dict) else None
+                }
+    except Exception:
+        WATCH_FOLDERS = []
+elif isinstance(wf, list) and wf:
+    # Simple list format - all folders use default settings
+    try:
+        WATCH_FOLDERS = [Path(p) for p in wf if p and isinstance(p, str)]
+        for folder in WATCH_FOLDERS:
+            FOLDER_CONFIGS[str(folder)] = {"auto_sort": True, "routes": None}
     except Exception:
         WATCH_FOLDERS = []
 elif CONFIG.get("watch_folder"):
@@ -75,7 +96,9 @@ elif CONFIG.get("watch_folder"):
     try:
         wf_str = str(CONFIG.get("watch_folder", "")).strip()
         if wf_str:
-            WATCH_FOLDERS = [Path(wf_str)]
+            path_obj = Path(wf_str)
+            WATCH_FOLDERS = [path_obj]
+            FOLDER_CONFIGS[str(path_obj)] = {"auto_sort": True, "routes": None}
     except Exception:
         WATCH_FOLDERS = []
 DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", SCRIPT_DIR / "config" / "json" / "downloads_dashboard.json"))
@@ -418,16 +441,38 @@ def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
     
     The function is careful to skip incomplete downloads and explicitly
     ignored files. Also calculates file hash and detects duplicates.
+    
+    Respects per-folder auto_sort setting - if disabled, file is not organized.
     """
     p = Path(file_path)
     if not p.is_file():
         return
+    
+    # Check if auto-sorting is enabled for this folder
+    folder_key = str(base_path)
+    folder_config = FOLDER_CONFIGS.get(folder_key, {"auto_sort": True, "routes": None})
+    if not folder_config.get("auto_sort", True):
+        logger.debug(f"Skipping {file_path} - auto-sort disabled for {base_path}")
+        return
+    
     filename = p.name
     filename_lower = filename.lower()
     ext = p.suffix.lower()
 
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
         return
+    
+    # Use per-folder routes if configured, otherwise use global EXTENSION_MAP
+    extension_map = folder_config.get("routes")
+    if extension_map:
+        # Normalize per-folder routes
+        normalized_map = {}
+        for cat, exts in extension_map.items():
+            normalized = [("." + e.lower().lstrip('.')) for e in exts]
+            normalized_map[cat] = normalized
+        extension_map = normalized_map
+    else:
+        extension_map = EXTENSION_MAP
 
     # Calculate file hash before organizing
     file_hash = calculate_file_hash(file_path)
@@ -464,8 +509,9 @@ def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
             category_label = "Custom"
         else:
             # Priority 3: Fallback to category-based routing inside Downloads
+            # Use per-folder extension_map if configured
             target_dir = "Other"
-            for category, extensions in EXTENSION_MAP.items():
+            for category, extensions in extension_map.items():
                 if ext in extensions:
                     target_dir = category
                     break
