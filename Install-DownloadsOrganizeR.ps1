@@ -411,6 +411,10 @@ function Install-OrganizerService {
 @echo off
 REM Batch wrapper to run Organizer.py with proper quoting
 cd /d "$InstallDir"
+REM Set environment variables for config/data/log locations
+set ORGANIZER_CONFIG_DIR=$configDir
+set ORGANIZER_DATA_DIR=$dataDir
+set ORGANIZER_LOG_DIR=$logDir
 "$pythonExe" "$organizerScript"
 "@
     $batContent | Out-File -FilePath $wrapperBat -Encoding ASCII -Force
