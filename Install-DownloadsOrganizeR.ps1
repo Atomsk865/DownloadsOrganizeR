@@ -404,9 +404,9 @@ function Install-OrganizerService {
     
     Write-Info "Creating service '$SERVICE_NAME'..."
     
-    # Install service
-    & $NssmPath install $SERVICE_NAME $pythonExe $organizerScript
-    & $NssmPath set $SERVICE_NAME AppDirectory $InstallDir
+    # Install service - paths with spaces MUST be quoted for NSSM
+    & $NssmPath install $SERVICE_NAME "`"$pythonExe`"" "`"$organizerScript`""
+    & $NssmPath set $SERVICE_NAME AppDirectory "`"$InstallDir`""
     & $NssmPath set $SERVICE_NAME DisplayName "Downloads Organizer Service"
     & $NssmPath set $SERVICE_NAME Description "Automatically organizes downloaded files into categorized folders"
     & $NssmPath set $SERVICE_NAME Start SERVICE_AUTO_START
