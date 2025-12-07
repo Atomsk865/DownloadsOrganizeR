@@ -141,6 +141,21 @@ const ThemeSystem = (() => {
         }));
     }
 
+    // Reload page once per change to ensure all areas pick up the new theme
+    let reloadScheduled = false;
+    window.addEventListener('themeChanged', () => {
+        if (reloadScheduled) return;
+        reloadScheduled = true;
+        setTimeout(() => {
+            reloadScheduled = false;
+            try {
+                window.location.reload();
+            } catch (e) {
+                console.warn('Theme reload failed', e);
+            }
+        }, 30);
+    });
+
     /**
      * Toggle between light and dark themes
      */
