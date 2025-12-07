@@ -60,6 +60,28 @@
       --setup-placeholder-text: #6c757d;
     }
     
+    /* Override Bootstrap text utilities for theme support */
+    .text-muted {
+      color: var(--setup-label-text) !important;
+      transition: color 0.3s ease;
+    }
+    small.text-muted {
+      color: var(--setup-label-text) !important;
+      transition: color 0.3s ease;
+    }
+    .text-secondary {
+      color: var(--setup-label-text) !important;
+      transition: color 0.3s ease;
+    }
+    .text-light {
+      color: var(--setup-text) !important;
+      transition: color 0.3s ease;
+    }
+    small, .small {
+      color: var(--setup-label-text) !important;
+      transition: color 0.3s ease;
+    }
+    
     body { 
       background: var(--setup-bg); 
       color: var(--setup-text); 
