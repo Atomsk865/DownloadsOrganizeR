@@ -182,12 +182,21 @@ function Get-Repository {
         Write-Info "Cloning repository using Git..."
         try {
             if (Test-Path $DestPath) {
-                Write-Info "Destination exists, pulling latest changes..."
-                Push-Location $DestPath
-                & git fetch origin
-                & git checkout $REPO_BRANCH
-                & git pull origin $REPO_BRANCH
-                Pop-Location
+                # Check if it's actually a git repository
+                $isGitRepo = Test-Path (Join-Path $DestPath ".git")
+                
+                if ($isGitRepo) {
+                    Write-Info "Destination exists, pulling latest changes..."
+                    Push-Location $DestPath
+                    & git fetch origin
+                    & git checkout $REPO_BRANCH
+                    & git pull origin $REPO_BRANCH
+                    Pop-Location
+                } else {
+                    Write-Warning "Destination exists but is not a git repository. Removing and re-cloning..."
+                    Remove-Item $DestPath -Recurse -Force -ErrorAction Stop
+                    & git clone --branch $REPO_BRANCH $REPO_URL $DestPath
+                }
             } else {
                 & git clone --branch $REPO_BRANCH $REPO_URL $DestPath
             }
