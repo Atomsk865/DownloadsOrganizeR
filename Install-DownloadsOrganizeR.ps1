@@ -412,9 +412,9 @@ function Install-OrganizerService {
     & $NssmPath set $SERVICE_NAME Start SERVICE_AUTO_START
     
     # Set environment variables for the service to find data directories
-    & $NssmPath set $SERVICE_NAME AppEnvironmentExtra "ORGANIZER_DATA_DIR=$dataDir"
-    & $NssmPath set $SERVICE_NAME AppEnvironmentExtra "ORGANIZER_CONFIG_DIR=$configDir"
-    & $NssmPath set $SERVICE_NAME AppEnvironmentExtra "ORGANIZER_LOG_DIR=$logDir"
+    # IMPORTANT: Set all in one command - multiple set commands overwrite each other
+    $envVars = "ORGANIZER_DATA_DIR=$dataDir`nORGANIZER_CONFIG_DIR=$configDir`nORGANIZER_LOG_DIR=$logDir"
+    & $NssmPath set $SERVICE_NAME AppEnvironmentExtra $envVars
     
     # Configure logging
     & $NssmPath set $SERVICE_NAME AppStdout (Join-Path $logDir "organizer_stdout.log")
