@@ -27,9 +27,15 @@ from datetime import datetime
 
 # -----------------------------
 # Configuration and paths
-# -----------------------------
+# --------------------- 
 SCRIPT_DIR = Path(__file__).parent
-CONFIG_PATHS = [SCRIPT_DIR / "organizer_config.json", Path("C:/Scripts/organizer_config.json")]
+# Build config paths: check ORGANIZER_CONFIG_DIR (set by service), then Script dir, then legacy locations
+config_dir_env = os.environ.get("ORGANIZER_CONFIG_DIR")
+CONFIG_PATHS = []
+if config_dir_env:
+    CONFIG_PATHS.append(Path(config_dir_env) / "organizer_config.json")
+CONFIG_PATHS.extend([SCRIPT_DIR / "organizer_config.json", Path("C:/Scripts/organizer_config.json")])
+
 CONFIG = {}
 for p in CONFIG_PATHS:
     if p.exists():

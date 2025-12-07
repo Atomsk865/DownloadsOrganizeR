@@ -370,6 +370,34 @@ function Install-OrganizerService {
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
     }
     
+    # Create/update organizer config with watch folders
+    $configFile = Join-Path $configDir "organizer_config.json"
+    if (-not (Test-Path $configFile)) {
+        Write-Info "Creating organizer configuration..."
+        $downloadsFolder = [System.IO.Path]::Combine("C:\Users", $env:USERNAME, "Downloads")
+        $config = @{
+            watch_folders = @($downloadsFolder)
+            dashboard_user = "admin"
+            password_change_required = $true
+            auth_method = "basic"
+            auth_fallback_enabled = $true
+            routes = @{
+                Images = @("jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "heic")
+                Music = @("mp3", "wav", "flac", "aac", "ogg", "wma", "m4a")
+                Videos = @("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm")
+                Documents = @("pdf", "doc", "docx", "txt", "rtf", "odt", "xls", "xlsx", "ppt", "pptx", "csv")
+                Archives = @("zip", "rar", "7z", "tar", "gz", "bz2")
+                Executables = @("exe", "msi", "bat", "cmd", "ps1")
+                Shortcuts = @("lnk", "url")
+                Scripts = @("py", "js", "html", "css", "json", "xml", "sh", "ts", "php")
+                Fonts = @("ttf", "otf", "woff", "woff2")
+            }
+            memory_threshold_mb = 200
+            cpu_threshold_percent = 60
+        }
+        $config | ConvertTo-Json | Out-File -FilePath $configFile -Encoding UTF8
+    }
+    
     # Get Python executable path
     $pythonExe = (Get-Command python).Source
     $organizerScript = Join-Path $InstallDir "Organizer.py"
