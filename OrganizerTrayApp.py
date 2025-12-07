@@ -82,6 +82,26 @@ class OrganizerTrayApp:
         
         return script_dir
     
+    def get_log_dir(self):
+        """Get writable log directory from marker file or ProgramData."""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        marker_file = os.path.join(script_dir, ".install_path")
+        
+        # Try to get data_dir from marker file first (most reliable)
+        if os.path.exists(marker_file):
+            try:
+                with open(marker_file, 'r') as f:
+                    paths = json.loads(f.read().strip())
+                    data_dir = paths.get('data_dir')
+                    if data_dir and os.path.isdir(data_dir):
+                        log_dir = os.path.join(data_dir, "logs")
+                        return log_dir
+            except Exception:
+                pass
+        
+        # Fallback to install_dir\logs (for local dev)
+        return os.path.join(self.install_dir, "logs")
+    
     def _get_startupinfo(self):
         """Get subprocess startup info to hide windows on Windows."""
         if sys.platform == 'win32':
@@ -318,7 +338,7 @@ class OrganizerTrayApp:
                     python_exe = pythonw
             
             # Create log file for dashboard errors only
-            log_dir = os.path.join(self.install_dir, "logs")
+            log_dir = self.get_log_dir()
             os.makedirs(log_dir, exist_ok=True)
             dashboard_error_log = os.path.join(log_dir, "dashboard_tray_errors.log")
             
