@@ -141,9 +141,9 @@ const ThemeSystem = (() => {
         }));
     }
 
-    // Reload page once per change to ensure all areas pick up the new theme
+    // Reload helper (opt-in from user actions only)
     let reloadScheduled = false;
-    window.addEventListener('themeChanged', () => {
+    function scheduleReload() {
         if (reloadScheduled) return;
         reloadScheduled = true;
         setTimeout(() => {
@@ -153,8 +153,8 @@ const ThemeSystem = (() => {
             } catch (e) {
                 console.warn('Theme reload failed', e);
             }
-        }, 30);
-    });
+        }, 50);
+    }
 
     /**
      * Toggle between light and dark themes
@@ -163,6 +163,7 @@ const ThemeSystem = (() => {
         const current = getSavedTheme();
         const next = current === 'light' ? 'dark' : 'light';
         applyTheme(next);
+        scheduleReload();
         
         // Show brief notification if possible
         if (typeof showNotification === 'function') {
@@ -209,6 +210,9 @@ const ThemeSystem = (() => {
         window.dispatchEvent(new CustomEvent('themeChanged', {
             detail: { theme: customTheme, type: 'custom' }
         }));
+
+        // Ensure full refresh so all modules pick up CSS
+        scheduleReload();
     }
 
     /**
