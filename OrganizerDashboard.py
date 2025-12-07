@@ -372,5 +372,11 @@ def create_app():
 
 # --- Main Entry Point ---
 if __name__ == "__main__":
+    import sys
+    # Fix Unicode encoding for Windows console
+    if sys.stdout.encoding.lower() != 'utf-8':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    
     print("✅ Dashboard running at http://localhost:5000")
     create_app().run(host="0.0.0.0", port=5000)
