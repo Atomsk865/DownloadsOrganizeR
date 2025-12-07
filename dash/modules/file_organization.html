@@ -26,6 +26,7 @@
             <label class="form-label mb-1"><small><b>Add New Watch Folder</b></small></label>
             <div class="input-group input-group-sm">
               <input type="text" id="new-watch-folder" class="form-control form-control-sm" placeholder="Enter folder path or browse..." />
+              <input type="file" id="folder-picker" style="display: none;" webkitdirectory directory multiple />
               <button class="btn btn-outline-primary btn-sm" onclick="browseForFolder()" title="Browse for folder">
                 <i class="bi bi-folder-open"></i>
               </button>
@@ -595,7 +596,39 @@ async function organizeAllWatchFolders() {
 }
 
 function browseForFolder() {
-  // Show a notification that folder browsing is available via FileDialog
-  showNotification('Folder browsing not available in web interface. Please enter the path manually or use the native file picker on your system.', 'info');
+  // Trigger hidden file input to browse for folder
+  const folderPicker = document.getElementById('folder-picker');
+  if (folderPicker) {
+    folderPicker.click();
+  }
 }
+
+// Handle folder selection from file picker
+document.addEventListener('DOMContentLoaded', function() {
+  const folderPicker = document.getElementById('folder-picker');
+  if (folderPicker) {
+    folderPicker.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        // Get the first file's path and extract folder
+        const firstFile = e.target.files[0];
+        const filePathArray = firstFile.webkitRelativePath || firstFile.name;
+        const pathParts = filePathArray.split('/');
+        
+        // Remove the filename, keep folder structure
+        if (pathParts.length > 1) {
+          // For webkitRelativePath, reconstruct the folder path
+          const folderName = pathParts[0];
+          const input = document.getElementById('new-watch-folder');
+          if (input) {
+            input.value = folderName;
+            showNotification(`Selected folder: ${folderName}`, 'info');
+          }
+        }
+        
+        // Reset file picker for next selection
+        e.target.value = '';
+      }
+    });
+  }
+});
 </script>
