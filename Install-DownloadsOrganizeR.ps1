@@ -518,7 +518,7 @@ function New-DashboardShortcut {
     # Create launcher script
     $launcherScript = @'
 # Dashboard Launcher Script
-$dashboardScript = "{INSTALL_DIR}\SortNStoreDashboard.py"
+$dashboardScript = "{INSTALL_DIR}\OrganizerDashboard.py"
 $pythonExe = "python"
 $dashboardUrl = "http://localhost:{PORT}"
 
@@ -535,7 +535,7 @@ function Test-DashboardRunning {
 # Function to find dashboard process
 function Get-DashboardProcess {
     return Get-Process python -ErrorAction SilentlyContinue | 
-           Where-Object { $_.CommandLine -like "*SortNStoreDashboard.py*" }
+           Where-Object { $_.CommandLine -like "*OrganizerDashboard.py*" }
 }
 
 Write-Host "Checking dashboard status..." -ForegroundColor Cyan
