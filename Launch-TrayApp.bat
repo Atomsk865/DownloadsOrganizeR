@@ -2,6 +2,8 @@
 REM Launch DownloadsOrganizeR System Tray Application
 REM This script starts the system tray app with proper Python environment
 
+setlocal enabledelayedexpansion
+
 cd /d "%~dp0"
 
 REM Check if Python is available
@@ -17,16 +19,18 @@ REM Check if PyQt6 is installed
 python -c "import PyQt6" >nul 2>&1
 if errorlevel 1 (
     echo PyQt6 not found. Installing...
-    pip install PyQt6
+    pip install PyQt6 >nul 2>&1
     if errorlevel 1 (
-        echo Failed to install PyQt6
+        echo Failed to install PyQt6 automatically
+        echo Try running: pip install PyQt6
         pause
         exit /b 1
     )
 )
 
 REM Start the tray application
-start pythonw OrganizerTrayApp.py
+REM Use pythonw to hide the console window
+pythonw OrganizerTrayApp.py
 
 REM Exit immediately (tray app runs in background)
-exit
+exit /b 0
