@@ -32,23 +32,42 @@ $SERVICE_NAME = "DownloadsOrganizer"
 $DASHBOARD_PORT = 5000
 
 # Color output functions
-function Write-Success { param($Message) Write-Host "✓ $Message" -ForegroundColor Green }
-function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
-function Write-Warning { param($Message) Write-Host "⚠ $Message" -ForegroundColor Yellow }
-function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColor Red }
-function Write-Step { param($Message) Write-Host "`n═══ $Message ═══`n" -ForegroundColor Magenta }
+function Write-Success {
+    param([string]$Message)
+    Write-Host "[SUCCESS] $Message" -ForegroundColor Green
+}
+
+function Write-Info {
+    param([string]$Message)
+    Write-Host "[INFO] $Message" -ForegroundColor Cyan
+}
+
+function Write-Warning {
+    param([string]$Message)
+    Write-Host "[WARNING] $Message" -ForegroundColor Yellow
+}
+
+function Write-Error {
+    param([string]$Message)
+    Write-Host "[ERROR] $Message" -ForegroundColor Red
+}
+
+function Write-Step {
+    param([string]$Message)
+    Write-Host "`n=== $Message ===`n" -ForegroundColor Magenta
+}
 
 # Banner
 function Show-Banner {
     Write-Host @"
 
-╔════════════════════════════════════════════════════════════════╗
-║                                                                ║
-║          DownloadsOrganizeR - Installation Wizard             ║
-║                                                                ║
-║     Automated setup for file organization service              ║
-║                                                                ║
-╚════════════════════════════════════════════════════════════════╝
+================================================================
+                                                                
+          DownloadsOrganizeR - Installation Wizard             
+                                                                
+     Automated setup for file organization service              
+                                                                
+================================================================
 
 "@ -ForegroundColor Cyan
 }
