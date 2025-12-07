@@ -423,7 +423,7 @@ const ThemeBuilder = (() => {
 
       /* Config main background stays with theme toggle, not custom themes */
       .config-main {
-        background: ${isDarkMode ? '#1a1d23' : '#f8f9fa'} !important;
+        background: var(--bg-primary) !important;
       }
 
       /* Primary color elements */
@@ -495,7 +495,7 @@ const ThemeBuilder = (() => {
 
       /* Navbar and header links - Secondary background with primary accents */
       .navbar {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
         border-bottom: 3px solid ${colors.primary} !important;
       }
@@ -528,7 +528,7 @@ const ThemeBuilder = (() => {
 
       /* Tables - Apply theme colors to headers and borders */
       table, .table {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
       }
@@ -541,7 +541,7 @@ const ThemeBuilder = (() => {
 
       .table tbody tr {
         border-color: ${colors.primary}40 !important;
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
       }
 
@@ -551,7 +551,7 @@ const ThemeBuilder = (() => {
 
       .table tbody td {
         border-color: ${colors.primary}30 !important;
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
       }
 
@@ -569,13 +569,13 @@ const ThemeBuilder = (() => {
 
       /* Cards - Secondary background with primary border */
       .card {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         border: 2px solid ${colors.primary} !important;
         color: ${baseTextColor} !important;
       }
 
       .card-body {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
       }
 
@@ -587,7 +587,7 @@ const ThemeBuilder = (() => {
 
       /* Forms and inputs - Primary color borders and outlines */
       .form-control, .form-select, textarea, input[type="text"], input[type="password"], input[type="email"] {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: none !important;
@@ -602,7 +602,7 @@ const ThemeBuilder = (() => {
 
       .form-control:focus, .form-select:focus, textarea:focus, 
       input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
-        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        background-color: var(--bg-secondary) !important;
         color: ${baseTextColor} !important;
         border: 2px solid ${colors.primary} !important;
         outline: 3px solid ${colors.primary}60 !important;
