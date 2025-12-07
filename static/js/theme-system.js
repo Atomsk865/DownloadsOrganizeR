@@ -24,9 +24,9 @@ const ThemeSystem = (() => {
      * Initialize theme system on page load
      */
     function init() {
-        // Apply saved theme on page load
+        // Apply saved theme on page load (skip events during init)
         const savedTheme = getSavedTheme();
-        applyTheme(savedTheme);
+        applyTheme(savedTheme, true);  // skipEvent = true during init
         
         // Apply custom theme if active (both old and new formats)
         const customTheme = getCustomTheme();
@@ -122,7 +122,7 @@ const ThemeSystem = (() => {
     /**
      * Apply theme mode (light/dark)
      */
-    function applyTheme(theme) {
+    function applyTheme(theme, skipEvent = false) {
         if (!theme || (theme !== 'light' && theme !== 'dark')) {
             theme = DEFAULT_THEME;
         }
@@ -139,10 +139,12 @@ const ThemeSystem = (() => {
             console.warn('Failed to save theme:', e);
         }
         
-        // Dispatch custom event for other components
-        window.dispatchEvent(new CustomEvent('themeChanged', {
-            detail: { theme, type: 'mode' }
-        }));
+        // Dispatch custom event for other components (skip during init to prevent reload loops)
+        if (!skipEvent) {
+            window.dispatchEvent(new CustomEvent('themeChanged', {
+                detail: { theme, type: 'mode' }
+            }));
+        }
     }
 
     // Reload helper (opt-in from user actions only)
