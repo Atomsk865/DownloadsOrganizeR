@@ -395,7 +395,7 @@ def format_file_size(size_bytes: float) -> str:
     return f"{size_bytes:.1f} PB"
 
 
-def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
+def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> tuple:
     """Move a single file into the matching category folder under Downloads.
 
     Priority order:
@@ -405,16 +405,19 @@ def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
     
     The function is careful to skip incomplete downloads and explicitly
     ignored files. Also calculates file hash and detects duplicates.
+    
+    Returns:
+        Tuple of (destination_path, category) on success, (None, None) if skipped/failed
     """
     p = Path(file_path)
     if not p.is_file():
-        return
+        return (None, None)
     filename = p.name
     filename_lower = filename.lower()
     ext = p.suffix.lower()
 
     if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
-        return
+        return (None, None)
 
     # Calculate file hash before organizing
     file_hash = calculate_file_hash(file_path)
@@ -468,6 +471,7 @@ def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
         # Register file hash after successful move
         if file_hash:
             register_file_hash(dest_path, file_hash)
+        return (str(dest_path), category_label)
     except Exception as e:
         logger.warning(f"Move failed: {file_path} -> {dest_path}: {e}")
         # If destination is network or currently inaccessible, queue for retry
@@ -475,6 +479,7 @@ def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> None:
             RETRY_QUEUE.add(str(p), dest_path)
         else:
             logger.error(f"Error moving {file_path}: {e}")
+        return (None, None)
 
 
 def update_dashboard_json(downloads_path: Path) -> None:

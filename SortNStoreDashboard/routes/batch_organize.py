@@ -123,11 +123,23 @@ def batch_organize_downloads():
                 else:
                     # Actually organize the file
                     from Organizer import organize_file
-                    organize_file(str(file_path), downloads_path)
-                    files_processed.append({
-                        "file": str(file_path),
-                        "status": "organized"
-                    })
+                    destination, category = organize_file(str(file_path), downloads_path)
+                    
+                    if destination and category:
+                        # Record the move in batch history
+                        record_move(str(file_path), destination, category, batch_id)
+                        files_processed.append({
+                            "file": str(file_path),
+                            "status": "organized",
+                            "destination": destination,
+                            "category": category
+                        })
+                    else:
+                        # File was skipped (incomplete download, ignored file, etc.)
+                        files_processed.append({
+                            "file": str(file_path),
+                            "status": "skipped"
+                        })
             except Exception as e:
                 logger.error(f"Error organizing {file_path}: {e}")
                 errors.append({
