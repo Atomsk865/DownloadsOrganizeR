@@ -94,6 +94,104 @@
             throw error;
         }
     };
+
+    // MODULE COLLAPSE/EXPAND TOGGLE
+    // Allows dashboard modules to be collapsed and expanded with persistence
+    const __moduleCollapseState = {};
+    
+    window.toggleHideModule = function(element, moduleId) {
+        // If called with just module ID string, find the header
+        if (typeof element === 'string') {
+            moduleId = element;
+            const moduleCard = document.getElementById(moduleId);
+            if (!moduleCard) return;
+            element = moduleCard.querySelector('.card-header');
+        }
+        
+        if (!element) return;
+        
+        const moduleCard = element.closest('.card');
+        if (!moduleCard) return;
+        
+        // Get module ID if not provided
+        if (!moduleId) {
+            moduleId = moduleCard.id;
+        }
+        
+        const cardBody = moduleCard.querySelector('.card-body');
+        if (!cardBody) return;
+        
+        // Toggle visibility
+        const isHidden = cardBody.style.display === 'none';
+        cardBody.style.display = isHidden ? 'block' : 'none';
+        
+        // Update icon rotation
+        const icon = element.querySelector('.toggle-icon');
+        if (icon) {
+            icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-180deg)';
+            icon.style.transition = 'transform 0.3s ease';
+        }
+        
+        // Save state to localStorage
+        if (moduleId) {
+            __moduleCollapseState[moduleId] = isHidden ? 'visible' : 'hidden';
+            try {
+                localStorage.setItem('dashboardModuleStates', JSON.stringify(__moduleCollapseState));
+            } catch (e) {
+                console.warn('Could not save module state:', e);
+            }
+        }
+    };
+    
+    // RESTORE MODULE COLLAPSE STATE ON PAGE LOAD
+    window.restoreModuleStates = function() {
+        try {
+            const saved = localStorage.getItem('dashboardModuleStates');
+            if (saved) {
+                const states = JSON.parse(saved);
+                Object.keys(states).forEach(moduleId => {
+                    const moduleCard = document.getElementById(moduleId);
+                    if (moduleCard) {
+                        const cardBody = moduleCard.querySelector('.card-body');
+                        const header = moduleCard.querySelector('.card-header');
+                        if (cardBody && header) {
+                            const shouldHide = states[moduleId] === 'hidden';
+                            cardBody.style.display = shouldHide ? 'none' : 'block';
+                            
+                            const icon = header.querySelector('.toggle-icon');
+                            if (icon) {
+                                icon.style.transform = shouldHide ? 'rotate(-180deg)' : 'rotate(0deg)';
+                                icon.style.transition = 'none'; // No animation on load
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Could not restore module states:', e);
+        }
+    };
+    
+    // Add click handler to all card headers for collapse
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make all card headers with cursor-pointer collapsible
+        document.querySelectorAll('.card-header.cursor-pointer').forEach(header => {
+            header.addEventListener('click', function(e) {
+                if (e.target.closest('button, a, input, select, textarea')) {
+                    return; // Don't toggle if clicking on interactive elements
+                }
+                const card = this.closest('.card');
+                if (card) {
+                    toggleHideModule(this, card.id);
+                }
+            });
+        });
+        
+        // Restore saved module states
+        if (typeof restoreModuleStates === 'function') {
+            restoreModuleStates();
+        }
+    });
 </script>
 <!-- Alpine.js - Lightweight reactive framework -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>

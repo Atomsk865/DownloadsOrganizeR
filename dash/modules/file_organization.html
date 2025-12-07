@@ -8,6 +8,40 @@
     </span>
   </div>
   <div class="card-body p-3">
+    <!-- Watch Folders Management (Collapsible) -->
+    <div class="mb-3">
+      <button class="btn btn-outline-secondary btn-sm w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#watchFoldersCollapse" aria-expanded="false">
+        <i class="bi bi-folder-gear"></i> Watch Folders Settings
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </button>
+      <div class="collapse mt-2" id="watchFoldersCollapse">
+        <div class="card card-body p-2">
+          <div class="mb-2">
+            <label class="form-label mb-1"><small><b>Configured Watch Folders</b></small></label>
+            <div id="watch-folders-list" class="list-group" style="max-height: 150px; overflow-y: auto;">
+              <div class="text-muted text-center py-2"><small>Loading folders...</small></div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label mb-1"><small><b>Add New Watch Folder</b></small></label>
+            <div class="input-group input-group-sm">
+              <input type="text" id="new-watch-folder" class="form-control form-control-sm" placeholder="Enter folder path or browse..." />
+              <button class="btn btn-outline-primary btn-sm" onclick="browseForFolder()" title="Browse for folder">
+                <i class="bi bi-folder-open"></i>
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="addWatchFolder()" title="Add folder to watch list">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <small class="text-muted d-block mt-1">Batch organizer will organize files in all watch folders</small>
+          </div>
+          <button class="btn btn-success btn-sm w-100" onclick="organizeAllWatchFolders()">
+            <i class="bi bi-lightning-charge"></i> Organize All Watch Folders
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Batch Organization Controls -->
     <div class="mb-3">
       <div class="row g-2 mb-2">
@@ -417,9 +451,151 @@ function nextOrgPage() {
 document.addEventListener('DOMContentLoaded', function() {
   refreshOrgHistory();
   loadOrgStats();
+  loadWatchFolders();
   
   // Refresh every 30 seconds
   setInterval(refreshOrgHistory, 30000);
   setInterval(loadOrgStats, 30000);
 });
+
+/**
+ * Watch Folder Management Functions
+ */
+
+async function loadWatchFolders() {
+  try {
+    const response = await fetch('/api/batch-config/watch-folders', {
+      credentials: 'include',
+      headers: getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      renderWatchFolders(data.watch_folders || []);
+    }
+  } catch (e) {
+    console.error('Failed to load watch folders:', e);
+  }
+}
+
+function renderWatchFolders(folders) {
+  const container = document.getElementById('watch-folders-list');
+  
+  if (!folders || folders.length === 0) {
+    container.innerHTML = '<div class="text-muted text-center py-2"><small>No watch folders configured</small></div>';
+    return;
+  }
+  
+  container.innerHTML = folders.map(folder => `
+    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-1">
+      <small>
+        <i class="bi bi-folder"></i> ${folder}
+      </small>
+      <button class="btn btn-sm btn-outline-danger" onclick="removeWatchFolder('${folder.replace(/'/g, "\\'")}')">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+async function addWatchFolder() {
+  const input = document.getElementById('new-watch-folder');
+  const folderPath = input.value.trim();
+  
+  if (!folderPath) {
+    showNotification('Please enter a folder path', 'warning');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/batch-config/watch-folders', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ path: folderPath })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      input.value = '';
+      showNotification(`Added watch folder: ${folderPath}`, 'success');
+      renderWatchFolders(data.watch_folders);
+    } else {
+      showNotification(`Error: ${data.error}`, 'danger');
+    }
+  } catch (e) {
+    showNotification(`Error adding folder: ${e.message}`, 'danger');
+  }
+}
+
+async function removeWatchFolder(folderPath) {
+  if (!confirm(`Remove watch folder?\n${folderPath}`)) {
+    return;
+  }
+  
+  try {
+    const encodedPath = encodeURIComponent(folderPath);
+    const response = await fetch(`/api/batch-config/watch-folders/${encodedPath}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAuthHeaders()
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification('Watch folder removed', 'success');
+      renderWatchFolders(data.watch_folders);
+    } else {
+      showNotification(`Error: ${data.error}`, 'danger');
+    }
+  } catch (e) {
+    showNotification(`Error removing folder: ${e.message}`, 'danger');
+  }
+}
+
+async function organizeAllWatchFolders() {
+  if (orgBatchInProgress) {
+    showNotification('Organization already in progress', 'warning');
+    return;
+  }
+  
+  orgBatchInProgress = true;
+  
+  try {
+    const response = await fetch('/api/batch-config/watch-folders/organize', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ dry_run: false })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const total = data.total_organized;
+      showNotification(`Organized ${total} files across all watch folders`, 'success');
+      await refreshOrgHistory();
+      await loadOrgStats();
+    } else {
+      showNotification(`Error: ${data.error}`, 'danger');
+    }
+  } catch (e) {
+    showNotification(`Error organizing watch folders: ${e.message}`, 'danger');
+  } finally {
+    orgBatchInProgress = false;
+  }
+}
+
+function browseForFolder() {
+  // Show a notification that folder browsing is available via FileDialog
+  showNotification('Folder browsing not available in web interface. Please enter the path manually or use the native file picker on your system.', 'info');
+}
 </script>

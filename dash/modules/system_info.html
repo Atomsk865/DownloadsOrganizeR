@@ -1,8 +1,9 @@
 <div class="dashboard-module wide" data-module="system-info" draggable="false" id="system-info-card">
     <div class="card">
-        <div class="card-header d-flex align-items-center">
+        <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this)">
             <b>System Information</b>
             <small class="ms-2" style="color: var(--text-secondary);">(Clicky Copy)</small>
+            <i class="bi bi-chevron-down toggle-icon ms-auto"></i>
         </div>
         <div class="card-body p-2">
             <!-- Env mismatch warning injected by JS -->

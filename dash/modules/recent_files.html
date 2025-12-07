@@ -1,12 +1,13 @@
 <div class="dashboard-module wide" data-module="recent-files" draggable="true">
     <!-- Recent Files Card -->
     <div class="card mb-3">
-        <div class="card-header d-flex align-items-center">
+        <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this)">
             <b>Recent File Movements</b>
             <a href="/docs/recent-files" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
                 <small><i class="bi bi-book"></i> Docs</small>
             </a>
-            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+            <i class="bi bi-chevron-down toggle-icon ms-auto"></i>
+            <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
         </div>
         <div class="card-body p-2">
             <div class="d-flex justify-content-end mb-1">

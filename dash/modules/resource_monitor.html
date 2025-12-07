@@ -1,9 +1,10 @@
 <div class="dashboard-module wide" data-module="service-status" draggable="true">
     <div class="card">
-        <div class="card-header d-flex align-items-center">
+        <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this)">
             <b><i class="bi bi-activity"></i> Resource Monitor</b>
             <span class="hide-toggle" data-module="service-status" title="Hide module"><i class="bi bi-x-circle"></i></span>
-            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+            <i class="bi bi-chevron-down toggle-icon ms-auto"></i>
+            <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
         </div>
         <div class="card-body p-2">
             <div class="mb-3">

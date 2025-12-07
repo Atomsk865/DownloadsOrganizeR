@@ -1,9 +1,10 @@
 <div class="dashboard-module" data-module="settings" draggable="true">
     <div class="card">
-        <div class="card-header d-flex align-items-center">
+        <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this)">
             <b>Settings</b>
             <span class="hide-toggle" data-module="settings" title="Hide module"><i class="bi bi-x-circle"></i></span>
-            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+            <i class="bi bi-chevron-down toggle-icon ms-auto"></i>
+            <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
         </div>
         <div class="card-body p-2">
             <form id="config-form-settings">

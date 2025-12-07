@@ -293,3 +293,198 @@ def get_organization_stats():
     except Exception as e:
         logger.error(f"Error getting stats: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ============================================================================
+# Watch Folder Management Endpoints
+# ============================================================================
+
+BATCH_CONFIG_PATH = Path(__file__).parent.parent.parent / 'batch_organizer_config.json'
+
+
+def load_batch_config():
+    """Load batch organizer configuration"""
+    if not BATCH_CONFIG_PATH.exists():
+        default_config = {
+            "watch_folders": [
+                str(Path.home() / "Downloads")
+            ],
+            "dry_run": False,
+            "recursive": True,
+            "exclude_extensions": [".crdownload", ".part", ".tmp"],
+            "exclude_files": ["desktop.ini", "thumbs.db"]
+        }
+        save_batch_config(default_config)
+        return default_config
+    
+    try:
+        return json.loads(BATCH_CONFIG_PATH.read_text())
+    except:
+        return {"watch_folders": [str(Path.home() / "Downloads")]}
+
+
+def save_batch_config(config):
+    """Save batch organizer configuration"""
+    try:
+        BATCH_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        BATCH_CONFIG_PATH.write_text(json.dumps(config, indent=2))
+    except Exception as e:
+        logger.error(f"Failed to save batch config: {e}")
+
+
+@batch_organize_bp.route('/api/batch-config/watch-folders', methods=['GET'])
+def get_watch_folders():
+    """Get list of configured watch folders"""
+    try:
+        config = load_batch_config()
+        folders = config.get("watch_folders", [])
+        return jsonify({
+            "success": True,
+            "watch_folders": folders,
+            "count": len(folders)
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting watch folders: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@batch_organize_bp.route('/api/batch-config/watch-folders', methods=['POST'])
+def add_watch_folder():
+    """Add a folder to watch list"""
+    try:
+        data = request.get_json() or {}
+        folder_path = data.get("path", "").strip()
+        
+        if not folder_path:
+            return jsonify({"success": False, "error": "Folder path required"}), 400
+        
+        folder_path = str(Path(folder_path).absolute())
+        
+        if not Path(folder_path).exists():
+            return jsonify({"success": False, "error": "Folder does not exist"}), 400
+        
+        config = load_batch_config()
+        
+        if folder_path in config.get("watch_folders", []):
+            return jsonify({"success": False, "error": "Folder already in watch list"}), 400
+        
+        config["watch_folders"].append(folder_path)
+        save_batch_config(config)
+        
+        logger.info(f"Added watch folder: {folder_path}")
+        return jsonify({
+            "success": True,
+            "message": f"Added {folder_path}",
+            "watch_folders": config["watch_folders"]
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error adding watch folder: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@batch_organize_bp.route('/api/batch-config/watch-folders/<path:folder_path>', methods=['DELETE'])
+def remove_watch_folder(folder_path):
+    """Remove a folder from watch list"""
+    try:
+        folder_path = str(Path(folder_path).absolute())
+        
+        config = load_batch_config()
+        
+        if folder_path not in config.get("watch_folders", []):
+            return jsonify({"success": False, "error": "Folder not in watch list"}), 404
+        
+        config["watch_folders"].remove(folder_path)
+        save_batch_config(config)
+        
+        logger.info(f"Removed watch folder: {folder_path}")
+        return jsonify({
+            "success": True,
+            "message": f"Removed {folder_path}",
+            "watch_folders": config["watch_folders"]
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error removing watch folder: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@batch_organize_bp.route('/api/batch-config/watch-folders/organize', methods=['POST'])
+def organize_all_watch_folders():
+    """Organize all configured watch folders"""
+    try:
+        data = request.get_json() or {}
+        dry_run = data.get("dry_run", False)
+        
+        config = load_batch_config()
+        folders = config.get("watch_folders", [])
+        
+        if not folders:
+            return jsonify({"success": False, "error": "No watch folders configured"}), 400
+        
+        batch_id = datetime.now().isoformat()
+        total_results = {
+            "success": True,
+            "batch_id": batch_id,
+            "dry_run": dry_run,
+            "folders": [],
+            "total_organized": 0,
+            "total_skipped": 0,
+            "total_errors": 0
+        }
+        
+        # Organize each folder
+        for folder in folders:
+            folder_path = Path(folder)
+            if not folder_path.exists():
+                logger.warning(f"Watch folder does not exist: {folder}")
+                continue
+            
+            try:
+                # Use the same logic as batch_organize_downloads
+                if folder_path.is_dir():
+                    files = list(folder_path.glob('*'))
+                    files = [f for f in files if f.is_file()]
+                    
+                    folder_result = {
+                        "folder": str(folder),
+                        "organized": 0,
+                        "skipped": 0,
+                        "operations": []
+                    }
+                    
+                    for file_path in files:
+                        try:
+                            if not dry_run:
+                                from Organizer import organize_file
+                                destination, category = organize_file(str(file_path), folder_path)
+                                
+                                if destination and category:
+                                    record_move(str(file_path), destination, category, batch_id)
+                                    folder_result["organized"] += 1
+                                    folder_result["operations"].append({
+                                        "file": file_path.name,
+                                        "destination": destination,
+                                        "category": category
+                                    })
+                                else:
+                                    folder_result["skipped"] += 1
+                            else:
+                                folder_result["organized"] += 1
+                        except Exception as e:
+                            logger.error(f"Error organizing {file_path}: {e}")
+                            folder_result["skipped"] += 1
+                    
+                    total_results["folders"].append(folder_result)
+                    total_results["total_organized"] += folder_result["organized"]
+                    total_results["total_skipped"] += folder_result["skipped"]
+                    
+            except Exception as e:
+                logger.error(f"Error processing folder {folder}: {e}")
+                total_results["total_errors"] += 1
+        
+        return jsonify(total_results), 200
+        
+    except Exception as e:
+        logger.error(f"Error organizing watch folders: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

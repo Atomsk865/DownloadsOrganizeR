@@ -1,13 +1,14 @@
 <div class="dashboard-module wide" data-module="duplicates" draggable="true">
     <div class="card">
-        <div class="card-header d-flex align-items-center">
+        <div class="card-header d-flex align-items-center cursor-pointer" onclick="toggleHideModule(this)">
             <b><i class="bi bi-files"></i> Duplicate Files</b>
             <span id="badge-duplicates-state" class="badge bg-secondary ms-2">Unknown</span>
             <a href="/docs/duplicate-detection" target="_blank" class="ms-2 text-decoration-none" title="Open documentation">
                 <small><i class="bi bi-book"></i> Docs</small>
             </a>
             <span class="hide-toggle" data-module="duplicates" title="Hide module"><i class="bi bi-x-circle"></i></span>
-            <span class="drag-handle ms-auto"><i class="bi bi-grip-vertical"></i></span>
+            <i class="bi bi-chevron-down toggle-icon ms-auto"></i>
+            <span class="drag-handle"><i class="bi bi-grip-vertical"></i></span>
         </div>
         <div id="duplicates-disabled-banner" class="alert alert-warning m-3 d-none" role="alert">
             <i class="bi bi-slash-circle"></i> Duplicates feature is disabled. Enable it in Features & Integrations.

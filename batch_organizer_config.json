@@ -1,0 +1,17 @@
+{
+  "watch_folders": [
+    "C:\\Users\\{USERNAME}\\Downloads"
+  ],
+  "dry_run": false,
+  "recursive": true,
+  "exclude_extensions": [
+    ".crdownload",
+    ".part",
+    ".tmp"
+  ],
+  "exclude_files": [
+    "desktop.ini",
+    "thumbs.db",
+    ".DS_Store"
+  ]
+}
