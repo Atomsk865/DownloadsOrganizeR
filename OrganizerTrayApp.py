@@ -82,6 +82,15 @@ class OrganizerTrayApp:
         
         return script_dir
     
+    def _get_startupinfo(self):
+        """Get subprocess startup info to hide windows on Windows."""
+        if sys.platform == 'win32':
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = subprocess.SW_HIDE
+            return si
+        return None
+    
     def init_tray(self):
         """Initialize system tray icon and menu."""
         # Create tray icon
@@ -296,13 +305,26 @@ class OrganizerTrayApp:
                                f"Could not find {dashboard_script}")
                 return
             
-            # Start dashboard in background
+            # Use pythonw.exe instead of python.exe to avoid console window
+            # pythonw is the same as python but doesn't create a console
+            python_exe = sys.executable
+            if python_exe.endswith('python.exe'):
+                python_exe = python_exe.replace('python.exe', 'pythonw.exe')
+            elif python_exe.endswith('.exe'):
+                # For other Python installations, try to use the -w variant
+                base = python_exe[:-4]  # Remove .exe
+                pythonw = base + 'w.exe'
+                if os.path.exists(pythonw):
+                    python_exe = pythonw
+            
+            # Start dashboard in background with no window
             self.dashboard_process = subprocess.Popen(
-                [sys.executable, dashboard_script],
+                [python_exe, dashboard_script],
                 cwd=self.install_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=CREATE_NO_WINDOW
+                creationflags=CREATE_NO_WINDOW,
+                startupinfo=self._get_startupinfo()
             )
             
             self.stop_dashboard_action.setEnabled(True)
