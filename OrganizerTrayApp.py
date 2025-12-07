@@ -12,6 +12,7 @@ import webbrowser
 from pathlib import Path
 import json
 import logging
+import time
 
 # Windows-specific: Hide subprocess windows
 if sys.platform == 'win32':
@@ -352,6 +353,19 @@ class OrganizerTrayApp:
                                    "Installation directory is not a git repository.\n"
                                    "Please reinstall using the installer.")
                     return
+                
+                # Stop service first to release git locks
+                try:
+                    logger.info("Stopping service for update...")
+                    subprocess.run(
+                        ["nssm", "stop", self.service_name],
+                        capture_output=True,
+                        timeout=10,
+                        creationflags=CREATE_NO_WINDOW
+                    )
+                    time.sleep(2)  # Wait for service to fully stop
+                except Exception as e:
+                    logger.warning(f"Could not stop service: {e}")
                 
                 # Git fetch
                 result = subprocess.run(
