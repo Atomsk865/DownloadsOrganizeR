@@ -1493,6 +1493,33 @@
     </div>
 </div>
 
+<!-- Folder Browser Modal (Free-floating) -->
+<div class="modal fade" id="folderBrowserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 400px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-folder-open"></i> Browse Folders
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <div id="folder-browser-path-display" class="alert alert-info alert-sm py-2 px-3 mb-3" style="font-size: 0.85rem;">
+                    <small><strong>Base path:</strong> <span id="folder-path-label">Loading...</span></small>
+                </div>
+                <div id="folder-browser-list" class="list-group list-group-flush folder-browser-results">
+                    <div class="text-muted text-center py-3">
+                        <small>Loading folders...</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <small class="text-muted">Select a folder to populate the input field</small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid dashboard-root p-0" style="max-width: 100%;">
     <h1 class="dashboard-title text-center">Organizer Service Dashboard</h1>
     {% block dashboard_content %}{% endblock %}

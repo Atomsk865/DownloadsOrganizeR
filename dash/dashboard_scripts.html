@@ -2110,29 +2110,37 @@ function deleteRow(btn) {
     btn.closest('tr').remove();
 }
 
-// Server folder browser helpers (shared across modules)
+// Server folder browser helpers (shared across modules, opens in modal)
+__folderBrowserState = {
+    inputName: null,
+    mode: 'full'
+};
+
 async function openServerFolderBrowser(btn) {
     const inputName = btn?.dataset?.targetInput;
-    const browserId = btn?.dataset?.browserId;
     const mode = btn?.dataset?.selectMode || 'full';
-    if (!inputName || !browserId) {
+    if (!inputName) {
         return;
     }
 
     const input = document.querySelector(`[name="${inputName}"]`) || document.getElementById(inputName);
-    const container = document.getElementById(browserId);
-    if (!container) {
-        return;
-    }
-
     const pathValue = (input?.value || '').trim();
-    container.innerHTML = '<div class="text-muted"><small>Loading folders...</small></div>';
+
+    // Store state for modal
+    __folderBrowserState = { inputName, mode };
+
+    // Show modal and load folders
+    const modal = new bootstrap.Modal(document.getElementById('folderBrowserModal'));
+    modal.show();
 
     try {
         const data = await fetchServerFolderList(pathValue);
-        renderServerFolderList({ container, data, inputName, browserId, mode, pathValue });
+        renderServerFolderListInModal({ data, pathValue });
     } catch (e) {
-        container.innerHTML = `<div class="text-danger"><small>Error: ${e.message}</small></div>`;
+        const list = document.getElementById('folder-browser-list');
+        if (list) {
+            list.innerHTML = `<div class="text-danger"><small>Error: ${e.message}</small></div>`;
+        }
     }
 }
 
@@ -2155,36 +2163,38 @@ async function fetchServerFolderList(pathValue) {
     return data;
 }
 
-function renderServerFolderList({ container, data, inputName, browserId, mode, pathValue }) {
+function renderServerFolderListInModal({ data, pathValue }) {
     const base = data.base || pathValue || '';
     const folders = data.folders || [];
+    const list = document.getElementById('folder-browser-list');
+    const pathLabel = document.getElementById('folder-path-label');
+
+    if (!list) return;
+
+    if (pathLabel) {
+        pathLabel.textContent = base || 'Downloads';
+    }
 
     if (!folders.length) {
-        container.innerHTML = `<div class="text-muted"><small>No subfolders under ${base || 'base path'}</small></div>`;
+        list.innerHTML = `<div class="text-muted text-center py-3"><small>No subfolders found</small></div>`;
         return;
     }
 
-    container.innerHTML = `
-        <div class="mb-1"><small><b>Folders under ${base}</b></small></div>
-        <div class="list-group list-group-flush folder-browser-list">
-            ${folders.map(f => {
-                const encodedPath = encodeURIComponent(f.path);
-                return `
-                    <button type="button" class="list-group-item list-group-item-action py-1" data-path="${encodedPath}" data-input-name="${inputName}" data-browser-id="${browserId}" data-select-mode="${mode}" onclick="handleServerFolderSelection(this)">
-                        <small><i class="bi bi-folder"></i> ${f.name}</small>
-                    </button>
-                `;
-            }).join('')}
-        </div>
-    `;
+    list.innerHTML = folders.map(f => {
+        const encodedPath = encodeURIComponent(f.path);
+        return `
+            <button type="button" class="list-group-item list-group-item-action py-2" data-path="${encodedPath}" onclick="handleServerFolderSelection(this)">
+                <small><i class="bi bi-folder"></i> ${f.name}</small>
+            </button>
+        `;
+    }).join('');
 }
 
 function handleServerFolderSelection(btn) {
     const pathValue = decodeURIComponent(btn?.dataset?.path || '');
-    const inputName = btn?.dataset?.inputName;
-    const browserId = btn?.dataset?.browserId;
-    const mode = btn?.dataset?.selectMode || 'full';
-    if (!inputName || !browserId) {
+    const { inputName, mode } = __folderBrowserState;
+
+    if (!inputName) {
         return;
     }
 
@@ -2198,10 +2208,10 @@ function handleServerFolderSelection(btn) {
         input.value = value;
     }
 
-    const container = document.getElementById(browserId);
-    if (container) {
-        const selected = input?.value || pathValue;
-        container.innerHTML = `<div class="text-success"><small>Selected: ${selected}</small></div>`;
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('folderBrowserModal'));
+    if (modal) {
+        modal.hide();
     }
 
     showNotification(`Selected folder: ${input?.value || pathValue}`, 'info');
@@ -2211,18 +2221,16 @@ function handleServerFolderSelection(btn) {
 function addCategoryRow() {
     const tbody = document.querySelector('#config-form tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
-    const browserId = `cat-browser-${rowCount}`;
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td>
             <div class="form-validation-wrapper">
                 <div class="input-group input-group-sm">
-                    <input class="form-control form-control-sm" type="text" name="folder_${rowCount}" placeholder="Folder name" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50" data-browser-id="${browserId}">
-                    <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowCount}" data-browser-id="${browserId}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                    <input class="form-control form-control-sm" type="text" name="folder_${rowCount}" placeholder="Folder name" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50">
+                    <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowCount}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
                 </div>
                 <span class="form-validation-icon"><i class="bi"></i></span>
             </div>
-            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
         </td>
         <td>
             <div class="form-validation-wrapper">
@@ -2240,16 +2248,14 @@ function addCategoryRow() {
 function addCustomRouteRow() {
     const tbody = document.getElementById('custom-routes-tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
-    const browserId = `custom-browser-${rowCount}`;
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td><input class="form-control form-control-sm" type="text" name="ext_${rowCount}" placeholder="mp4"></td>
         <td>
             <div class="input-group input-group-sm">
-                <input class="form-control form-control-sm" type="text" name="path_${rowCount}" placeholder="C:/Media/Videos" data-browser-id="${browserId}">
-                <button class="btn btn-outline-secondary" type="button" data-target-input="path_${rowCount}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                <input class="form-control form-control-sm" type="text" name="path_${rowCount}" placeholder="C:/Media/Videos">
+                <button class="btn btn-outline-secondary" type="button" data-target-input="path_${rowCount}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
             </div>
-            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
         </td>
         <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)"><span aria-hidden="true">-</span><span class="visually-hidden">Delete</span></button></td>
     `;
@@ -2260,7 +2266,6 @@ function addCustomRouteRow() {
 function addTagRouteRow() {
     const tbody = document.getElementById('tag-routes-tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
-    const browserId = `tag-browser-${rowCount}`;
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td>
@@ -2272,12 +2277,11 @@ function addTagRouteRow() {
         <td>
             <div class="form-validation-wrapper">
                 <div class="input-group input-group-sm">
-                    <input class="form-control form-control-sm" type="text" name="tagpath_${rowCount}" placeholder="C:/Documents/Invoices" required maxlength="255" data-browser-id="${browserId}">
-                    <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${rowCount}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                    <input class="form-control form-control-sm" type="text" name="tagpath_${rowCount}" placeholder="C:/Documents/Invoices" required maxlength="255">
+                    <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${rowCount}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
                 </div>
                 <span class="form-validation-icon"><i class="bi"></i></span>
             </div>
-            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
         </td>
         <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
     `;
@@ -2295,16 +2299,14 @@ function loadCustomRoutes(customRoutes) {
     if (customRoutes && Object.keys(customRoutes).length > 0) {
         let index = 1;
         for (const [ext, path] of Object.entries(customRoutes)) {
-            const browserId = `custom-browser-${index}`;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input class="form-control form-control-sm" type="text" name="ext_${index}" value="${ext}"></td>
                 <td>
                     <div class="input-group input-group-sm">
-                        <input class="form-control form-control-sm" type="text" name="path_${index}" value="${path}" data-browser-id="${browserId}">
-                        <button class="btn btn-outline-secondary" type="button" data-target-input="path_${index}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                        <input class="form-control form-control-sm" type="text" name="path_${index}" value="${path}">
+                        <button class="btn btn-outline-secondary" type="button" data-target-input="path_${index}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
                     </div>
-                    <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
                 </td>
                 <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
             `;
@@ -2343,18 +2345,16 @@ async function loadFileCategories(routes) {
     // Populate rows from config
     let rowNum = 1;
     for (const [folder, extensions] of Object.entries(routes)) {
-        const browserId = `cat-browser-${rowNum}`;
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
                 <div class="form-validation-wrapper">
                     <div class="input-group input-group-sm">
-                        <input class="form-control form-control-sm" type="text" name="folder_${rowNum}" value="${folder}" required pattern="^[a-zA-Z0-9_\\-\\s]+$" maxlength="50" data-browser-id="${browserId}">
-                        <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowNum}" data-browser-id="${browserId}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                        <input class="form-control form-control-sm" type="text" name="folder_${rowNum}" value="${folder}" required pattern="^[a-zA-Z0-9_\\-\\s]+$" maxlength="50">
+                        <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowNum}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
                     </div>
                     <span class="form-validation-icon"><i class="bi"></i></span>
                 </div>
-                <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
             </td>
             <td>
                 <div class="form-validation-wrapper">
@@ -2445,7 +2445,6 @@ function loadTagRoutes(tagRoutes) {
     if (tagRoutes && Object.keys(tagRoutes).length > 0) {
         let index = 1;
         for (const [tag, path] of Object.entries(tagRoutes)) {
-            const browserId = `tag-browser-${index}`;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>
@@ -2457,12 +2456,11 @@ function loadTagRoutes(tagRoutes) {
                 <td>
                     <div class="form-validation-wrapper">
                         <div class="input-group input-group-sm">
-                            <input class="form-control form-control-sm" type="text" name="tagpath_${index}" value="${path}" required maxlength="255" data-browser-id="${browserId}">
-                            <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${index}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                            <input class="form-control form-control-sm" type="text" name="tagpath_${index}" value="${path}" required maxlength="255">
+                            <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${index}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
                         </div>
                         <span class="form-validation-icon"><i class="bi"></i></span>
                     </div>
-                    <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
                 </td>
                 <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
             `;

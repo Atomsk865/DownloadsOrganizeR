@@ -27,14 +27,13 @@
             <div class="input-group input-group-sm">
               <input type="text" id="new-watch-folder" class="form-control form-control-sm" placeholder="Enter folder path..." />
               <input type="file" id="folder-picker" style="display: none;" webkitdirectory directory multiple />
-              <button id="watch-folder-browse-btn" class="btn btn-outline-primary btn-sm" data-target-input="new-watch-folder" data-browser-id="server-folder-browser" data-select-mode="full" onclick="browseForFolder()" title="Browse for folder">
+              <button id="watch-folder-browse-btn" class="btn btn-outline-primary btn-sm" data-target-input="new-watch-folder" data-select-mode="full" onclick="browseForFolder()" title="Browse for folder">
                 <i class="bi bi-folder-open"></i>
               </button>
               <button class="btn btn-primary btn-sm" onclick="addWatchFolder()" title="Add folder to watch list">
                 <span aria-hidden="true">+</span><span class="visually-hidden">Add folder</span>
               </button>
             </div>
-            <div id="server-folder-browser" class="mt-2 folder-browser-results" style="max-height: 160px; overflow-y: auto;"></div>
             <small class="text-muted d-block mt-1">Batch organizer will organize files in all watch folders</small>
           </div>
           <button class="btn btn-success btn-sm w-100" onclick="organizeAllWatchFolders()">
