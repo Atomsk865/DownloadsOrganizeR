@@ -591,10 +591,14 @@ Start-Sleep -Seconds 2
     
     $launcherScript | Out-File -FilePath $launcherPath -Encoding UTF8 -Force
     
-    # Create VBS wrapper to hide PowerShell window
+    # Create VBS wrapper to hide console and launch dashboard
+    # Call batch file directly for better reliability
     $vbsWrapper = @"
 Set objShell = CreateObject("WScript.Shell")
-objShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$launcherPath""", 0, False
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+strInstallDir = "$InstallDir"
+strBatchFile = objFSO.BuildPath(strInstallDir, "Launch-Dashboard.bat")
+objShell.Run Chr(34) & strBatchFile & Chr(34), 0, False
 "@
     
     $vbsPath = Join-Path $InstallDir "Launch-Dashboard.vbs"
