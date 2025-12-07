@@ -11,6 +11,11 @@ import subprocess
 import webbrowser
 from pathlib import Path
 import json
+import logging
+
+# Configure logging for debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 try:
     from PyQt6.QtWidgets import (QApplication, QSystemTrayIcon, QMenu, 
@@ -34,9 +39,9 @@ except ImportError:
         sys.exit(1)
 
 
-class OrganizerTrayApp(QWidget):
-    def __init__(self):
-        super().__init__()
+class OrganizerTrayApp:
+    def __init__(self, app):
+        self.app = app
         self.service_name = "DownloadsOrganizer"
         self.dashboard_process = None
         self.dashboard_port = 5000
@@ -72,54 +77,54 @@ class OrganizerTrayApp(QWidget):
     
     def init_tray(self):
         """Initialize system tray icon and menu."""
-        # Create tray icon (use default for now, can be customized)
-        self.tray_icon = QSystemTrayIcon(self)
+        # Create tray icon
+        self.tray_icon = QSystemTrayIcon(self.app)
         
-        # Try to load custom icon, fallback to default
+        # Try to load custom icon, fallback to generic icon
         icon_path = os.path.join(self.install_dir, "static", "img", "logo.png")
         if os.path.exists(icon_path):
             self.tray_icon.setIcon(QIcon(icon_path))
         else:
-            # Use a default system icon
-            self.tray_icon.setIcon(self.style().standardIcon(
-                self.style().StandardPixmap.SP_ComputerIcon if PYQT_VERSION == 6
-                else self.style().SP_ComputerIcon
+            # Use a simple default icon (create a basic one)
+            self.tray_icon.setIcon(self.app.style().standardIcon(
+                self.app.style().StandardPixmap.SP_ComputerIcon if PYQT_VERSION == 6
+                else self.app.style().SP_ComputerIcon
             ))
         
         # Create menu
         menu = QMenu()
         
         # Service controls
-        self.service_status_action = QAction("Service: Checking...", self)
+        self.service_status_action = QAction("Service: Checking...", menu)
         self.service_status_action.setEnabled(False)
         menu.addAction(self.service_status_action)
         
         menu.addSeparator()
         
-        self.start_service_action = QAction("▶ Start Service", self)
+        self.start_service_action = QAction("▶ Start Service", menu)
         self.start_service_action.triggered.connect(self.start_service)
         menu.addAction(self.start_service_action)
         
-        self.stop_service_action = QAction("■ Stop Service", self)
+        self.stop_service_action = QAction("■ Stop Service", menu)
         self.stop_service_action.triggered.connect(self.stop_service)
         menu.addAction(self.stop_service_action)
         
-        self.restart_service_action = QAction("⟲ Restart Service", self)
+        self.restart_service_action = QAction("⟲ Restart Service", menu)
         self.restart_service_action.triggered.connect(self.restart_service)
         menu.addAction(self.restart_service_action)
         
         menu.addSeparator()
         
         # Dashboard controls
-        self.dashboard_action = QAction("🌐 Open Dashboard", self)
+        self.dashboard_action = QAction("🌐 Open Dashboard", menu)
         self.dashboard_action.triggered.connect(self.open_dashboard)
         menu.addAction(self.dashboard_action)
         
-        self.launch_dashboard_action = QAction("▶ Start Dashboard Server", self)
+        self.launch_dashboard_action = QAction("▶ Start Dashboard Server", menu)
         self.launch_dashboard_action.triggered.connect(self.launch_dashboard)
         menu.addAction(self.launch_dashboard_action)
         
-        self.stop_dashboard_action = QAction("■ Stop Dashboard Server", self)
+        self.stop_dashboard_action = QAction("■ Stop Dashboard Server", menu)
         self.stop_dashboard_action.triggered.connect(self.stop_dashboard)
         self.stop_dashboard_action.setEnabled(False)
         menu.addAction(self.stop_dashboard_action)
@@ -127,14 +132,14 @@ class OrganizerTrayApp(QWidget):
         menu.addSeparator()
         
         # Update action
-        update_action = QAction("⬇ Update from GitHub", self)
+        update_action = QAction("⬇ Update from GitHub", menu)
         update_action.triggered.connect(self.update_system)
         menu.addAction(update_action)
         
         menu.addSeparator()
         
         # Exit action
-        exit_action = QAction("✕ Exit", self)
+        exit_action = QAction("✕ Exit", menu)
         exit_action.triggered.connect(self.exit_app)
         menu.addAction(exit_action)
         
@@ -146,14 +151,17 @@ class OrganizerTrayApp(QWidget):
     
     def tray_activated(self, reason):
         """Handle tray icon activation (clicks)."""
-        if PYQT_VERSION == 6:
-            from PyQt6.QtWidgets import QSystemTrayIcon
-            if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-                self.open_dashboard()
-        else:
-            from PyQt5.QtWidgets import QSystemTrayIcon
-            if reason == QSystemTrayIcon.DoubleClick:
-                self.open_dashboard()
+        try:
+            if PYQT_VERSION == 6:
+                from PyQt6.QtWidgets import QSystemTrayIcon
+                if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+                    self.open_dashboard()
+            else:
+                from PyQt5.QtWidgets import QSystemTrayIcon
+                if reason == QSystemTrayIcon.DoubleClick:
+                    self.open_dashboard()
+        except Exception as e:
+            logger.error(f"Error in tray_activated: {e}")
     
     def update_service_status(self):
         """Check service status and update UI."""
@@ -178,17 +186,20 @@ class OrganizerTrayApp(QWidget):
                 self.stop_service_action.setEnabled(False)
                 self.restart_service_action.setEnabled(False)
             else:
-                self.service_status_action.setText(f"Service: {status}")
+                self.service_status_action.setText(f"Service: {status[:30]}")
                 self.start_service_action.setEnabled(True)
                 self.stop_service_action.setEnabled(True)
                 self.restart_service_action.setEnabled(True)
         
         except subprocess.TimeoutExpired:
             self.service_status_action.setText("Service: ⚠ Timeout")
+            logger.warning("Service status check timed out")
         except FileNotFoundError:
             self.service_status_action.setText("Service: ⚠ NSSM not found")
+            logger.error("NSSM not found in PATH")
         except Exception as e:
             self.service_status_action.setText(f"Service: ⚠ Error")
+            logger.error(f"Error checking service status: {e}")
     
     def start_service(self):
         """Start the organizer service."""
@@ -376,17 +387,24 @@ class OrganizerTrayApp(QWidget):
     
     def show_notification(self, title, message):
         """Show system tray notification."""
-        self.tray_icon.showMessage(
-            title,
-            message,
-            QSystemTrayIcon.MessageIcon.Information if PYQT_VERSION == 6
-            else QSystemTrayIcon.Information,
-            3000
-        )
+        try:
+            self.tray_icon.showMessage(
+                title,
+                message,
+                QSystemTrayIcon.MessageIcon.Information if PYQT_VERSION == 6
+                else QSystemTrayIcon.Information,
+                3000
+            )
+        except Exception as e:
+            logger.warning(f"Failed to show notification: {e}")
     
     def show_error(self, title, message):
         """Show error message box."""
-        QMessageBox.critical(None, title, message)
+        try:
+            QMessageBox.critical(None, title, message)
+        except Exception as e:
+            logger.error(f"Failed to show error dialog: {e}")
+            print(f"ERROR: {title}\n{message}", file=sys.stderr)
     
     def exit_app(self):
         """Exit the application."""
@@ -399,15 +417,22 @@ class OrganizerTrayApp(QWidget):
 
 def main():
     """Main entry point for the tray application."""
-    app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)  # Keep running when windows close
-    
-    # Check if already running (simple check)
-    app.setApplicationName("DownloadsOrganizerTray")
-    
-    tray_app = OrganizerTrayApp()
-    
-    sys.exit(app.exec() if PYQT_VERSION == 6 else app.exec_())
+    try:
+        app = QApplication(sys.argv)
+        app.setQuitOnLastWindowClosed(False)  # Keep running when windows close
+        
+        # Check if already running (simple check)
+        app.setApplicationName("DownloadsOrganizerTray")
+        
+        tray_app = OrganizerTrayApp(app)
+        
+        sys.exit(app.exec() if PYQT_VERSION == 6 else app.exec_())
+    except Exception as e:
+        # Log error to console for debugging
+        import traceback
+        print(f"Error starting tray app: {e}")
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
