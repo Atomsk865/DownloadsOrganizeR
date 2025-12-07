@@ -317,15 +317,21 @@ class OrganizerTrayApp:
                 if os.path.exists(pythonw):
                     python_exe = pythonw
             
-            # Start dashboard in background with no window
-            self.dashboard_process = subprocess.Popen(
-                [python_exe, dashboard_script],
-                cwd=self.install_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                creationflags=CREATE_NO_WINDOW,
-                startupinfo=self._get_startupinfo()
-            )
+            # Create log file for dashboard errors only
+            log_dir = os.path.join(self.install_dir, "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            dashboard_error_log = os.path.join(log_dir, "dashboard_tray_errors.log")
+            
+            # Start dashboard in background, discard stdout, log errors only
+            with open(dashboard_error_log, 'w') as error_logfile:
+                self.dashboard_process = subprocess.Popen(
+                    [python_exe, dashboard_script],
+                    cwd=self.install_dir,
+                    stdout=subprocess.DEVNULL,
+                    stderr=error_logfile,
+                    creationflags=CREATE_NO_WINDOW,
+                    startupinfo=self._get_startupinfo()
+                )
             
             self.stop_dashboard_action.setEnabled(True)
             self.show_notification("Dashboard Started", 
