@@ -21,7 +21,9 @@
                     </tbody>
                 </table>
                 <div class="d-flex gap-2 mt-2">
-                    <button id="btn-add-custom-route" class="btn btn-success btn-sm" type="button" onclick="if(typeof addCustomRouteRow==='function')addCustomRouteRow()">Add Route</button>
+                    <button id="btn-add-custom-route" class="btn btn-success btn-sm" type="button" onclick="if(typeof addCustomRouteRow==='function')addCustomRouteRow()">
+                        <span aria-hidden="true">+</span><span class="visually-hidden">Add Route</span>
+                    </button>
                     <button id="btn-save-custom-routes" class="btn btn-primary btn-sm" type="button" onclick="if(typeof saveConfiguration==='function')saveConfiguration()">Save Configuration</button>
                 </div>
             </form>
