@@ -11,10 +11,12 @@
     /* CSS Variables for theming */
     :root {
       --setup-bg: #0f172a;
-      --setup-text: #e2e8f0;
+      --setup-text: #ffffff;
       --setup-card-bg: #111827;
+      --setup-card-text: #ffffff;
       --setup-card-border: #1f2937;
       --setup-input-bg: #0b1220;
+      --setup-input-text: #ffffff;
       --setup-input-border: #1f2937;
       --setup-input-focus: #38bdf8;
       --setup-input-focus-shadow: rgba(56,189,248,0.25);
@@ -25,15 +27,22 @@
       --setup-button-toggle-hover-border: #4b5563;
       --setup-notification-bg: #1f2937;
       --setup-notification-border: #374151;
+      --setup-notification-text: #e2e8f0;
+      --setup-badge-bg: #374151;
+      --setup-badge-text: #e2e8f0;
+      --setup-label-text: #cbd5e1;
+      --setup-placeholder-text: #6b7280;
     }
     
     /* Light mode */
     [data-theme="light"] {
       --setup-bg: #f8f9fa;
-      --setup-text: #212529;
+      --setup-text: #000000;
       --setup-card-bg: #ffffff;
+      --setup-card-text: #000000;
       --setup-card-border: #dee2e6;
       --setup-input-bg: #ffffff;
+      --setup-input-text: #000000;
       --setup-input-border: #dee2e6;
       --setup-input-focus: #0d6efd;
       --setup-input-focus-shadow: rgba(13,110,253,0.25);
@@ -44,6 +53,11 @@
       --setup-button-toggle-hover-border: #ced4da;
       --setup-notification-bg: #ffffff;
       --setup-notification-border: #dee2e6;
+      --setup-notification-text: #212529;
+      --setup-badge-bg: #e9ecef;
+      --setup-badge-text: #212529;
+      --setup-label-text: #212529;
+      --setup-placeholder-text: #6c757d;
     }
     
     body { 
@@ -56,29 +70,43 @@
       background: var(--setup-card-bg); 
       border: 1px solid var(--setup-card-border); 
       box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-      transition: background 0.3s ease, border-color 0.3s ease;
+      color: var(--setup-card-text);
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
     .form-control, .form-select { 
       background: var(--setup-input-bg); 
-      color: var(--setup-text); 
+      color: var(--setup-input-text); 
       border: 1px solid var(--setup-input-border);
       transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    .form-control::placeholder, .form-select::placeholder {
+      color: var(--setup-placeholder-text);
     }
     .form-control:focus, .form-select:focus { 
       border-color: var(--setup-input-focus); 
       box-shadow: 0 0 0 0.15rem var(--setup-input-focus-shadow);
+      color: var(--setup-input-text);
+    }
+    label, .form-label {
+      color: var(--setup-label-text);
+      transition: color 0.3s ease;
     }
     code { 
       color: var(--setup-code-color);
       transition: color 0.3s ease;
     }
-    .btn-primary { background: linear-gradient(90deg, #22d3ee, #6366f1); border: none; }
+    .badge {
+      background: var(--setup-badge-bg) !important;
+      color: var(--setup-badge-text) !important;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .btn-primary { background: linear-gradient(90deg, #22d3ee, #6366f1); border: none; color: white; }
     .btn-primary:hover, .btn-primary:focus { filter: brightness(1.06); box-shadow: 0 10px 40px rgba(99,102,241,0.3); }
     .divider { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--setup-card-border), transparent); margin: 1.25rem 0; transition: background 0.3s ease; }
     .watch-chip { 
       background: var(--setup-input-bg); 
       border: 1px dashed var(--setup-card-border); 
-      color: var(--setup-text); 
+      color: var(--setup-input-text); 
       padding: 0.4rem 0.6rem; 
       border-radius: 999px; 
       display: inline-flex; 
@@ -125,7 +153,7 @@
       border: 1px solid var(--setup-notification-border);
       border-radius: 8px;
       padding: 12px 16px;
-      color: var(--setup-text);
+      color: var(--setup-notification-text);
       font-size: 0.9rem;
       max-width: 220px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
