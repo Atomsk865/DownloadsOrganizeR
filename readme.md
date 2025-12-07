@@ -55,6 +55,8 @@ For advanced users or troubleshooting, see detailed instructions in [INSTALL.md]
 - Dashboard modules: Recent Files, Duplicates, File Categories, Resource Monitor, System Info, Statistics, Settings, Admin Tools, Reports & Analytics, User Links.
 - Health thresholds (CPU, memory) configurable.
 - Service logging and dashboard log management.
+- **System Update:** One-click updates from GitHub with automatic config backup and import.
+- **Per-folder Configuration:** Monitor multiple folders with different auto-sort settings and custom routes.
 
 See `docs/FEATURES.md` for full descriptions and scenarios.
 
@@ -119,3 +121,4 @@ See `LICENSE`.
 - `docs/FEATURES.md` – Feature details and scenarios
 - `docs/BUGS.md` – Known issues and limitations
 - `docs/ARCHITECTURE.md` – System overview and file paths
+- `docs/SYSTEM_UPDATE.md` – System update feature with config backup and import
