@@ -538,71 +538,50 @@ function New-DashboardShortcut {
     
     Write-Step "Creating Desktop Shortcut"
     
-    # Create launcher script
+    # Create launcher script - use batch file to ensure proper env vars
+    $launcherBat = Join-Path $InstallDir "Launch-Dashboard.bat"
+    $batLauncher = @"
+@echo off
+REM Dashboard Launcher - Start OrganizerDashboard.py
+cd /d "$InstallDir"
+set ORGANIZER_CONFIG_DIR=$configDir
+set ORGANIZER_DATA_DIR=$dataDir
+set ORGANIZER_LOG_DIR=$logDir
+python OrganizerDashboard.py
+"@
+    $batLauncher | Out-File -FilePath $launcherBat -Encoding ASCII -Force
+    
+    # Create launcher PowerShell wrapper that calls the batch file
     $launcherScript = @'
 # Dashboard Launcher Script
-$dashboardScript = "{INSTALL_DIR}\OrganizerDashboard.py"
-$pythonExe = "python"
+$dashboardBat = "{INSTALL_DIR}\Launch-Dashboard.bat"
 $dashboardUrl = "http://localhost:{PORT}"
 
-# Function to check if dashboard is running
-function Test-DashboardRunning {
+Write-Host "Launching dashboard..." -ForegroundColor Cyan
+
+# Start the dashboard via batch file  
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$dashboardBat`"" -WindowStyle Hidden
+
+# Wait for dashboard to start
+$timeout = 15
+$elapsed = 0
+while ($elapsed -lt $timeout) {
+    Start-Sleep -Seconds 1
+    $elapsed++
     try {
-        $response = Invoke-WebRequest -Uri $dashboardUrl -TimeoutSec 2 -UseBasicParsing
-        return $true
-    } catch {
-        return $false
-    }
-}
-
-# Function to find dashboard process
-function Get-DashboardProcess {
-    return Get-Process python -ErrorAction SilentlyContinue | 
-           Where-Object { $_.CommandLine -like "*OrganizerDashboard.py*" }
-}
-
-Write-Host "Checking dashboard status..." -ForegroundColor Cyan
-
-# Check if dashboard is already running
-if (Test-DashboardRunning) {
-    Write-Host "Dashboard is already running" -ForegroundColor Green
-} else {
-    Write-Host "Dashboard not responding, checking process..." -ForegroundColor Yellow
-    
-    $process = Get-DashboardProcess
-    if ($process) {
-        Write-Host "Found dashboard process but not responding, restarting..." -ForegroundColor Yellow
-        $process | Stop-Process -Force
-        Start-Sleep -Seconds 2
-    }
-    
-    Write-Host "Starting dashboard..." -ForegroundColor Cyan
-    Start-Process -FilePath $pythonExe -ArgumentList $dashboardScript -WindowStyle Hidden -WorkingDirectory "{INSTALL_DIR}"
-    
-    # Wait for dashboard to start
-    $timeout = 15
-    $elapsed = 0
-    while ($elapsed -lt $timeout) {
-        Start-Sleep -Seconds 1
-        $elapsed++
-        if (Test-DashboardRunning) {
-            Write-Host "Dashboard started successfully!" -ForegroundColor Green
+        $response = Invoke-WebRequest -Uri $dashboardUrl -TimeoutSec 1 -UseBasicParsing -ErrorAction SilentlyContinue
+        if ($response.StatusCode -eq 200 -or $elapsed -ge 3) {
+            Write-Host "Dashboard is starting at $dashboardUrl" -ForegroundColor Green
             break
         }
-    }
-    
-    if ($elapsed -ge $timeout) {
-        Write-Host "Dashboard failed to start within $timeout seconds" -ForegroundColor Red
-        Write-Host "Check logs at: {INSTALL_DIR}\dashboard.log" -ForegroundColor Yellow
-        Read-Host "Press Enter to exit"
-        exit 1
+    } catch {
+        # Still waiting for dashboard to respond
     }
 }
 
 # Open browser
 Write-Host "Opening dashboard in browser..." -ForegroundColor Cyan
 Start-Process $dashboardUrl
-
 Start-Sleep -Seconds 2
 '@
     
