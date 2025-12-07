@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from SortNStoreDashboard.auth.auth import requires_right
+from SortNStoreDashboard.auth.auth import requires_auth
 import psutil
 import time
 from SortNStoreDashboard.helpers.helpers import service_running, find_organizer_proc
@@ -10,7 +10,7 @@ _METRICS_CACHE = {"data": None, "ts": 0.0}
 _METRICS_TTL = 2.0  # seconds
 
 @routes_metrics.route("/metrics")
-@requires_right('view_metrics')
+@requires_auth
 def metrics():
     now = time.time()
     if _METRICS_CACHE["data"] is not None and (now - _METRICS_CACHE["ts"]) < _METRICS_TTL:
