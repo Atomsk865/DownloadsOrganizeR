@@ -48,6 +48,52 @@
         if (typeof initDragAndDrop === 'function') initDragAndDrop();
         if (typeof initResizableTables === 'function') initResizableTables();
     });
+
+    // REQUEST DEDUPLICATION CACHE
+    // Prevents duplicate simultaneous API requests for the same endpoint
+    const __requestCache = {};
+    const __requestCacheTTL = 2000; // 2 seconds - cache recently fetched data
+    
+    window.cachedFetch = async function(url, options = {}) {
+        const cacheKey = url + (options.method || 'GET');
+        
+        // For GET requests, use cache
+        if (options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
+            const cached = __requestCache[cacheKey];
+            if (cached) {
+                const age = Date.now() - cached.timestamp;
+                // If request is in-flight, wait for it
+                if (cached.promise && age < 100) {
+                    return cached.promise;
+                }
+                // If cached data is fresh, return it
+                if (cached.data && age < __requestCacheTTL) {
+                    return Promise.resolve(cached.data.clone());
+                }
+            }
+        }
+        
+        // Create new request promise
+        const promise = fetch(url, options);
+        
+        // Cache the promise for in-flight requests
+        __requestCache[cacheKey] = {
+            promise,
+            timestamp: Date.now(),
+            data: null
+        };
+        
+        try {
+            const response = await promise;
+            // Also cache the response for future use
+            const cloned = response.clone();
+            __requestCache[cacheKey].data = cloned;
+            return response;
+        } catch (error) {
+            delete __requestCache[cacheKey];
+            throw error;
+        }
+    };
 </script>
 <!-- Alpine.js - Lightweight reactive framework -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -2500,7 +2546,7 @@ async function updateSidebarStats() {
     if (!document.getElementById('sidebar-stat-total')) return;
     
     try {
-        const response = await fetch('/api/statistics/overview', {
+        const response = await cachedFetch('/api/statistics/overview', {
             credentials: 'include',
             headers: getAuthHeaders()
         });
@@ -3269,7 +3315,7 @@ function formatBytes(bytes) {
 async function loadStatistics() {
     try {
         // Load overview stats
-        const overviewRes = await fetch('/api/statistics/overview', {
+        const overviewRes = await cachedFetch('/api/statistics/overview', {
             credentials: 'include',
             headers: { 'Authorization': __authHeader }
         });
