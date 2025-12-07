@@ -44,7 +44,7 @@ The EXE installer provides:
 
 ## What Gets Installed
 
-Location: `C:\Scripts` (configurable)
+Location: `C:\DownloadsOrganizeR` (configurable via installation wizard)
 
 Contents:
 

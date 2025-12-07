@@ -25,6 +25,6 @@ A concise list of current issues and practical workarounds.
 - If moves fail, check logs and permissions.
 
 ## File Path Assumptions
-- Defaults assume `C:\Scripts` for service and config.
+- Default installation directory is `C:\DownloadsOrganizeR` (customizable during installation).
 - If customized, ensure dashboard and service point to the same config paths.
 

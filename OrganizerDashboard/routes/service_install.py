@@ -21,7 +21,12 @@ def install_service():
         
         data = request.get_json() or {}
         service_name = data.get('service_name', 'DownloadsOrganizer')
-        scripts_root = data.get('scripts_root', r'C:\Scripts')
+        
+        # Get installation directory dynamically
+        from OrganizerDashboard.config_runtime import get_config
+        config = get_config()
+        default_scripts_root = config.get('install_dir', os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+        scripts_root = data.get('scripts_root', default_scripts_root)
         memory_threshold = data.get('memory_threshold_mb', 200)
         cpu_threshold = data.get('cpu_threshold_percent', 60)
         
@@ -153,7 +158,11 @@ def reinstall_service():
             return jsonify({'error': 'Installer script not found'}), 404
         
         try:
-            scripts_root = data.get('scripts_root', r'C:\Scripts')
+            # Get installation directory dynamically
+            from OrganizerDashboard.config_runtime import get_config
+            config = get_config()
+            default_scripts_root = config.get('install_dir', os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+            scripts_root = data.get('scripts_root', default_scripts_root)
             memory_threshold = data.get('memory_threshold_mb', 200)
             cpu_threshold = data.get('cpu_threshold_percent', 60)
             
@@ -207,7 +216,7 @@ def get_installation_config():
         
         return jsonify({
             'service_name': config.get('service_name', 'DownloadsOrganizer'),
-            'scripts_root': r'C:\Scripts',
+            'scripts_root': os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)),
             'memory_threshold_mb': config.get('memory_threshold_mb', 200),
             'cpu_threshold_percent': config.get('cpu_threshold_percent', 60),
             'is_windows': platform.system() == 'Windows'

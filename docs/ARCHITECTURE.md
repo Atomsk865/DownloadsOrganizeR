@@ -22,11 +22,11 @@ User Downloads → [Watchdog Observer] → Organizer.py → Categorizes Files
 
 ## Logging
 - Organizer logs in `C:\Users\{username}\Downloads\organizer.log`.
-- Service logs in `C:\Scripts\service-logs\` when installed via NSSM.
+- Service logs in `<INSTALL_DIR>\service-logs\` when installed via NSSM (default: `C:\DownloadsOrganizeR\service-logs\`).
 
 ## Expected Paths
-- Organizer service: `C:\Scripts\Organizer.py`
-- Config: `C:\Scripts\organizer_config.json`
-- Service logs: `C:\Scripts\service-logs\`
+- Organizer service: `<INSTALL_DIR>\Organizer.py`
+- Config: `<INSTALL_DIR>\organizer_config.json`
+- Service logs: `<INSTALL_DIR>\service-logs\`
 - Downloads: `C:\Users\{username}\Downloads\`
 

@@ -20,9 +20,9 @@ This guide covers installing the Windows service, running locally for developmen
 3. The installer will:
 
 - Install NSSM (Non-Sucking Service Manager)
-- Copy `Organizer.py` to `C:\Scripts`
+- Copy `Organizer.py` to installation directory (e.g., `C:\DownloadsOrganizeR`)
 - Create a Windows service named `DownloadsOrganizer`
-- Configure logs in `C:\Scripts\service-logs\`
+- Configure logs in `<INSTALL_DIR>\service-logs\`
 
 4. The service starts automatically and organizes Downloads in real time.
 
@@ -74,9 +74,9 @@ python OrganizerDashboard.py
 - The dashboard reads and writes `organizer_config.json` for routes and thresholds.
 - Organizer.py contains a hardcoded `EXTENSION_MAP`. If you add new categories via the dashboard, update Organizer.py accordingly until full dynamic loading is enabled.
 - Common paths:
-  - Service: `C:\Scripts\Organizer.py`
-  - Config: `C:\Scripts\organizer_config.json`
-  - Logs: `C:\Scripts\service-logs\`
+  - Service: `<INSTALL_DIR>\Organizer.py`
+  - Config: `<INSTALL_DIR>\organizer_config.json`
+  - Logs: `<INSTALL_DIR>\service-logs\`
   - Downloads: `C:\Users\{username}\Downloads\`
 
 ## Uninstall
@@ -87,5 +87,5 @@ Remove the service:
 nssm remove DownloadsOrganizer confirm
 ```
 
-Optionally delete `C:\Scripts` if you want to remove files.
+Optionally delete installation directory (e.g., `C:\DownloadsOrganizeR`) if you want to remove files.
 

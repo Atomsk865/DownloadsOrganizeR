@@ -6,7 +6,7 @@ Run as Administrator.
 #>
 
 param(
-  [string]$TargetRoot = 'C:\Scripts',
+  [string]$TargetRoot = 'C:\DownloadsOrganizeR',  # Changed from C:\Scripts to match new default
   [switch]$InstallService,
   [switch]$InstallDotnetService,
   [switch]$NoStartDashboard,

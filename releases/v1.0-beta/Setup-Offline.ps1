@@ -6,7 +6,7 @@ Run as Administrator.
 #>
 
 param(
-  [string]$TargetRoot = 'C:\Scripts',
+  [string]$TargetRoot = 'C:\Scripts',  # Historical v1.0-beta default; newer versions use C:\DownloadsOrganizeR
   [switch]$InstallService,
   [switch]$NoStartDashboard,
   [string]$ServiceName = 'DownloadsOrganizer',

@@ -6,9 +6,9 @@ Requires: PowerShell Admin. Uses .NET SDK to publish unless a prebuilt publish d
 param(
   [string]$PublishDir = "$PSScriptRoot\publish",
   [string]$ServiceName = 'DownloadsOrganizer',
-  [string]$PythonExe = 'C:\Scripts\venv\Scripts\python.exe',
-  [string]$ScriptPath = 'C:\Scripts\Organizer.py',
-  [string]$WorkingDirectory = 'C:\Scripts',
+  [string]$PythonExe = 'C:\DownloadsOrganizeR\venv\Scripts\python.exe',  # Updated default path
+  [string]$ScriptPath = 'C:\DownloadsOrganizeR\Organizer.py',           # Updated default path
+  [string]$WorkingDirectory = 'C:\DownloadsOrganizeR',                   # Updated default path
   [string]$Project = (Join-Path $PSScriptRoot 'DownloadsOrganizeR.ServiceHost.csproj')
 )
 

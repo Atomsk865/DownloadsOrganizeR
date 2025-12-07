@@ -9,7 +9,7 @@ Install-And-Monitor-OrganizerService.ps1
 [CmdletBinding()]
 param(
     [string]$ServiceName          = "DownloadsOrganizer",
-    [string]$ScriptsRoot          = "C:\Scripts",
+    [string]$ScriptsRoot          = "C:\Program Files\DownloadsOrganizeR",  # Changed to follow Windows best practices
     [int]   $MemoryThresholdMB    = 200,
     [int]   $CpuThresholdPercent  = 60,
     [int]   $CheckIntervalSec     = 30,

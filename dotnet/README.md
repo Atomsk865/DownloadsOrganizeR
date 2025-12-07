@@ -17,7 +17,7 @@ A Windows-native .NET 8 Worker Service that supervises the Python `Organizer.py`
 
 Prereqs:
 - .NET SDK 8.x
-- Python and the app deployed to `C:\Scripts`
+- Python and the app deployed to installation directory (e.g., `C:\DownloadsOrganizeR`)
 
 Steps:
 ```powershell
@@ -27,7 +27,7 @@ PowerShell -ExecutionPolicy Bypass -File .\Install-Service.ps1 `
   -ServiceName DownloadsOrganizer `
   -PythonExe 'C:\Scripts\venv\Scripts\python.exe' `
   -ScriptPath 'C:\Scripts\Organizer.py' `
-  -WorkingDirectory 'C:\Scripts'
+  -WorkingDirectory 'C:\DownloadsOrganizeR'  # Update to your installation directory
 ```
 
 ## Update Configuration

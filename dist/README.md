@@ -46,8 +46,8 @@ PowerShell -ExecutionPolicy Bypass -File .\dist\Setup-DownloadsOrganizeR.ps1
 
 ## What the Installer Does
 
-1. Creates `C:\Scripts` target folder and copies core files
-2. Creates a Python virtual environment under `C:\Scripts\venv`
+1. Creates installation target folder (default: `C:\DownloadsOrganizeR`) and copies core files
+2. Creates a Python virtual environment under `<INSTALL_DIR>\venv`
 3. Installs required packages from `requirements.txt`
 4. Initializes default configs (`organizer_config.json`, `dashboard_config.json`)
 5. Optionally installs NSSM service `DownloadsOrganizer`
@@ -57,7 +57,7 @@ PowerShell -ExecutionPolicy Bypass -File .\dist\Setup-DownloadsOrganizeR.ps1
 
 All installers support these parameters:
 
-- `-TargetRoot <path>` - Installation directory (default: `C:\Scripts`)
+- `-TargetRoot <path>` - Installation directory (default: `C:\DownloadsOrganizeR`)
 - `-InstallService` - Install Windows service via NSSM (requires NSSM on PATH)
 - `-InstallDotnetService` - Install Windows service via .NET Service Host (requires .NET SDK or prebuilt publish)
 - `-NoStartDashboard` - Skip automatic dashboard startup
@@ -94,7 +94,7 @@ All installers support these parameters:
 
 - **Python not found:** Ensure Python 3.12+ is installed and added to system PATH
 - **LDAP errors:** Verify certificates/trust for `ldaps://` URLs
-- **Service won't start:** Check service logs in `C:\Scripts\service-logs\`
+- **Service won't start:** Check service logs in `<INSTALL_DIR>\service-logs\` (default: `C:\DownloadsOrganizeR\service-logs\`)
 - **Port conflict:** Dashboard port 5000 already in use; change in config
 - **Permission denied:** Run PowerShell as Administrator
 

@@ -8,35 +8,35 @@ This README is user‑centric: quick install, how it works, features, configurat
 
 ## Quick Start
 
-1. Install prerequisites
+### Automated Installation (Recommended)
 
-   - Windows 10/11
-   - PowerShell 5.1+
-   - Python 3.10+
+**One-Command Install** - Open PowerShell as Administrator:
 
-2. Install the service (Administrator)
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; `
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/Install-DownloadsOrganizeR.ps1" -OutFile "$env:TEMP\Install-DownloadsOrganizeR.ps1"; `
+& "$env:TEMP\Install-DownloadsOrganizeR.ps1"
+```
 
-   - Open PowerShell as Admin in the repo folder
-   - Run:
+**Or download and run:**
+1. Download `Install-DownloadsOrganizeR.ps1` or `Install.bat`
+2. Right-click → **Run as Administrator**
+3. Follow the installation wizard
 
-     ```powershell
-     ./Install-And-Monitor-OrganizerService.ps1
-     ```
+The installer will:
+- ✅ Check/install Python 3.8+ (if needed)
+- ✅ Download latest version from GitHub
+- ✅ Install all dependencies
+- ✅ Create and start Windows service
+- ✅ Set up health monitoring
+- ✅ Create desktop shortcut for dashboard
 
-   - This installs NSSM, copies `Organizer.py` to `C:\Scripts`, and creates a Windows service `DownloadsOrganizer`.
+**Access Dashboard:** Click the desktop shortcut or visit `http://localhost:5000`  
+**Default credentials:** `admin` / `change_this_password`
 
-3. Start the Dashboard (optional for monitoring)
+### Manual Installation
 
-  Run:
-
-  ```bash
-  pip install -r requirements.txt
-  python OrganizerDashboard.py
-  ```
-
-  Visit `http://localhost:5000` (default credentials: `admin` / `change_this_password`)
-
-Want more detail? See `docs/INSTALL.md`.
+For advanced users or troubleshooting, see detailed instructions in [INSTALL.md](INSTALL.md)
 
 ## What It Does
 
@@ -71,10 +71,16 @@ User Downloads → [Watchdog Observer] → Organizer.py → Categorizes Files
 
 Core paths:
 
-- Organizer service: `C:\Scripts\Organizer.py`
-- Config: `C:\Scripts\organizer_config.json`
-- Service logs: `C:\Scripts\service-logs\`
+**Program Files Installation (Recommended):**
+- Application: `C:\Program Files\DownloadsOrganizeR\`
+- Config: `C:\ProgramData\DownloadsOrganizeR\config\`
+- Logs: `C:\ProgramData\DownloadsOrganizeR\logs\`
 - Downloads: `C:\Users\{username}\Downloads\`
+
+**Legacy/Simple Installation:**
+- Application: `<INSTALL_DIR>\` (e.g., `C:\DownloadsOrganizeR\`)
+- Config: `<INSTALL_DIR>\`
+- Logs: `<INSTALL_DIR>\service-logs\`
 
 Learn more in `docs/ARCHITECTURE.md`.
 

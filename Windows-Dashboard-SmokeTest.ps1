@@ -10,8 +10,8 @@ Purpose:
 Prerequisites:
 - Run in PowerShell on Windows
 - Python 3.12+ installed and on PATH
-- Required packages installed: `pip install -r C:\Scripts\requirements.txt`
-- Repo deployed to `C:\Scripts` (or adjust `$RepoRoot`)
+- Required packages installed: `pip install -r <INSTALL_DIR>\requirements.txt`
+- Update `$RepoRoot` parameter to match your installation directory (default: C:\DownloadsOrganizeR)
 
 Usage:
   Right-click → Run with PowerShell (or from elevated PS):
@@ -20,7 +20,7 @@ Usage:
 #>
 
 param(
-  [string]$RepoRoot = 'C:\Scripts',
+  [string]$RepoRoot = 'C:\DownloadsOrganizeR',  # Update to match your installation directory
   [int]$Port = 5000,
   [ValidateSet('basic','ldap','windows')]
   [string]$AuthMethod = 'basic',

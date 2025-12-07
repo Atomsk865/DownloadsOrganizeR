@@ -52,9 +52,11 @@ PowerShell -ExecutionPolicy Bypass -File .\Setup-Offline.ps1
 ```
 
 ### Options
-- `-TargetRoot <path>` - Install location (default: C:\Scripts)
+- `-TargetRoot <path>` - Install location (default: C:\Scripts in v1.0-beta; updated to C:\DownloadsOrganizeR in later versions)
 - `-InstallService` - Install and start Windows service
 - `-NoStartDashboard` - Skip dashboard auto-start
+
+> **Note**: Newer versions use `C:\DownloadsOrganizeR` as the default installation location with full customization support.
 
 ## Requirements
 

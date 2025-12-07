@@ -128,7 +128,14 @@ IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
 # -----------------------------
 # Logging
 # -----------------------------
-log_path = DOWNLOADS_PATH / ORGANIZER_LOG
+# Check for environment variable set by service installer (points to ProgramData or install dir)
+log_dir_override = os.environ.get("ORGANIZER_LOG_DIR")
+if log_dir_override and os.path.isdir(log_dir_override):
+    log_path = Path(log_dir_override) / ORGANIZER_LOG
+else:
+    # Fallback to Downloads folder (traditional location)
+    log_path = DOWNLOADS_PATH / ORGANIZER_LOG
+
 log_path.parent.mkdir(parents=True, exist_ok=True)
 logger = logging.getLogger("Organizer")
 logger.setLevel(logging.INFO)

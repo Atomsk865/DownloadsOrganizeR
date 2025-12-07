@@ -2,7 +2,7 @@
 DownloadsOrganizeR Production Installer (Prod-Beta)
 
 Run as Administrator.
-- Copies repo files to C:\Scripts (or uses RepoSource)
+- Copies repo files to installation directory (configurable via TargetRoot parameter)
 - Creates Python venv and installs requirements
 - Initializes config files
 - Optionally installs Windows service via NSSM
@@ -11,7 +11,7 @@ Run as Administrator.
 
 param(
   [string]$RepoSource = (Get-Location).Path,
-  [string]$TargetRoot = 'C:\Scripts',
+  [string]$TargetRoot = 'C:\DownloadsOrganizeR',  # Changed from C:\Scripts to match new default
   [switch]$InstallService,
   [switch]$NoStartDashboard,
   [string]$ServiceName = 'DownloadsOrganizer',

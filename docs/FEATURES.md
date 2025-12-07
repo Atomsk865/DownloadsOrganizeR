@@ -41,6 +41,6 @@ DownloadsOrganizeR organizes your Downloads and provides a dashboard for visibil
 
 ## Logging
 - **Purpose:** Trace file movements and service behavior.
-- **How:** Organizer logs to Downloads; service logs in `C:\Scripts\service-logs`.
+- **How:** Organizer logs to Downloads; service logs in `<INSTALL_DIR>\service-logs` (default: `C:\DownloadsOrganizeR\service-logs`).
 - **Scenarios:** Troubleshooting missed moves or permission issues.
 

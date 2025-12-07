@@ -109,8 +109,8 @@ goto mainmenu
 cls
 echo Uninstalling DownloadsOrganizer service...
 echo.
-echo Note: This will remove the Windows service. Files under C:\Scripts will remain.
-echo You can manually delete C:\Scripts if desired.
+echo Note: This will remove the Windows service. Installation files will remain.
+echo You can manually delete the installation directory if desired.
 echo.
 set /p CONFIRM=Proceed with uninstall? (Y/N): 
 if /I not "%CONFIRM%"=="Y" goto mainmenu
