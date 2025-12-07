@@ -404,12 +404,19 @@ function Install-OrganizerService {
     
     Write-Info "Creating service '$SERVICE_NAME'..."
     
-    # Install service - separate program from arguments to handle spaces correctly
-    # First create the service with just the Python executable
-    & $NssmPath install $SERVICE_NAME $pythonExe
+    # Create a batch file wrapper to handle quoting properly
+    # This wrapper will be called by NSSM instead of Python directly
+    $wrapperBat = Join-Path $InstallDir "run-organizer.bat"
+    $batContent = @"
+@echo off
+REM Batch wrapper to run Organizer.py with proper quoting
+cd /d "$InstallDir"
+"$pythonExe" "$organizerScript"
+"@
+    $batContent | Out-File -FilePath $wrapperBat -Encoding ASCII -Force
     
-    # Then set the application parameter (the script path)
-    & $NssmPath set $SERVICE_NAME AppParameters $organizerScript
+    # Install service with the batch wrapper (no spaces in bat filename path issues)
+    & $NssmPath install $SERVICE_NAME $wrapperBat
     
     # Verify installation by checking service exists
     $service = Get-Service -Name $SERVICE_NAME -ErrorAction SilentlyContinue
