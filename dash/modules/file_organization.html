@@ -27,13 +27,14 @@
             <div class="input-group input-group-sm">
               <input type="text" id="new-watch-folder" class="form-control form-control-sm" placeholder="Enter folder path..." />
               <input type="file" id="folder-picker" style="display: none;" webkitdirectory directory multiple />
-              <button class="btn btn-outline-primary btn-sm" onclick="browseForFolder()" title="Browse for folder">
+              <button id="watch-folder-browse-btn" class="btn btn-outline-primary btn-sm" data-target-input="new-watch-folder" data-browser-id="server-folder-browser" data-select-mode="full" onclick="browseForFolder()" title="Browse for folder">
                 <i class="bi bi-folder-open"></i>
               </button>
               <button class="btn btn-primary btn-sm" onclick="addWatchFolder()" title="Add folder to watch list">
-                <i class="bi bi-plus-lg"></i>
+                <span aria-hidden="true">+</span><span class="visually-hidden">Add folder</span>
               </button>
             </div>
+            <div id="server-folder-browser" class="mt-2 folder-browser-results" style="max-height: 160px; overflow-y: auto;"></div>
             <small class="text-muted d-block mt-1">Batch organizer will organize files in all watch folders</small>
           </div>
           <button class="btn btn-success btn-sm w-100" onclick="organizeAllWatchFolders()">
@@ -595,24 +596,6 @@ async function organizeAllWatchFolders() {
   }
 }
 
-function browseForFolder() {
-  const input = document.getElementById('new-watch-folder');
-  // Try modern File System Access API first (works on Chromium/Edge in secure context)
-  if (window.showDirectoryPicker) {
-    window.showDirectoryPicker().then(handle => {
-      if (input) {
-        input.value = handle.name; // Browsers do not expose full absolute path for security
-        showNotification('Folder selected. Browser cannot share full path; please confirm the path is correct.', 'info');
-      }
-    }).catch(() => {
-      // User canceled or API not allowed; fallback to classic picker
-      triggerLegacyFolderPicker();
-    });
-  } else {
-    triggerLegacyFolderPicker();
-  }
-}
-
 function triggerLegacyFolderPicker() {
   const picker = document.getElementById('folder-picker');
   if (picker) {
@@ -649,4 +632,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+function browseForFolder() {
+  const btn = document.getElementById('watch-folder-browse-btn');
+  if (btn && typeof openServerFolderBrowser === 'function') {
+    openServerFolderBrowser(btn);
+  } else {
+    triggerLegacyFolderPicker();
+  }
+}
 </script>

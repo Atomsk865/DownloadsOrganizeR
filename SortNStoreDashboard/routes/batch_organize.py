@@ -488,3 +488,36 @@ def organize_all_watch_folders():
     except Exception as e:
         logger.error(f"Error organizing watch folders: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@batch_organize_bp.route('/api/batch-config/browse-folders', methods=['GET'])
+def browse_folders():
+    """List server-side subfolders for a given path (or default Downloads)."""
+    try:
+        requested_path = (request.args.get('path') or '').strip()
+
+        # Default to Downloads if no path provided
+        if not requested_path:
+            base_path = Path.home() / "Downloads"
+        else:
+            # Allow UNC or absolute paths; Path will handle platform specifics
+            base_path = Path(requested_path)
+
+        if not base_path.exists() or not base_path.is_dir():
+            return jsonify({"success": False, "error": "Folder not found"}), 400
+
+        folders = []
+        for child in base_path.iterdir():
+            if child.is_dir():
+                folders.append({"name": child.name, "path": str(child)})
+
+        return jsonify({
+            "success": True,
+            "base": str(base_path),
+            "count": len(folders),
+            "folders": folders
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error browsing folders: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

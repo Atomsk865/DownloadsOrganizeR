@@ -2110,12 +2110,128 @@ function deleteRow(btn) {
     btn.closest('tr').remove();
 }
 
+// Server folder browser helpers (shared across modules)
+async function openServerFolderBrowser(btn) {
+    const inputName = btn?.dataset?.targetInput;
+    const browserId = btn?.dataset?.browserId;
+    const mode = btn?.dataset?.selectMode || 'full';
+    if (!inputName || !browserId) {
+        return;
+    }
+
+    const input = document.querySelector(`[name="${inputName}"]`) || document.getElementById(inputName);
+    const container = document.getElementById(browserId);
+    if (!container) {
+        return;
+    }
+
+    const pathValue = (input?.value || '').trim();
+    container.innerHTML = '<div class="text-muted"><small>Loading folders...</small></div>';
+
+    try {
+        const data = await fetchServerFolderList(pathValue);
+        renderServerFolderList({ container, data, inputName, browserId, mode, pathValue });
+    } catch (e) {
+        container.innerHTML = `<div class="text-danger"><small>Error: ${e.message}</small></div>`;
+    }
+}
+
+async function fetchServerFolderList(pathValue) {
+    const query = pathValue ? `?path=${encodeURIComponent(pathValue)}` : '';
+    const res = await fetch(`/api/batch-config/browse-folders${query}`, {
+        credentials: 'include',
+        headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!data.success) {
+        throw new Error(data.error || 'Failed to browse folders');
+    }
+
+    return data;
+}
+
+function renderServerFolderList({ container, data, inputName, browserId, mode, pathValue }) {
+    const base = data.base || pathValue || '';
+    const folders = data.folders || [];
+
+    if (!folders.length) {
+        container.innerHTML = `<div class="text-muted"><small>No subfolders under ${base || 'base path'}</small></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="mb-1"><small><b>Folders under ${base}</b></small></div>
+        <div class="list-group list-group-flush folder-browser-list">
+            ${folders.map(f => {
+                const encodedPath = encodeURIComponent(f.path);
+                return `
+                    <button type="button" class="list-group-item list-group-item-action py-1" data-path="${encodedPath}" data-input-name="${inputName}" data-browser-id="${browserId}" data-select-mode="${mode}" onclick="handleServerFolderSelection(this)">
+                        <small><i class="bi bi-folder"></i> ${f.name}</small>
+                    </button>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function handleServerFolderSelection(btn) {
+    const pathValue = decodeURIComponent(btn?.dataset?.path || '');
+    const inputName = btn?.dataset?.inputName;
+    const browserId = btn?.dataset?.browserId;
+    const mode = btn?.dataset?.selectMode || 'full';
+    if (!inputName || !browserId) {
+        return;
+    }
+
+    const input = document.querySelector(`[name="${inputName}"]`) || document.getElementById(inputName);
+    if (input) {
+        let value = pathValue;
+        if (mode === 'basename') {
+            const parts = pathValue.split(/[\\\\/]/).filter(Boolean);
+            value = parts.pop() || pathValue;
+        }
+        input.value = value;
+    }
+
+    const container = document.getElementById(browserId);
+    if (container) {
+        const selected = input?.value || pathValue;
+        container.innerHTML = `<div class="text-success"><small>Selected: ${selected}</small></div>`;
+    }
+
+    showNotification(`Selected folder: ${input?.value || pathValue}`, 'info');
+}
+
 // Add new category row to File Categories table
 function addCategoryRow() {
     const tbody = document.querySelector('#config-form tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const browserId = `cat-browser-${rowCount}`;
     const newRow = document.createElement('tr');
-    newRow.innerHTML = `<td><div class="form-validation-wrapper"><input class="form-control form-control-sm" type="text" name="folder_${rowCount}" placeholder="Folder name" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50"><span class="form-validation-icon"><i class="bi"></i></span></div></td><td><div class="form-validation-wrapper"><input class="form-control form-control-sm" type="text" name="exts_${rowCount}" placeholder="ext1, ext2, ext3" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200"><span class="form-validation-icon"><i class="bi"></i></span></div></td><td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)"><span aria-hidden="true">-</span><span class="visually-hidden">Delete</span></button></td>`;
+    newRow.innerHTML = `
+        <td>
+            <div class="form-validation-wrapper">
+                <div class="input-group input-group-sm">
+                    <input class="form-control form-control-sm" type="text" name="folder_${rowCount}" placeholder="Folder name" required pattern="^[a-zA-Z0-9_\-\s]+$" maxlength="50" data-browser-id="${browserId}">
+                    <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowCount}" data-browser-id="${browserId}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                </div>
+                <span class="form-validation-icon"><i class="bi"></i></span>
+            </div>
+            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
+        </td>
+        <td>
+            <div class="form-validation-wrapper">
+                <input class="form-control form-control-sm" type="text" name="exts_${rowCount}" placeholder="ext1, ext2, ext3" pattern="^[a-zA-Z0-9,\s\.]*$" maxlength="200">
+                <span class="form-validation-icon"><i class="bi"></i></span>
+            </div>
+        </td>
+        <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)"><span aria-hidden="true">-</span><span class="visually-hidden">Delete</span></button></td>
+    `;
     tbody.appendChild(newRow);
     initializeFormValidation(newRow);
 }
@@ -2124,8 +2240,19 @@ function addCategoryRow() {
 function addCustomRouteRow() {
     const tbody = document.getElementById('custom-routes-tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const browserId = `custom-browser-${rowCount}`;
     const newRow = document.createElement('tr');
-    newRow.innerHTML = `<td><input class="form-control form-control-sm" type="text" name="ext_${rowCount}" placeholder="mp4"></td><td><input class="form-control form-control-sm" type="text" name="path_${rowCount}" placeholder="C:/Media/Videos"></td><td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)"><span aria-hidden="true">-</span><span class="visually-hidden">Delete</span></button></td>`;
+    newRow.innerHTML = `
+        <td><input class="form-control form-control-sm" type="text" name="ext_${rowCount}" placeholder="mp4"></td>
+        <td>
+            <div class="input-group input-group-sm">
+                <input class="form-control form-control-sm" type="text" name="path_${rowCount}" placeholder="C:/Media/Videos" data-browser-id="${browserId}">
+                <button class="btn btn-outline-secondary" type="button" data-target-input="path_${rowCount}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+            </div>
+            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
+        </td>
+        <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)"><span aria-hidden="true">-</span><span class="visually-hidden">Delete</span></button></td>
+    `;
     tbody.appendChild(newRow);
 }
 
@@ -2133,6 +2260,7 @@ function addCustomRouteRow() {
 function addTagRouteRow() {
     const tbody = document.getElementById('tag-routes-tbody');
     const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const browserId = `tag-browser-${rowCount}`;
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td>
@@ -2143,9 +2271,13 @@ function addTagRouteRow() {
         </td>
         <td>
             <div class="form-validation-wrapper">
-                <input class="form-control form-control-sm" type="text" name="tagpath_${rowCount}" placeholder="C:/Documents/Invoices" required maxlength="255">
+                <div class="input-group input-group-sm">
+                    <input class="form-control form-control-sm" type="text" name="tagpath_${rowCount}" placeholder="C:/Documents/Invoices" required maxlength="255" data-browser-id="${browserId}">
+                    <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${rowCount}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                </div>
                 <span class="form-validation-icon"><i class="bi"></i></span>
             </div>
+            <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
         </td>
         <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
     `;
@@ -2163,16 +2295,41 @@ function loadCustomRoutes(customRoutes) {
     if (customRoutes && Object.keys(customRoutes).length > 0) {
         let index = 1;
         for (const [ext, path] of Object.entries(customRoutes)) {
+            const browserId = `custom-browser-${index}`;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input class="form-control form-control-sm" type="text" name="ext_${index}" value="${ext}"></td>
-                <td><input class="form-control form-control-sm" type="text" name="path_${index}" value="${path}"></td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input class="form-control form-control-sm" type="text" name="path_${index}" value="${path}" data-browser-id="${browserId}">
+                        <button class="btn btn-outline-secondary" type="button" data-target-input="path_${index}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                    </div>
+                    <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
+                </td>
                 <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
             `;
             tbody.appendChild(row);
             index++;
         }
     }
+}
+
+function extractCustomRoutesFromTable() {
+    const tbody = document.getElementById('custom-routes-tbody');
+    const routes = {};
+    if (!tbody) return routes;
+
+    tbody.querySelectorAll('tr').forEach(row => {
+        const extInput = row.querySelector('input[name^="ext_"]');
+        const pathInput = row.querySelector('input[name^="path_"]');
+        const ext = (extInput?.value || '').trim();
+        const path = (pathInput?.value || '').trim();
+        if (ext && path) {
+            routes[ext] = path;
+        }
+    });
+
+    return routes;
 }
 
 // Initialize custom routes table on page load
@@ -2186,13 +2343,18 @@ async function loadFileCategories(routes) {
     // Populate rows from config
     let rowNum = 1;
     for (const [folder, extensions] of Object.entries(routes)) {
+        const browserId = `cat-browser-${rowNum}`;
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
                 <div class="form-validation-wrapper">
-                    <input class="form-control form-control-sm" type="text" name="folder_${rowNum}" value="${folder}" required pattern="^[a-zA-Z0-9_\\-\\s]+$" maxlength="50">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control form-control-sm" type="text" name="folder_${rowNum}" value="${folder}" required pattern="^[a-zA-Z0-9_\\-\\s]+$" maxlength="50" data-browser-id="${browserId}">
+                        <button class="btn btn-outline-secondary" type="button" data-target-input="folder_${rowNum}" data-browser-id="${browserId}" data-select-mode="basename" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                    </div>
                     <span class="form-validation-icon"><i class="bi"></i></span>
                 </div>
+                <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
             </td>
             <td>
                 <div class="form-validation-wrapper">
@@ -2216,7 +2378,29 @@ async function loadFileCategories(routes) {
     }
 }
 
+function extractFileCategoriesFromTable() {
+    const tbody = document.querySelector('#config-form tbody');
+    const routes = {};
+    if (!tbody) return routes;
+
+    tbody.querySelectorAll('tr').forEach(row => {
+        const folderInput = row.querySelector('input[name^="folder_"]');
+        const extsInput = row.querySelector('input[name^="exts_"]');
+        const folder = (folderInput?.value || '').trim();
+        if (!folder) return;
+        const extList = (extsInput?.value || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        routes[folder] = extList;
+    });
+
+    return routes;
+}
+
 async function initializeCustomRoutes() {
+    let config = {};
+
     try {
         const response = await fetch('/api/organizer/config', {
             credentials: 'include',
@@ -2224,25 +2408,30 @@ async function initializeCustomRoutes() {
         });
         
         if (response.ok) {
-            const config = await response.json();
-            
-            // Load file categories
-            if (config.routes && Object.keys(config.routes).length > 0) {
-                loadFileCategories(config.routes);
-            }
-            
-            // Load custom routes
-            if (config.custom_routes && Object.keys(config.custom_routes).length > 0) {
-                loadCustomRoutes(config.custom_routes);
-            }
-            
-            // Load tag routes
-            if (config.tag_routes && Object.keys(config.tag_routes).length > 0) {
-                loadTagRoutes(config.tag_routes);
-            }
+            config = await response.json();
         }
     } catch (error) {
         console.log('Could not load configuration:', error);
+    }
+
+    const routes = (config.routes && Object.keys(config.routes).length > 0)
+        ? config.routes
+        : extractFileCategoriesFromTable();
+    const customRoutes = (config.custom_routes && Object.keys(config.custom_routes).length > 0)
+        ? config.custom_routes
+        : extractCustomRoutesFromTable();
+    const tagRoutes = (config.tag_routes && Object.keys(config.tag_routes).length > 0)
+        ? config.tag_routes
+        : extractTagRoutesFromTable();
+
+    if (routes && Object.keys(routes).length > 0) {
+        loadFileCategories(routes);
+    }
+    if (customRoutes && Object.keys(customRoutes).length > 0) {
+        loadCustomRoutes(customRoutes);
+    }
+    if (tagRoutes && Object.keys(tagRoutes).length > 0) {
+        loadTagRoutes(tagRoutes);
     }
 }
 
@@ -2256,6 +2445,7 @@ function loadTagRoutes(tagRoutes) {
     if (tagRoutes && Object.keys(tagRoutes).length > 0) {
         let index = 1;
         for (const [tag, path] of Object.entries(tagRoutes)) {
+            const browserId = `tag-browser-${index}`;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>
@@ -2266,9 +2456,13 @@ function loadTagRoutes(tagRoutes) {
                 </td>
                 <td>
                     <div class="form-validation-wrapper">
-                        <input class="form-control form-control-sm" type="text" name="tagpath_${index}" value="${path}" required maxlength="255">
+                        <div class="input-group input-group-sm">
+                            <input class="form-control form-control-sm" type="text" name="tagpath_${index}" value="${path}" required maxlength="255" data-browser-id="${browserId}">
+                            <button class="btn btn-outline-secondary" type="button" data-target-input="tagpath_${index}" data-browser-id="${browserId}" data-select-mode="full" title="Browse server folders" onclick="openServerFolderBrowser(this)"><i class="bi bi-folder"></i></button>
+                        </div>
                         <span class="form-validation-icon"><i class="bi"></i></span>
                     </div>
+                    <div id="${browserId}" class="folder-browser-results mt-1 small"></div>
                 </td>
                 <td><button class="btn btn-danger btn-sm" type="button" onclick="deleteRow(this)">Delete</button></td>
             `;
@@ -2285,6 +2479,24 @@ function loadTagRoutes(tagRoutes) {
     if (table) {
         initializeTableSorting(table.closest('.dashboard-module') || document);
     }
+}
+
+function extractTagRoutesFromTable() {
+    const tbody = document.getElementById('tag-routes-tbody');
+    const routes = {};
+    if (!tbody) return routes;
+
+    tbody.querySelectorAll('tr').forEach(row => {
+        const tagInput = row.querySelector('input[name^="tag_"]');
+        const pathInput = row.querySelector('input[name^="tagpath_"]');
+        const tag = (tagInput?.value || '').trim();
+        const path = (pathInput?.value || '').trim();
+        if (tag && path) {
+            routes[tag] = path;
+        }
+    });
+
+    return routes;
 }
 
 // Log streaming
