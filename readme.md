@@ -57,6 +57,7 @@ For advanced users or troubleshooting, see detailed instructions in [INSTALL.md]
 - Service logging and dashboard log management.
 - **System Update:** One-click updates from GitHub with automatic config backup and import.
 - **Per-folder Configuration:** Monitor multiple folders with different auto-sort settings and custom routes.
+- **System Tray App:** Windows tray icon for quick service/dashboard management and updates.
 
 See `docs/FEATURES.md` for full descriptions and scenarios.
 
@@ -122,3 +123,4 @@ See `LICENSE`.
 - `docs/BUGS.md` – Known issues and limitations
 - `docs/ARCHITECTURE.md` – System overview and file paths
 - `docs/SYSTEM_UPDATE.md` – System update feature with config backup and import
+- `docs/TRAY_APP.md` – System tray application for Windows
