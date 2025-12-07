@@ -618,6 +618,36 @@ objShell.Run Chr(34) & strBatchFile & Chr(34), 0, False
     $shortcut.Save()
     
     Write-Success "Desktop shortcut created: $shortcutPath"
+    
+    # Create system tray app shortcut
+    $trayShortcutPath = Join-Path $desktopPath "DownloadsOrganizeR Tray.lnk"
+    $trayVbsPath = Join-Path $InstallDir "Launch-TrayApp.vbs"
+    
+    if (Test-Path $trayVbsPath) {
+        $trayShortcut = $WshShell.CreateShortcut($trayShortcutPath)
+        $trayShortcut.TargetPath = "wscript.exe"
+        $trayShortcut.Arguments = "`"$trayVbsPath`""
+        $trayShortcut.WorkingDirectory = $InstallDir
+        $trayShortcut.Description = "DownloadsOrganizeR System Tray Manager"
+        $trayShortcut.IconLocation = "shell32.dll,23"
+        $trayShortcut.Save()
+        
+        Write-Success "Tray app shortcut created: $trayShortcutPath"
+        
+        # Also add to startup folder for auto-launch
+        $startupPath = [Environment]::GetFolderPath("Startup")
+        $startupShortcutPath = Join-Path $startupPath "DownloadsOrganizeR Tray.lnk"
+        $startupShortcut = $WshShell.CreateShortcut($startupShortcutPath)
+        $startupShortcut.TargetPath = "wscript.exe"
+        $startupShortcut.Arguments = "`"$trayVbsPath`""
+        $startupShortcut.WorkingDirectory = $InstallDir
+        $startupShortcut.Description = "DownloadsOrganizeR System Tray Manager"
+        $startupShortcut.IconLocation = "shell32.dll,23"
+        $startupShortcut.Save()
+        
+        Write-Success "Startup shortcut created: $startupShortcutPath"
+    }
+    
     return $true
 }
 
@@ -656,12 +686,26 @@ Write-Host "Removing scheduled task..." -ForegroundColor Yellow
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
 Write-Host "Scheduled task removed" -ForegroundColor Green
 
-# Remove desktop shortcut
+# Remove desktop shortcuts
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktopPath "DownloadsOrganizeR Dashboard.lnk"
 if (Test-Path $shortcutPath) {
     Remove-Item $shortcutPath -Force
-    Write-Host "Desktop shortcut removed" -ForegroundColor Green
+    Write-Host "Dashboard shortcut removed" -ForegroundColor Green
+}
+
+$trayShortcutPath = Join-Path $desktopPath "DownloadsOrganizeR Tray.lnk"
+if (Test-Path $trayShortcutPath) {
+    Remove-Item $trayShortcutPath -Force
+    Write-Host "Tray app shortcut removed" -ForegroundColor Green
+}
+
+# Remove startup shortcut
+$startupPath = [Environment]::GetFolderPath("Startup")
+$startupShortcutPath = Join-Path $startupPath "DownloadsOrganizeR Tray.lnk"
+if (Test-Path $startupShortcutPath) {
+    Remove-Item $startupShortcutPath -Force
+    Write-Host "Startup shortcut removed" -ForegroundColor Green
 }
 
 # Ask about removing installation directory

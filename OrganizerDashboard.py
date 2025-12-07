@@ -205,8 +205,11 @@ def create_app():
         _sys.modules['__main__'] = _sys.modules.get('__main__', sys.modules[__name__])
 
     app = Flask(__name__, template_folder='dash')
-    # Basic secret key for session cookies; can be overridden via env
-    app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', 'downloads_organizer_secret')
+    # Secret key for session cookies; should be set via env var in production
+    # Default is generated randomly but will not persist across restarts
+    import secrets
+    default_key = secrets.token_hex(32)
+    app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', default_key)
     
     # CSRF Protection
     csrf = CSRFProtect()

@@ -3,7 +3,7 @@ import socket
 import sys
 import psutil
 from OrganizerDashboard.helpers.helpers import (
-    get_windows_version, get_cpu_name, get_private_ip, get_public_ip, service_running, find_organizer_proc, format_bytes, last_n_lines_normalized, load_dashboard_json
+    get_windows_version, get_cpu_name, get_private_ip, get_public_ip, service_running, find_organizer_proc, format_bytes, last_n_lines_normalized
 )
 from OrganizerDashboard.auth.auth import check_auth, authenticate, requires_auth
 from flask_login import current_user
@@ -37,8 +37,6 @@ def dashboard():
             return redirect('/login')
     except Exception:
         return redirect('/login')
-
-    dashboard_data = load_dashboard_json()
     
     # Get top processes by CPU
     top_processes = []

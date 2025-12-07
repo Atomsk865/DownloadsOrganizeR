@@ -146,11 +146,4 @@ def format_bytes(num):
     tb = gb / 1024
     return f"{tb:.2f} TB"
 
-def load_dashboard_json():
-    DASHBOARD_JSON = "C:\\Scripts\\downloads_dashboard.json"
-    try:
-        with open(DASHBOARD_JSON, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data
-    except Exception:
-        return {}
+# Deprecated: load_dashboard_json() removed - was unused and had hardcoded path

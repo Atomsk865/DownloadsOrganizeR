@@ -119,3 +119,51 @@ Desktop.ini
 # Logs
 *.log
 service-logs/
+
+# Build artifacts
+dist/
+build/
+*.spec
+*.exe
+*.msi
+
+# Installer artifacts
+DownloadsOrganizeR-Installer.zip
+packages-microsoft-prod.deb
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# Python cache
+.mypy_cache/
+.pytest_cache/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.before_import
+
+# Config backups
+Backups/
+
+# Notification history
+notification_history.json
+
+# Test files (deprecated/temporary)
+test_destination.txt
+test_*.py
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+*.sln
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
