@@ -541,6 +541,8 @@ const ThemeBuilder = (() => {
 
       .table tbody tr {
         border-color: ${colors.primary}40 !important;
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        color: ${baseTextColor} !important;
       }
 
       .table tbody tr:hover {
@@ -549,6 +551,8 @@ const ThemeBuilder = (() => {
 
       .table tbody td {
         border-color: ${colors.primary}30 !important;
+        background-color: ${isDarkMode ? colors.secondary : '#ffffff'} !important;
+        color: ${baseTextColor} !important;
       }
 
       /* Role rights table specific styling */
