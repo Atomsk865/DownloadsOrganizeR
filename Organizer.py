@@ -127,7 +127,7 @@ try:
 except Exception:
     TAG_ROUTES = {}
 
-IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG}
+IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG, "desktop.ini", "thumbs.db", "Thumbs.db"}
 IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
 
 
