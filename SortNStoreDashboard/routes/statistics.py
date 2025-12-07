@@ -50,7 +50,7 @@ def parse_timestamp(ts_str):
 
 @routes_statistics.route("/api/statistics/overview", methods=["GET"])
 @requires_auth
-@rate_limit(max_requests=10, window_seconds=60)
+@rate_limit(max_requests=30, window_seconds=60)
 @client_debounce_hint(debounce_ms=500)
 def get_statistics_overview():
     """Get overview statistics for the dashboard."""

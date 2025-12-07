@@ -2166,7 +2166,7 @@ function streamLog(which) {
     const logElement = document.getElementById(`${which}-log`);
     // Only stream if the log element exists (config page only)
     if (!logElement) {
-        console.log(`Log element ${which}-log not found, skipping stream`);
+        console.debug(`Log element ${which}-log not found, skipping stream`);
         return;
     }
     
