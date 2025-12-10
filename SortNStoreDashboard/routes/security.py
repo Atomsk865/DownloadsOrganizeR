@@ -100,3 +100,88 @@ def refresh_session():
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@routes_security.route('/api/security/ip-allowlist', methods=['GET'])
+@login_required
+@requires_right('admin')
+def get_ip_allowlist():
+    """Get current IP allowlist configuration."""
+    try:
+        from SortNStoreDashboard.config_runtime import get_dashboard_config
+        from SortNStoreDashboard.auth.ip_allowlist import PRIVATE_NETWORKS
+        
+        config = get_dashboard_config()
+        allowlist = config.get('ip_allowlist', [])
+        
+        return jsonify({
+            "success": True,
+            "allowlist": allowlist,
+            "enabled": len(allowlist) > 0,
+            "common_networks": PRIVATE_NETWORKS
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@routes_security.route('/api/security/ip-allowlist', methods=['POST'])
+@login_required
+@requires_right('admin')
+def update_ip_allowlist():
+    """Update IP allowlist configuration."""
+    try:
+        from SortNStoreDashboard.config_runtime import get_dashboard_config, save_dashboard_config
+        from SortNStoreDashboard.auth.ip_allowlist import validate_cidr_list
+        
+        data = request.get_json()
+        new_allowlist = data.get('allowlist', [])
+        
+        # Validate CIDR list
+        valid, errors = validate_cidr_list(new_allowlist)
+        if not valid:
+            return jsonify({
+                "success": False,
+                "error": "Invalid CIDR notation",
+                "details": errors
+            }), 400
+        
+        # Update config
+        config = get_dashboard_config()
+        config['ip_allowlist'] = new_allowlist
+        save_dashboard_config()
+        
+        # Warn if allowlist is empty (disables feature)
+        if not new_allowlist:
+            message = "IP allowlist disabled - all IPs allowed"
+        else:
+            message = f"IP allowlist updated with {len(new_allowlist)} ranges"
+        
+        return jsonify({
+            "success": True,
+            "message": message,
+            "allowlist": new_allowlist
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@routes_security.route('/api/security/validate-cidr', methods=['POST'])
+@login_required
+@requires_right('admin')
+def validate_cidr():
+    """Validate CIDR notation without applying changes."""
+    try:
+        from SortNStoreDashboard.auth.ip_allowlist import validate_cidr_list
+        
+        data = request.get_json()
+        cidrs = data.get('cidrs', [])
+        
+        valid, errors = validate_cidr_list(cidrs)
+        
+        return jsonify({
+            "success": True,
+            "valid": valid,
+            "errors": errors
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

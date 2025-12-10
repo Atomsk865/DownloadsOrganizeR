@@ -22,6 +22,25 @@ def init_session_timeout(app):
     """
     
     @app.before_request
+    def check_ip_allowlist_middleware():
+        """Check IP allowlist before processing any request."""
+        # Skip for static assets and health check endpoints
+        if request.endpoint == 'static':
+            return
+        
+        from SortNStoreDashboard.auth.ip_allowlist import check_ip_allowlist, get_client_ip
+        
+        allowed, reason = check_ip_allowlist()
+        if not allowed:
+            # Log the rejection
+            client_ip = get_client_ip()
+            print(f"Access denied for IP {client_ip}: {reason}")
+            
+            # Return 403 Forbidden
+            from flask import abort
+            abort(403)
+    
+    @app.before_request
     def check_session_timeout():
         """Check and enforce session timeout before each request."""
         # Skip for login/logout/static routes
