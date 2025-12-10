@@ -450,6 +450,8 @@ def create_app():
     @app.after_request
     def add_security_headers(response):
         """Apply security headers to all responses."""
+        from flask import request
+        
         # Content Security Policy - restrict resource loading
         # Allow self, inline scripts/styles (needed for dashboard), and CDNs for Bootstrap/etc
         response.headers['Content-Security-Policy'] = (
