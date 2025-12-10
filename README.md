@@ -8,6 +8,24 @@
 
 ---
 
+## 📚 Documentation Quick Links
+
+**Find what you need:**
+
+| Need | Link |
+|------|------|
+| **New to this?** | [Getting Started Guide](docs/getting-started/) |
+| **Want full docs?** | [Documentation Index](docs/INDEX.md) |
+| **Plan mobile expansion?** | [Cross-Platform Roadmap](docs/roadmaps/CROSS_PLATFORM_MOBILE_ROADMAP.md) |
+| **Deploy to production?** | [Deployment Guide](docs/deployment/) |
+| **Understand architecture?** | [Architecture Guide](docs/architecture/) |
+| **Need specific features?** | [Features Guide](docs/features/) |
+| **What changed?** | [Changelogs](docs/changelogs/) |
+
+**All documentation organized into 8 categories** - See [docs/INDEX.md](docs/INDEX.md) for complete navigation.
+
+---
+
 ## Features
 
 ✨ **Automatic File Organization**
