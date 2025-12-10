@@ -34,7 +34,7 @@ REM Wait 3-5 minutes for build to complete
 
 **Option 2: Manual Build**
 ```batch
-python build_exe.py
+python installers/installers/build_exe.py
 ```
 
 ### Linux/Mac (Build for Windows)
@@ -42,7 +42,7 @@ python build_exe.py
 ```bash
 # Requires Windows target machine
 # But can prepare build on Linux/Mac
-python build_exe.py
+python installers/installers/build_exe.py
 # Produces dist/DownloadsOrganizeR/
 ```
 
@@ -327,7 +327,7 @@ One-click build script
 - Shows colorful progress
 ```
 
-### build_exe.py (Python)
+### installers/build_exe.py (Python)
 ```
 Advanced builder with features:
 - Pre-flight checks
@@ -370,7 +370,7 @@ You now have a **complete, production-ready installation system**:
 
 | Task | Command |
 |------|---------|
-| Build EXE | `build_exe.bat` or `python build_exe.py` |
+| Build EXE | `build_exe.bat` or `python installers/installers/build_exe.py` |
 | Run EXE | `DownloadsOrganizeR.exe` |
 | Access Dashboard | `http://localhost:5000` |
 | Install Service | `Install.bat` (as admin) |

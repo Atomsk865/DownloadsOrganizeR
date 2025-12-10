@@ -36,7 +36,7 @@ Cleaned up the codebase by removing deprecated files and fixing all references f
 |------|--------|--------|
 | **OrganizerTrayApp.py** | Line 321: `OrganizerDashboard.py` → `SortNStoreDashboard.py` | ✓ |
 | **installer_builder.py** | Line 197: Dashboard launch script reference | ✓ |
-| **check_environment.py** | Lines 46, 50, 84: File structure checks | ✓ |
+| **scripts/check_environment.py** | Lines 46, 50, 84: File structure checks | ✓ |
 | **test_recent_files.py** | Line 64: Example command documentation | ✓ |
 | **tests/test_setup_validation.py** | Lines 18, 42-43, 53, 72: Module imports and variable names | ✓ |
 | **SortNStoreDashboard/routes/factory_reset.py** | Line 47: Package module reference | ✓ |
@@ -121,7 +121,7 @@ DownloadsOrganizeR/
 ✓ OrganizerDashboard.py       - Deleted (no longer needed)
 ✓ SortNStoreDashboard.py      - Compiles successfully
 ✓ installer_builder.py        - Compiles successfully
-✓ check_environment.py        - Compiles successfully
+✓ scripts/check_environment.py        - Compiles successfully
 ✓ test_recent_files.py        - Compiles successfully
 ✓ tests/test_setup_validation.py - Compiles successfully
 ✓ SortNStoreDashboard/routes/factory_reset.py - Compiles successfully
@@ -215,7 +215,7 @@ python SortNStoreDashboard.py
 
 ### To Check Environment
 ```bash
-python check_environment.py
+python scripts/scripts/check_environment.py
 ```
 
 ### To Run Tests

@@ -1,0 +1,91 @@
+REORGANIZATION PLAN FOR PROFESSIONAL ROOT DIRECTORY
+====================================================
+
+KEEP AT ROOT (User-facing):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ README.md                           - Main project description
+✓ LICENSE                             - License file
+✓ Organizer.py                        - Core service (REQUIRED)
+✓ OrganizerTrayApp.py                 - System tray GUI (REQUIRED)
+✓ SortNStoreDashboard.py              - Dashboard app (REQUIRED)
+✓ requirements.txt                    - Dependencies
+✓ organizer_config.json               - Service config (user-editable)
+✓ dashboard_config.json               - Dashboard config (user-editable)
+
+MOVE TO FOLDERS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 docs/
+├── *.md (54 markdown files - all documentation)
+├── ARCHITECTURE.md
+├── CHANGELOG.md
+├── INSTALLATION.md
+├── TROUBLESHOOTING.md
+└── ... (all reference docs)
+
+📁 installers/
+├── Install-And-Monitor-OrganizerService.ps1
+├── Setup-Installer.bat
+├── Setup-Installer.ps1
+├── installer_builder.py
+├── build.py
+├── build_exe.py
+└── ... (all installer/build scripts)
+
+📁 scripts/
+├── check_environment.py
+├── check_routes.py
+├── preflight_check.py
+├── Organizer.py                      (moved here or keep at root?)
+├── BatchOrganizer.py
+└── ... (utility scripts)
+
+📁 tests/
+├── test_*.py (all test files)
+├── demo_*.py (demo files)
+└── ... (existing tests/ directory - keep as is)
+
+📁 examples/
+├── (existing examples directory)
+└── ... (existing content)
+
+📁 html/
+├── (existing dash/ directory content or HTML files)
+└── ... (template files)
+
+REMOVE FROM ROOT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- .github/ (keep in root - hidden)
+- C:/ (Windows path artifact - DELETE)
+- OrganizerDashboard.py (already deleted)
+- Dashboard.png (move to docs/images/)
+
+FINAL ROOT STRUCTURE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DownloadsOrganizeR/
+├── README.md
+├── LICENSE
+├── Organizer.py
+├── OrganizerTrayApp.py
+├── SortNStoreDashboard.py
+├── requirements.txt
+├── organizer_config.json
+├── dashboard_config.json
+│
+├── docs/                    ← All documentation
+├── installers/              ← Build & installation scripts
+├── scripts/                 ← Utility scripts
+├── tests/                   ← Test files
+├── examples/                ← Example configs
+├── html/                    ← HTML templates
+├── static/                  ← Static assets (CSS, JS, images)
+├── config/                  ← Config files
+├── SortNStoreDashboard/     ← Python package (keep at root)
+│   ├── __init__.py
+│   ├── routes/
+│   ├── auth/
+│   └── ...
+│
+├── dash/                    ← HTML templates (keep at root - Flask needs it)
+└── .github/                 ← GitHub actions (keep at root - hidden)
+

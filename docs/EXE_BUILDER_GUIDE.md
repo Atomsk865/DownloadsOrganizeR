@@ -23,7 +23,7 @@ REM Run the build script (automatic)
 build_exe.bat
 
 REM Or run Python directly
-python build_exe.py
+python installers/installers/build_exe.py
 ```
 
 ### Output
@@ -77,7 +77,7 @@ exe = EXE(
 )
 ```
 
-3. Rebuild with `python build_exe.py`
+3. Rebuild with `python installers/installers/build_exe.py`
 
 ### Change Startup Port
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
 ### Change EXE Name
 
-Edit `build_exe.py`:
+Edit `installers/build_exe.py`:
 
 ```python
 EXE_NAME = f'MyCustomName-v{version}.exe'
@@ -169,7 +169,7 @@ pip freeze | grep -v "used_package" > requirements.txt
 
 1. Check if Python dependencies are installed:
 ```batch
-python build_exe.py  REM Re-run build
+python installers/installers/build_exe.py  REM Re-run build
 ```
 
 2. Run in console mode to see errors:
@@ -247,7 +247,7 @@ signtool verify /v DownloadsOrganizeR.exe
 ### Build Issues
 1. Ensure Python 3.9+ installed
 2. Run `pip install --upgrade pyinstaller`
-3. Check `build_exe.py` logs
+3. Check `installers/build_exe.py` logs
 
 ### Runtime Issues
 1. Check `C:\Scripts\service-logs\` for errors
@@ -266,13 +266,13 @@ signtool verify /v DownloadsOrganizeR.exe
 ### Build with Optimizations
 
 ```bash
-python build_exe.py --clean     # Remove old builds first
+python installers/installers/build_exe.py --clean     # Remove old builds first
 ```
 
 ### Build and Create NSIS Installer
 
 ```bash
-python build_exe.py --installer  # (Future enhancement)
+python installers/installers/build_exe.py --installer  # (Future enhancement)
 ```
 
 ### Debug Build (Console Window)

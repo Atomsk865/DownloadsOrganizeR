@@ -293,7 +293,7 @@ Result: 90% fewer requests during typing
 
 ## Future Optimization Opportunities
 
-1. **CSS/JS Minification** - Build script ready in `build.py`
+1. **CSS/JS Minification** - Build script ready in `installers/build.py`
 2. **Database Query Optimization** - Add indexes, batch operations
 3. **Full JavaScript Modularization** - Split 3700-line script into focused modules
 4. **Image Optimization** - Lazy load images, use WebP format

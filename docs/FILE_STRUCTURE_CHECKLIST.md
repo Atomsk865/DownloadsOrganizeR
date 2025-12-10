@@ -74,7 +74,7 @@ SortNStoreDashboard/
 |------|--------|--------|
 | OrganizerTrayApp.py | Launch `SortNStoreDashboard.py` instead of OrganizerDashboard.py | ✓ Fixed |
 | installer_builder.py | Dashboard launch reference | ✓ Fixed |
-| check_environment.py | File structure checks | ✓ Fixed |
+| scripts/check_environment.py | File structure checks | ✓ Fixed |
 | test_recent_files.py | Example commands | ✓ Fixed |
 | tests/test_setup_validation.py | Module imports and variables | ✓ Fixed |
 | SortNStoreDashboard/routes/factory_reset.py | Package module reference | ✓ Fixed |
@@ -165,7 +165,7 @@ OrganizerTrayApp.py -> Start Service button
 
 ### To Check Environment
 ```bash
-python check_environment.py
+python scripts/scripts/check_environment.py
 ```
 
 ---
