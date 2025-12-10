@@ -1,83 +1,146 @@
 {
-  "_comment": "Multi-Cloud Mixed Destination Configuration",
-  "_description": "Ultimate flexible setup with local, OneDrive, Google Drive, and network storage",
-  
-  "watch_folders": [
-    "C:\\Users\\YourUsername\\Downloads",
-    "C:\\Users\\YourUsername\\Desktop"
-  ],
-  
-  "category_destinations": {
-    "Images": "C:\\Users\\YourUsername\\OneDrive\\Pictures",
-    "Videos": "D:\\LocalMedia\\Videos",
-    "Documents": "G:\\My Drive\\Documents",
-    "Music": "\\\\NAS\\Media\\Music",
-    "Code": "C:\\Users\\YourUsername\\Dropbox\\Projects",
-    "Archives": "\\\\NAS\\Backups\\Archives",
-    "Fonts": "C:\\Users\\YourUsername\\OneDrive\\Assets\\Fonts",
-    "Executables": "D:\\Programs"
-  },
-  
-  "routes": {
-    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic", ".ico"],
-    "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v"],
-    "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv"],
-    "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".aiff"],
-    "Code": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php", ".java", ".cpp"],
-    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso"],
-    "Fonts": [".ttf", ".otf", ".woff", ".woff2", ".eot"],
-    "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1"],
-    "Other": []
-  },
-  
-  "custom_routes": {
-    "psd": "C:\\Users\\YourUsername\\Dropbox\\Design\\Photoshop",
-    "ai": "C:\\Users\\YourUsername\\Dropbox\\Design\\Illustrator",
-    "blend": "D:\\LocalMedia\\Blender"
-  },
-  
-  "tag_routes": {
-    "invoice": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Invoices",
-    "receipt": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Receipts",
-    "contract": "\\\\NAS\\Legal\\Contracts",
-    "important": "C:\\Users\\YourUsername\\OneDrive\\Important"
-  },
-  
-  "pattern_routes": {
-    "^invoice_\\d{4}": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Invoices",
-    "backup.*": "\\\\NAS\\Backups"
-  },
-  
-  "size_rules": [
-    {
-      "_comment": "Large files to local storage",
-      "min_mb": 500,
-      "destination": "D:\\LargeFiles"
-    }
-  ],
-  
-  "date_rules": [
-    {
-      "_comment": "Recent files to OneDrive",
-      "days_newer_than": 7,
-      "destination": "C:\\Users\\YourUsername\\OneDrive\\Recent"
+    "_comment": "Multi-Cloud Mixed Destination Configuration",
+    "_description": "Ultimate flexible setup with local, OneDrive, Google Drive, and network storage",
+    "watch_folders": [
+        "C:\\Users\\YourUsername\\Downloads",
+        "C:\\Users\\YourUsername\\Desktop"
+    ],
+    "category_destinations": {
+        "Images": "C:\\Users\\YourUsername\\OneDrive\\Pictures",
+        "Videos": "D:\\LocalMedia\\Videos",
+        "Documents": "G:\\My Drive\\Documents",
+        "Music": "\\\\NAS\\Media\\Music",
+        "Code": "C:\\Users\\YourUsername\\Dropbox\\Projects",
+        "Archives": "\\\\NAS\\Backups\\Archives",
+        "Fonts": "C:\\Users\\YourUsername\\OneDrive\\Assets\\Fonts",
+        "Executables": "D:\\Programs"
     },
-    {
-      "_comment": "Old files to NAS archive",
-      "days_older_than": 365,
-      "destination": "\\\\NAS\\Archive\\Old"
-    }
-  ],
-  
-  "retry_queue": {
-    "enabled": true,
-    "interval_seconds": 600,
-    "max_retries": 20
-  },
-  
-  "duplicate_detection": {
-    "enabled": true
-  },
-  
-  "logs_dir": "C:\\SortNStore\\logs"
+    "routes": {
+        "Images": [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".tiff",
+            ".svg",
+            ".webp",
+            ".heic",
+            ".ico"
+        ],
+        "Videos": [
+            ".mp4",
+            ".mkv",
+            ".avi",
+            ".mov",
+            ".wmv",
+            ".flv",
+            ".webm",
+            ".m4v"
+        ],
+        "Documents": [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".txt",
+            ".rtf",
+            ".odt",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".csv"
+        ],
+        "Music": [
+            ".mp3",
+            ".wav",
+            ".flac",
+            ".aac",
+            ".ogg",
+            ".wma",
+            ".m4a",
+            ".aiff"
+        ],
+        "Code": [
+            ".py",
+            ".js",
+            ".html",
+            ".css",
+            ".json",
+            ".xml",
+            ".sh",
+            ".ts",
+            ".php",
+            ".java",
+            ".cpp"
+        ],
+        "Archives": [
+            ".zip",
+            ".rar",
+            ".7z",
+            ".tar",
+            ".gz",
+            ".bz2",
+            ".xz",
+            ".iso"
+        ],
+        "Fonts": [
+            ".ttf",
+            ".otf",
+            ".woff",
+            ".woff2",
+            ".eot"
+        ],
+        "Executables": [
+            ".exe",
+            ".msi",
+            ".bat",
+            ".cmd",
+            ".ps1"
+        ],
+        "Other": []
+    },
+    "custom_routes": {
+        "psd": "C:\\Users\\YourUsername\\Dropbox\\Design\\Photoshop",
+        "ai": "C:\\Users\\YourUsername\\Dropbox\\Design\\Illustrator",
+        "blend": "D:\\LocalMedia\\Blender"
+    },
+    "tag_routes": {
+        "invoice": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Invoices",
+        "receipt": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Receipts",
+        "contract": "\\\\NAS\\Legal\\Contracts",
+        "important": "C:\\Users\\YourUsername\\OneDrive\\Important"
+    },
+    "pattern_routes": {
+        "^invoice_\\d{4}": "C:\\Users\\YourUsername\\OneDrive\\Finance\\Invoices",
+        "backup.*": "\\\\NAS\\Backups"
+    },
+    "size_rules": [
+        {
+            "_comment": "Large files to local storage",
+            "min_mb": 500,
+            "destination": "D:\\LargeFiles"
+        }
+    ],
+    "date_rules": [
+        {
+            "_comment": "Recent files to OneDrive",
+            "days_newer_than": 7,
+            "destination": "C:\\Users\\YourUsername\\OneDrive\\Recent"
+        },
+        {
+            "_comment": "Old files to NAS archive",
+            "days_older_than": 365,
+            "destination": "\\\\NAS\\Archive\\Old"
+        }
+    ],
+    "retry_queue": {
+        "enabled": true,
+        "interval_seconds": 600,
+        "max_retries": 20
+    },
+    "duplicate_detection": {
+        "enabled": true
+    },
+    "logs_dir": "C:\\SortNStore\\logs"
 }

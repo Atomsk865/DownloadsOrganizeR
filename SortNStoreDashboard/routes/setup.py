@@ -343,14 +343,25 @@ def setup_initialize():
 
 @routes_setup.route('/api/setup/save', methods=['POST'])
 def setup_save():
-    """Save additional setup preferences like watch_folders, vt_api_key, features."""
-    from SortNStoreDashboard.config_runtime import get_config, save_config
+    """Save additional setup preferences like watch_folders, vt_api_key, features, and organizer settings."""
+    from SortNStoreDashboard.config_runtime import get_config, save_config, get_dashboard_config, save_dashboard_config
     data = request.get_json() or {}
     
     # Extract preferences
     watch_folders = data.get('watch_folders', [])
     vt_api_key = data.get('vt_api_key', '').strip()
     features = data.get('features', {})
+    destination_mode = data.get('destination_mode', 'subfolder')
+    base_destination = data.get('base_destination', '').strip()
+    organizer_enabled = data.get('organizer_enabled', False)
+    
+    # Validate watch folders if organizer is being enabled
+    if organizer_enabled and not watch_folders:
+        return jsonify({'error': 'At least one watch folder is required when enabling the organizer'}), 400
+    
+    # Validate custom destination if required
+    if organizer_enabled and destination_mode == 'custom' and not base_destination:
+        return jsonify({'error': 'Base destination path required when using custom mode'}), 400
     
     # Update organizer_config.json
     config = get_config()
@@ -361,10 +372,28 @@ def setup_save():
     if features:
         config['features'] = features
     
-    # Persist
+    # Save organizer-specific settings
+    config['destination_mode'] = destination_mode
+    if base_destination:
+        config['base_destination'] = base_destination
+    config['organizer_enabled'] = organizer_enabled
+    
+    # Update dashboard config with organizer state
+    dash_cfg = get_dashboard_config()
+    dash_cfg['organizer_enabled'] = organizer_enabled
+    
+    # Persist both configs
     try:
         save_config()
-        return jsonify({'success': True, 'message': 'Setup preferences saved'})
+        save_dashboard_config()
+        
+        msg = 'Setup preferences saved'
+        if organizer_enabled:
+            msg += '. Organizer service is now ENABLED and will start monitoring configured folders.'
+        else:
+            msg += '. Organizer service remains DISABLED. Enable it from Settings when ready.'
+        
+        return jsonify({'success': True, 'message': msg, 'organizer_enabled': organizer_enabled})
     except Exception as e:
         return jsonify({'error': f'Failed to save preferences: {e}'}), 500
 

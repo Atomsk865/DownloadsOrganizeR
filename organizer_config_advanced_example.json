@@ -1,83 +1,179 @@
 {
-  "watch_folders": [
-    "C:\\Users\\YourUsername\\Downloads",
-    "C:\\Users\\YourUsername\\Desktop"
-  ],
-  "routes": {
-    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic", ".ico"],
-    "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".aiff", ".ape"],
-    "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".ts"],
-    "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv"],
-    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso"],
-    "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1", ".app", ".dmg"],
-    "Shortcuts": [".lnk", ".url", ".webloc"],
-    "Code": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php", ".java", ".cpp", ".c", ".h", ".cs", ".rb", ".go"],
-    "Fonts": [".ttf", ".otf", ".woff", ".woff2", ".eot"],
-    "Data": [".sql", ".db", ".sqlite", ".json", ".yaml", ".yml"],
-    "Logs": [".log"],
-    "Other": []
-  },
-  "custom_routes": {
-    "psd": "C:\\Design\\Photoshop",
-    "ai": "C:\\Design\\Illustrator",
-    "sketch": "C:\\Design\\Sketch"
-  },
-  "tag_routes": {
-    "invoice": "C:\\Accounting\\Invoices",
-    "receipt": "C:\\Accounting\\Receipts",
-    "contract": "C:\\Legal\\Contracts",
-    "proposal": "C:\\Sales\\Proposals",
-    "report": "C:\\Reports",
-    "important": "C:\\Important"
-  },
-  "pattern_routes": {
-    "^invoice_\\d{4}": "C:\\Accounting\\Invoices",
-    "(tax|w2|1040).*\\.pdf$": "C:\\Taxes",
-    "\\[DRAFT\\].*": "C:\\WorkInProgress",
-    "Screenshot_\\d{8}": "C:\\Screenshots",
-    "resume.*\\.pdf$": "C:\\Jobs\\Resumes"
-  },
-  "size_rules": [
-    {
-      "min_mb": 0,
-      "max_mb": 1,
-      "destination": "C:\\Archive\\Small"
+    "watch_folders": [
+        "C:\\Users\\YourUsername\\Downloads",
+        "C:\\Users\\YourUsername\\Desktop"
+    ],
+    "routes": {
+        "Images": [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".tiff",
+            ".svg",
+            ".webp",
+            ".heic",
+            ".ico"
+        ],
+        "Music": [
+            ".mp3",
+            ".wav",
+            ".flac",
+            ".aac",
+            ".ogg",
+            ".wma",
+            ".m4a",
+            ".aiff",
+            ".ape"
+        ],
+        "Videos": [
+            ".mp4",
+            ".mkv",
+            ".avi",
+            ".mov",
+            ".wmv",
+            ".flv",
+            ".webm",
+            ".m4v",
+            ".ts"
+        ],
+        "Documents": [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".txt",
+            ".rtf",
+            ".odt",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".csv"
+        ],
+        "Archives": [
+            ".zip",
+            ".rar",
+            ".7z",
+            ".tar",
+            ".gz",
+            ".bz2",
+            ".xz",
+            ".iso"
+        ],
+        "Executables": [
+            ".exe",
+            ".msi",
+            ".bat",
+            ".cmd",
+            ".ps1",
+            ".app",
+            ".dmg"
+        ],
+        "Shortcuts": [
+            ".lnk",
+            ".url",
+            ".webloc"
+        ],
+        "Code": [
+            ".py",
+            ".js",
+            ".html",
+            ".css",
+            ".json",
+            ".xml",
+            ".sh",
+            ".ts",
+            ".php",
+            ".java",
+            ".cpp",
+            ".c",
+            ".h",
+            ".cs",
+            ".rb",
+            ".go"
+        ],
+        "Fonts": [
+            ".ttf",
+            ".otf",
+            ".woff",
+            ".woff2",
+            ".eot"
+        ],
+        "Data": [
+            ".sql",
+            ".db",
+            ".sqlite",
+            ".json",
+            ".yaml",
+            ".yml"
+        ],
+        "Logs": [
+            ".log"
+        ],
+        "Other": []
     },
-    {
-      "min_mb": 1,
-      "max_mb": 100,
-      "destination": "C:\\Archive\\Medium"
+    "custom_routes": {
+        "psd": "C:\\Design\\Photoshop",
+        "ai": "C:\\Design\\Illustrator",
+        "sketch": "C:\\Design\\Sketch"
     },
-    {
-      "min_mb": 100,
-      "max_mb": 1000,
-      "destination": "C:\\Archive\\Large"
+    "tag_routes": {
+        "invoice": "C:\\Accounting\\Invoices",
+        "receipt": "C:\\Accounting\\Receipts",
+        "contract": "C:\\Legal\\Contracts",
+        "proposal": "C:\\Sales\\Proposals",
+        "report": "C:\\Reports",
+        "important": "C:\\Important"
     },
-    {
-      "min_mb": 1000,
-      "destination": "C:\\Archive\\Huge"
-    }
-  ],
-  "date_rules": [
-    {
-      "days_newer_than": 7,
-      "destination": "C:\\Files\\Recent"
+    "pattern_routes": {
+        "^invoice_\\d{4}": "C:\\Accounting\\Invoices",
+        "(tax|w2|1040).*\\.pdf$": "C:\\Taxes",
+        "\\[DRAFT\\].*": "C:\\WorkInProgress",
+        "Screenshot_\\d{8}": "C:\\Screenshots",
+        "resume.*\\.pdf$": "C:\\Jobs\\Resumes"
     },
-    {
-      "days_older_than": 365,
-      "destination": "C:\\Archive\\Old"
-    }
-  ],
-  "duplicate_detection": {
-    "enabled": true
-  },
-  "retry_queue": {
-    "enabled": true,
-    "interval_seconds": 600,
-    "max_retries": 10
-  },
-  "logs_dir": "C:\\SortNStore\\logs",
-  "file_moves_json": "./config/json/file_moves.json",
-  "file_hashes_json": "./config/json/file_hashes.json",
-  "notification_history_json": "./notification_history.json"
+    "size_rules": [
+        {
+            "min_mb": 0,
+            "max_mb": 1,
+            "destination": "C:\\Archive\\Small"
+        },
+        {
+            "min_mb": 1,
+            "max_mb": 100,
+            "destination": "C:\\Archive\\Medium"
+        },
+        {
+            "min_mb": 100,
+            "max_mb": 1000,
+            "destination": "C:\\Archive\\Large"
+        },
+        {
+            "min_mb": 1000,
+            "destination": "C:\\Archive\\Huge"
+        }
+    ],
+    "date_rules": [
+        {
+            "days_newer_than": 7,
+            "destination": "C:\\Files\\Recent"
+        },
+        {
+            "days_older_than": 365,
+            "destination": "C:\\Archive\\Old"
+        }
+    ],
+    "duplicate_detection": {
+        "enabled": true
+    },
+    "retry_queue": {
+        "enabled": true,
+        "interval_seconds": 600,
+        "max_retries": 10
+    },
+    "logs_dir": "C:\\SortNStore\\logs",
+    "file_moves_json": "./config/json/file_moves.json",
+    "file_hashes_json": "./config/json/file_hashes.json",
+    "notification_history_json": "./notification_history.json"
 }

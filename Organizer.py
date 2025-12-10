@@ -656,6 +656,27 @@ def main():
     logger.info("=" * 70)
     logger.info("SortNStore File Organizer Starting")
     logger.info("=" * 70)
+    
+    # Enterprise safety check: Require explicit enablement via Dashboard setup
+    organizer_enabled = CONFIG.get("organizer_enabled", False)
+    if not organizer_enabled:
+        logger.warning("=" * 70)
+        logger.warning("ORGANIZER SERVICE IS DISABLED")
+        logger.warning("")
+        logger.warning("The service is waiting for initial configuration.")
+        logger.warning("")
+        logger.warning("To enable the organizer service:")
+        logger.warning("  1. Open the Dashboard at http://localhost:5000")
+        logger.warning("  2. Complete the setup wizard (if not done)")
+        logger.warning("  3. Configure watch folders and destinations")
+        logger.warning("  4. Enable the organizer service from Settings")
+        logger.warning("")
+        logger.warning("This safety feature prevents accidental file organization")
+        logger.warning("before proper configuration is completed.")
+        logger.warning("=" * 70)
+        logger.info("Service will remain in standby mode. Exiting gracefully.")
+        return
+    
     logger.info(f"Watch folders: {[str(f) for f in WATCH_FOLDERS]}")
     
     routing_engine = RoutingEngine(CONFIG)

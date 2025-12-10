@@ -213,6 +213,7 @@
         <div>1) Admin account</div>
         <div>2) Auth method</div>
         <div>3) Folders & features</div>
+        <div>4) Organizer setup</div>
       </div>
     </div>
 
@@ -350,6 +351,51 @@
             </div>
 
             <div class="divider"></div>
+            <div class="mb-3">
+              <div class="badge bg-secondary text-uppercase mb-2">Step 4</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <h5 class="mb-0">Organizer Service Setup</h5>
+                <small class="text-muted">Safety first - configure before enabling</small>
+              </div>
+            </div>
+            
+            <div class="alert alert-info border-0 mb-3">
+              <i class="bi bi-shield-check me-2"></i>
+              <strong>Enterprise Safety:</strong> The organizer service will remain disabled until you explicitly enable it.
+              This prevents accidental file organization before proper configuration.
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Destination Mode</label>
+              <select id="destination-mode" class="form-select">
+                <option value="subfolder" selected>Subfolders (organize within watch folder)</option>
+                <option value="custom">Custom destination (specify base path)</option>
+              </select>
+              <small class="text-muted">Subfolder mode creates category folders in each watch folder. Custom mode sends all files to a single base location.</small>
+            </div>
+            
+            <div class="mb-3" id="custom-destination-block" style="display:none;">
+              <label class="form-label">Custom Base Destination</label>
+              <input id="custom-destination" class="form-control" placeholder="e.g., D:/Organized or /mnt/storage/sorted">
+              <small class="text-muted">All categories will be created under this path. Supports local drives, UNC paths (\\\\server\\share), and cloud storage paths.</small>
+            </div>
+            
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="enable-organizer" role="switch">
+                <label class="form-check-label fw-semibold" for="enable-organizer">
+                  <i class="bi bi-toggle-on text-success me-1"></i> Enable Organizer Service
+                </label>
+              </div>
+              <small class="text-muted">Uncheck this to complete setup without starting the organizer. You can enable it later from Settings.</small>
+            </div>
+            
+            <div class="alert alert-warning border-0 mb-3" id="organizer-warning" style="display:none;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>Important:</strong> When you enable the organizer, it will begin monitoring your configured watch folders immediately after setup. Ensure you've selected the correct folders and destination mode.
+            </div>
+
+            <div class="divider"></div>
             <div class="d-flex align-items-center gap-2">
               <button class="btn btn-primary w-100" type="button" id="btn-complete">Complete Setup</button>
               <a class="btn btn-outline-light" href="/docs/readme" target="_blank">Docs</a>
@@ -436,6 +482,19 @@
       document.getElementById('ldap-block').style.display = method === 'ldap' ? 'block' : 'none';
       document.getElementById('windows-block').style.display = method === 'windows' ? 'block' : 'none';
     });
+    
+    // Toggle custom destination input based on mode
+    document.getElementById('destination-mode').addEventListener('change', () => {
+      const mode = document.getElementById('destination-mode').value;
+      const customBlock = document.getElementById('custom-destination-block');
+      customBlock.style.display = mode === 'custom' ? 'block' : 'none';
+    });
+    
+    // Show warning when organizer is enabled
+    document.getElementById('enable-organizer').addEventListener('change', (e) => {
+      const warning = document.getElementById('organizer-warning');
+      warning.style.display = e.target.checked ? 'block' : 'none';
+    });
 
     document.getElementById('btn-add-folder').onclick = () => addCustomFolder();
     document.getElementById('btn-prefill-default').onclick = () => {
@@ -507,11 +566,34 @@
         duplicates_enabled: document.getElementById('feat-dup').checked,
         reports_enabled: document.getElementById('feat-reports').checked
       };
+      
+      const watchFolders = currentFolders();
+      if (watchFolders.length === 0) {
+        showToast('Please select at least one watch folder', 'warning');
+        return;
+      }
+      
+      const destinationMode = document.getElementById('destination-mode').value;
+      const organizerEnabled = document.getElementById('enable-organizer').checked;
+      
       const savePayload = {
-        watch_folders: currentFolders(),
+        watch_folders: watchFolders,
         vt_api_key: document.getElementById('vt-api-key').value.trim(),
-        features
+        features,
+        destination_mode: destinationMode,
+        organizer_enabled: organizerEnabled
       };
+      
+      // Add custom destination if in custom mode
+      if (destinationMode === 'custom') {
+        const customDest = document.getElementById('custom-destination').value.trim();
+        if (customDest) {
+          savePayload.base_destination = customDest;
+        } else if (organizerEnabled) {
+          showToast('Custom destination path required when using custom mode with organizer enabled', 'warning');
+          return;
+        }
+      }
       try {
         const saveResp = await fetch('/api/setup/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(savePayload) });
         if(!saveResp.ok){

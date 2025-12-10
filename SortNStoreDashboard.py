@@ -57,6 +57,8 @@ DEFAULT_CONFIG = {
     "memory_threshold_mb": 200,
     "cpu_threshold_percent": 60,
     "logs_dir": r"C:\Scripts\service-logs",
+    "organizer_enabled": False,
+    "destination_mode": "subfolder",
     "password_change_required": False,
     "auth_method": "basic",
     "auth_fallback_enabled": True,
@@ -341,6 +343,7 @@ def create_app():
     from SortNStoreDashboard.routes.env_test import routes_env
     from SortNStoreDashboard.routes.unc_credentials import routes_unc_creds
     from SortNStoreDashboard.routes.batch_organize import batch_organize_bp
+    from SortNStoreDashboard.routes.organizer_control import routes_organizer_control
 
     app.register_blueprint(routes_dashboard)
     app.register_blueprint(routes_update_config, url_prefix='/api')
@@ -394,6 +397,7 @@ def create_app():
     app.register_blueprint(routes_env)
     app.register_blueprint(routes_unc_creds)
     app.register_blueprint(batch_organize_bp)
+    app.register_blueprint(routes_organizer_control)
 
     # Exempt setup and login blueprints from CSRF (run before session exists)
     csrf.exempt(routes_setup)

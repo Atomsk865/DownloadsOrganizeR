@@ -1,36 +1,60 @@
 {
-  "_comment": "Network Storage (NAS/UNC) Configuration",
-  "_description": "All files organized to network storage with retry queue",
-  
-  "watch_folders": [
-    "C:\\Users\\YourUsername\\Downloads"
-  ],
-  
-  "base_destination": "\\\\NAS-Server\\Organized",
-  
-  "category_destinations": {
-    "Videos": "\\\\NAS-Server\\Media\\Videos",
-    "Music": "\\\\NAS-Server\\Media\\Music",
-    "Images": "\\\\NAS-Server\\Media\\Photos",
-    "Documents": "\\\\NAS-Server\\Documents",
-    "Archives": "\\\\NAS-Server\\Backups"
-  },
-  
-  "routes": {
-    "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv"],
-    "Music": [".mp3", ".wav", ".flac", ".aac", ".m4a"],
-    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp"],
-    "Documents": [".pdf", ".doc", ".docx", ".txt", ".xlsx"],
-    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
-    "Other": []
-  },
-  
-  "retry_queue": {
-    "enabled": true,
-    "interval_seconds": 300,
-    "max_retries": 30,
-    "_comment": "Aggressive retry for network storage - every 5 min, up to 30 times"
-  },
-  
-  "logs_dir": "C:\\SortNStore\\logs"
+    "_comment": "Network Storage (NAS/UNC) Configuration",
+    "_description": "All files organized to network storage with retry queue",
+    "watch_folders": [
+        "C:\\Users\\YourUsername\\Downloads"
+    ],
+    "base_destination": "\\\\NAS-Server\\Organized",
+    "category_destinations": {
+        "Videos": "\\\\NAS-Server\\Media\\Videos",
+        "Music": "\\\\NAS-Server\\Media\\Music",
+        "Images": "\\\\NAS-Server\\Media\\Photos",
+        "Documents": "\\\\NAS-Server\\Documents",
+        "Archives": "\\\\NAS-Server\\Backups"
+    },
+    "routes": {
+        "Videos": [
+            ".mp4",
+            ".mkv",
+            ".avi",
+            ".mov",
+            ".wmv"
+        ],
+        "Music": [
+            ".mp3",
+            ".wav",
+            ".flac",
+            ".aac",
+            ".m4a"
+        ],
+        "Images": [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp"
+        ],
+        "Documents": [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".txt",
+            ".xlsx"
+        ],
+        "Archives": [
+            ".zip",
+            ".rar",
+            ".7z",
+            ".tar",
+            ".gz"
+        ],
+        "Other": []
+    },
+    "retry_queue": {
+        "enabled": true,
+        "interval_seconds": 300,
+        "max_retries": 30,
+        "_comment": "Aggressive retry for network storage - every 5 min, up to 30 times"
+    },
+    "logs_dir": "C:\\SortNStore\\logs"
 }
