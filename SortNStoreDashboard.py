@@ -461,6 +461,7 @@ def create_app():
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "img-src 'self' data: https:; "
             "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "frame-src 'self' https://ipchicken.com https://www.ipchicken.com; "
             "frame-ancestors 'none'"
         )
         
