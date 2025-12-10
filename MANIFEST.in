@@ -1,0 +1,4 @@
+recursive-include src/sortnstore/dashboard_app *.html *.css *.js *.json
+recursive-include src/sortnstore *.txt *.json *.yaml *.yml
+include README.md LICENSE pyproject.toml
+exclude .git .gitignore

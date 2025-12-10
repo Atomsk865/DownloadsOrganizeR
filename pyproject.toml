@@ -6,6 +6,47 @@ build-backend = "setuptools.build_meta"
 name = "sortnstore"
 version = "1.0.0"
 description = "Windows file organization service with web dashboard"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Richard Dennett"}]
+keywords = ["file-organization", "downloads", "windows", "service", "dashboard"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Development Status :: 4 - Beta",
+]
+dependencies = [
+    "flask>=3.0.0",
+    "watchdog>=3.0.0",
+    "psutil>=5.8.0",
+]
+
+[project.optional-dependencies]
+gpu = ["gputil>=1.4.0"]
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.9",
+    "mypy>=0.900",
+]
+
+[project.scripts]
+sortnstore-dashboard = "sortnstore.dashboard:main"
+sortnstore-organizer = "sortnstore.organizer:main"
+sortnstore-tray = "sortnstore.tray_app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pylint.messages_control]
 disable = [
