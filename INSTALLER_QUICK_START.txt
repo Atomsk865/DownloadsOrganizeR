@@ -1,0 +1,121 @@
+╔════════════════════════════════════════════════════════════════╗
+║      DownloadsOrganizeR Enterprise Installer v2.0             ║
+║      Quick Start Reference Card                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 FASTEST INSTALLATION (Personal)
+
+PowerShell (as Administrator):
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex
+
+Time: ~5 minutes | Installs to: C:\DownloadsOrganizeR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+�� BUSINESS INSTALLATION (Enterprise)
+
+PowerShell (as Administrator):
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex -ArgumentList @((@{DeploymentMode='Enterprise';EnableLogging=$true}|ConvertTo-Json))
+
+Time: ~10 minutes | Installs to: C:\Program Files\DownloadsOrganizeR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏭 ENTERPRISE DEPLOYMENT (Silent, Automated)
+
+PowerShell (as Administrator):
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex -ArgumentList @((@{DeploymentMode='Enterprise';InstallService=$true;Silent=$true;EnableLogging=$true}|ConvertTo-Json))
+
+Time: ~5 minutes | No user interaction | Installs to: C:\Program Files\DownloadsOrganizeR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 PARAMETER QUICK REFERENCE
+
+-InstallDir <path>              Installation directory
+-DeploymentMode <Personal|Enterprise>  Installation mode
+-InstallService                 Install as Windows service
+-Silent                         No user prompts
+-EnableLogging                  Detailed audit logging
+-SkipHealthCheck               Skip system validation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ WHAT GETS INSTALLED
+
+Required:
+  ✓ Application files (Python, Dashboard, Organizer)
+  ✓ Python dependencies (via pip)
+  ✓ Configuration files
+  ✓ Log directories
+  ✓ Installation record
+
+Optional:
+  ✓ Windows Service (ask during install)
+  ✓ Health monitoring
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 VERIFY INSTALLATION
+
+1. Check Installation Record:
+   # Personal:
+   Get-Content C:\DownloadsOrganizeR\config\installation_record.json
+   
+   # Enterprise:
+   Get-Content "C:\Program Files\DownloadsOrganizeR\config\installation_record.json"
+
+2. Check Service Status (if installed):
+   Get-Service DownloadsOrganizeR
+
+3. Access Dashboard:
+   http://localhost:5000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️ SYSTEM REQUIREMENTS
+
+✓ Windows 10/11 or Windows Server 2016+
+✓ PowerShell 5.1+
+✓ Administrator privileges
+✓ Python 3.8+ (installer checks for this)
+✓ 500 MB disk space minimum
+✓ Internet connection (for download)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🆘 TROUBLESHOOTING
+
+Problem: "Script requires Administrator privileges"
+Solution: Right-click PowerShell → "Run as administrator"
+
+Problem: "Python not found"
+Solution: Install from python.org, add to PATH
+
+Problem: Download fails
+Solution: Check internet connection, verify TLS 1.2 support
+
+For more help:
+  📖 INSTALLER_BEST_PRACTICES.md
+  📖 INSTALLER_DEPLOYMENT_GUIDE.md
+  📖 docs/getting-started/INSTALL.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION
+
+Best Practices:    INSTALLER_BEST_PRACTICES.md
+Deployment Guide:  INSTALLER_DEPLOYMENT_GUIDE.md
+Complete Info:     ENTERPRISE_INSTALLER_COMPLETE.md
+Getting Started:   docs/getting-started/INSTALL.md
+
+GitHub:            https://github.com/Atomsk865/DownloadsOrganizeR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Installer Version: 2.0 (Enterprise-Grade)
+Release Date: December 2025
+Status: Production Ready ✅
+
