@@ -150,6 +150,11 @@ PATTERN_ROUTES = _build_pattern_routes(CONFIG.get("pattern_routes", {}))
 SIZE_RULES = CONFIG.get("size_rules", [])
 DATE_RULES = CONFIG.get("date_rules", [])
 
+# Destination configuration (supports local, UNC, cloud paths)
+DESTINATION_MODE = CONFIG.get("destination_mode", "subfolder")  # "subfolder" or "custom"
+BASE_DESTINATION = CONFIG.get("base_destination", None)  # Override base path
+CATEGORY_DESTINATIONS = CONFIG.get("category_destinations", {})  # Per-category overrides
+
 # Logging configuration
 LOGS_DIR = Path(CONFIG.get("logs_dir", SCRIPT_DIR / "logs"))
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -243,6 +248,52 @@ def is_network_path(path: Path) -> bool:
     """Check if path is on network (UNC)."""
     p = str(path)
     return p.startswith('\\\\') or p.startswith('\\')
+
+
+def is_cloud_path(path: Path) -> bool:
+    """Check if path is on cloud storage (OneDrive, Google Drive, Dropbox, etc)."""
+    p = str(path).lower()
+    cloud_indicators = [
+        'onedrive',
+        'google drive',
+        'googledrive',
+        'dropbox',
+        'icloud',
+        'box.com',
+        'mega',
+        'pcloud',
+        'sync.com'
+    ]
+    return any(indicator in p for indicator in cloud_indicators)
+
+
+def resolve_destination_path(category: str, watch_folder: Path) -> Path:
+    """Resolve destination path for a category based on configuration.
+    
+    Supports:
+    - Subfolder mode (default): {watch_folder}/{category}
+    - Custom mode with base_destination: {base_destination}/{category}
+    - Per-category overrides: Absolute paths including UNC, cloud storage
+    - Network paths (UNC): \\\\server\\share\\path
+    - Cloud storage: C:\\Users\\You\\OneDrive\\Documents
+    """
+    # Check for per-category override first
+    if category in CATEGORY_DESTINATIONS:
+        dest = CATEGORY_DESTINATIONS[category]
+        if isinstance(dest, str):
+            return Path(dest)
+    
+    # Check if custom base destination is set
+    if BASE_DESTINATION:
+        base = Path(BASE_DESTINATION)
+        return base / category
+    
+    # Default: subfolder mode
+    if DESTINATION_MODE == "subfolder":
+        return watch_folder / category
+    
+    # Fallback to watch folder subfolder
+    return watch_folder / category
 
 
 def is_file_accessible(file_path: Path, timeout: float = 2.0) -> bool:
@@ -387,12 +438,16 @@ class RoutingEngine:
         """Default extension-based categorization."""
         ext = file_path.suffix.lower()
         
+        # Determine watch folder context (for subfolder mode)
+        watch_folder = file_path.parent
+        
         for category, extensions in EXTENSION_MAP.items():
             if ext in extensions:
-                target = Path.home() / "Downloads" / category
+                target = resolve_destination_path(category, watch_folder)
                 return target, f"extension:{category}"
         
-        target = Path.home() / "Downloads" / "Other"
+        # Fallback to "Other" category
+        target = resolve_destination_path("Other", watch_folder)
         return target, "extension:Other"
 
 
@@ -583,7 +638,8 @@ class SortNStoreHandler(FileSystemEventHandler):
             
             except Exception as e:
                 logger.error(f"Failed to move {file_path}: {e}")
-                if is_network_path(dest_dir):
+                # Queue for retry if network or cloud path
+                if is_network_path(dest_dir) or is_cloud_path(dest_dir):
                     self.retry_queue.add(str(file_path), str(unique_dest), reason)
         
         finally:

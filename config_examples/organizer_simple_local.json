@@ -1,0 +1,27 @@
+{
+  "_comment": "Simple Local Subfolder Configuration",
+  "_description": "Default behavior - organize into subfolders within Downloads",
+  
+  "watch_folders": [
+    "C:\\Users\\YourUsername\\Downloads"
+  ],
+  
+  "destination_mode": "subfolder",
+  
+  "routes": {
+    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp"],
+    "Videos": [".mp4", ".mkv", ".avi", ".mov"],
+    "Documents": [".pdf", ".doc", ".docx", ".txt"],
+    "Music": [".mp3", ".wav", ".flac"],
+    "Archives": [".zip", ".rar", ".7z"],
+    "Code": [".py", ".js", ".html", ".css"],
+    "Other": []
+  },
+  
+  "tag_routes": {
+    "invoice": "C:\\Users\\YourUsername\\Documents\\Finance\\Invoices",
+    "receipt": "C:\\Users\\YourUsername\\Documents\\Finance\\Receipts"
+  },
+  
+  "logs_dir": "C:\\SortNStore\\logs"
+}

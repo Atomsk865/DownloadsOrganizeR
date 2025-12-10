@@ -1,0 +1,33 @@
+{
+  "_comment": "OneDrive Cloud Storage Configuration Example",
+  "_description": "Organizes files directly into OneDrive for automatic cloud sync",
+  
+  "watch_folders": [
+    "C:\\Users\\YourUsername\\Downloads"
+  ],
+  
+  "destination_mode": "custom",
+  "base_destination": "C:\\Users\\YourUsername\\OneDrive\\Organized",
+  
+  "routes": {
+    "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic"],
+    "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
+    "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx"],
+    "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a"],
+    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
+    "Code": [".py", ".js", ".html", ".css", ".json", ".xml"],
+    "Other": []
+  },
+  
+  "retry_queue": {
+    "enabled": true,
+    "interval_seconds": 300,
+    "max_retries": 15
+  },
+  
+  "duplicate_detection": {
+    "enabled": true
+  },
+  
+  "logs_dir": "C:\\SortNStore\\logs"
+}
