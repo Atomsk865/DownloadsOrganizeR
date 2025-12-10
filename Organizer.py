@@ -1,13 +1,21 @@
+"""
+SortNStore Organizer - Advanced Multi-Folder File Organization Service
 
-"""Organizer.py
+Watches multiple folders and intelligently routes files based on:
+  - File extensions (primary routing)
+  - Filename patterns and tags
+  - File size and date ranges
+  - File metadata (creation/modification dates)
+  - Custom rules (user-defined patterns)
+  - Duplicate detection and handling
 
-Watches a user's Downloads folder and moves files into categorized
-subfolders based on file extensions.
-
-This module aims to be readable and easy-to-run for development. It will
-attempt to load `organizer_config.json` from the current working directory
-and use the `routes` mapping there if present. Otherwise it falls back to a
-bundled `EXTENSION_MAP`.
+Features:
+  - Multiple watch folders support
+  - Flexible routing rule system
+  - Network path support with retry queue
+  - Comprehensive logging and statistics
+  - Configuration-driven behavior
+  - Thread-safe operations
 """
 
 from pathlib import Path
@@ -17,19 +25,25 @@ import json
 import logging
 import time
 import hashlib
-from typing import Dict, List, Optional
+import re
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import threading
-from base64 import b64decode
-from datetime import datetime
 
 
-# -----------------------------
-# Configuration and paths
-# -----------------------------
+# ============================================================================
+# CONFIGURATION & INITIALIZATION
+# ============================================================================
+
 SCRIPT_DIR = Path(__file__).parent
-CONFIG_PATHS = [SCRIPT_DIR / "organizer_config.json", Path("C:/Scripts/organizer_config.json")]
+CONFIG_PATHS = [
+    SCRIPT_DIR / "organizer_config.json",
+    Path("C:/Scripts/organizer_config.json"),
+    Path("C:/ProgramData/SortNStore/organizer_config.json")
+]
+
 CONFIG = {}
 for p in CONFIG_PATHS:
     if p.exists():
@@ -40,23 +54,71 @@ for p in CONFIG_PATHS:
         except Exception:
             CONFIG = {}
 
-# Allow overriding the watch folder path via config, env var, or fallback to Downloads
-downloads_path_str = CONFIG.get("watch_folder") or os.environ.get("DOWNLOADS_PATH")
-if not downloads_path_str:
-    # Try common Windows environment variables, otherwise fallback to user's Downloads
-    try:
-        username = os.environ.get("USERNAME") or os.getlogin()
-    except Exception:
-        username = ""
-    if username:
-        downloads_path_str = f"C:\\Users\\{username}\\Downloads"
-    else:
-        downloads_path_str = str(Path.home() / "Downloads")
 
-DOWNLOADS_PATH = Path(downloads_path_str)
+def _build_extension_map(routes: dict) -> Dict[str, List[str]]:
+    """Build normalized extension map from config."""
+    if not routes:
+        return _default_extension_map()
+    
+    ext_map = {}
+    for category, extensions in routes.items():
+        if isinstance(extensions, list):
+            normalized = [("." + e.lower().lstrip('.')) for e in extensions]
+            ext_map[category] = normalized
+    return ext_map if ext_map else _default_extension_map()
 
-# Build watch folders list from config
-# Priority: watch_folders (plural, explicit list) > watch_folder (singular, legacy) > empty list
+
+def _default_extension_map() -> Dict[str, List[str]]:
+    """Default extension categorization."""
+    return {
+        "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic", ".ico"],
+        "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".aiff", ".ape"],
+        "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".ts"],
+        "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv", ".pages", ".numbers"],
+        "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso"],
+        "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1", ".app", ".dmg"],
+        "Shortcuts": [".lnk", ".url", ".webloc"],
+        "Code": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php", ".java", ".cpp", ".c", ".h", ".cs", ".rb", ".go"],
+        "Fonts": [".ttf", ".otf", ".woff", ".woff2", ".eot"],
+        "Data": [".sql", ".db", ".sqlite", ".xlsx", ".json", ".yaml", ".yml", ".xml"],
+        "Logs": [".log"],
+        "Other": []
+    }
+
+
+def _build_custom_routes(custom_routes: dict) -> Dict[str, str]:
+    """Build extension -> custom destination mapping."""
+    routes = {}
+    for ext, target in (custom_routes or {}).items():
+        if isinstance(ext, str) and isinstance(target, str):
+            norm_ext = "." + ext.lower().lstrip('.')
+            routes[norm_ext] = target.strip()
+    return routes
+
+
+def _build_tag_routes(tag_routes: dict) -> Dict[str, str]:
+    """Build filename tag -> destination mapping."""
+    routes = {}
+    for tag, target in (tag_routes or {}).items():
+        if isinstance(tag, str) and isinstance(target, str):
+            routes[tag.lower()] = target.strip()
+    return routes
+
+
+def _build_pattern_routes(pattern_routes: dict) -> Dict[str, str]:
+    """Build regex pattern -> destination mapping."""
+    routes = {}
+    for pattern, target in (pattern_routes or {}).items():
+        if isinstance(pattern, str) and isinstance(target, str):
+            try:
+                re.compile(pattern)  # Validate regex
+                routes[pattern] = target.strip()
+            except re.error:
+                pass
+    return routes
+
+
+# Get watch folders from config
 WATCH_FOLDERS = []
 wf = CONFIG.get("watch_folders")
 if isinstance(wf, list) and wf:
@@ -64,128 +126,316 @@ if isinstance(wf, list) and wf:
         WATCH_FOLDERS = [Path(p) for p in wf if p]
     except Exception:
         WATCH_FOLDERS = []
-elif CONFIG.get("watch_folder"):
-    # Fallback to legacy single watch_folder if configured
-    try:
-        wf_str = str(CONFIG.get("watch_folder", "")).strip()
-        if wf_str:
-            WATCH_FOLDERS = [Path(wf_str)]
-    except Exception:
-        WATCH_FOLDERS = []
-DOWNLOADS_JSON = Path(CONFIG.get("downloads_json", SCRIPT_DIR / "config" / "json" / "downloads_dashboard.json"))
-# Organizer log path under ./logs directory
+
+if not WATCH_FOLDERS:
+    wf_str = CONFIG.get("watch_folder")
+    if wf_str:
+        WATCH_FOLDERS = [Path(wf_str)]
+    else:
+        try:
+            username = os.environ.get("USERNAME") or os.getlogin()
+        except Exception:
+            username = ""
+        if username:
+            downloads_path = Path(f"C:\\Users\\{username}\\Downloads")
+        else:
+            downloads_path = Path.home() / "Downloads"
+        WATCH_FOLDERS = [downloads_path]
+
+# Build routing configuration
+EXTENSION_MAP = _build_extension_map(CONFIG.get("routes", {}))
+CUSTOM_ROUTES = _build_custom_routes(CONFIG.get("custom_routes", {}))
+TAG_ROUTES = _build_tag_routes(CONFIG.get("tag_routes", {}))
+PATTERN_ROUTES = _build_pattern_routes(CONFIG.get("pattern_routes", {}))
+SIZE_RULES = CONFIG.get("size_rules", [])
+DATE_RULES = CONFIG.get("date_rules", [])
+
+# Logging configuration
 LOGS_DIR = Path(CONFIG.get("logs_dir", SCRIPT_DIR / "logs"))
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 ORGANIZER_LOG = str(LOGS_DIR / "organizer.log")
+
+# File tracking
 FILE_MOVES_JSON = Path(CONFIG.get("file_moves_json", SCRIPT_DIR / "config" / "json" / "file_moves.json"))
 FILE_HASHES_JSON = Path(CONFIG.get("file_hashes_json", SCRIPT_DIR / "config" / "json" / "file_hashes.json"))
 NOTIFICATION_HISTORY_JSON = Path(CONFIG.get("notification_history_json", SCRIPT_DIR / "notification_history.json"))
 
-# Load extension map from config if available and normalize to dot-prefixed lower-case
-if CONFIG.get("routes"):
-    EXTENSION_MAP = {}
-    for cat, exts in CONFIG["routes"].items():
-        normalized = [("." + e.lower().lstrip('.')) for e in exts]
-        EXTENSION_MAP[cat] = normalized
-else:
-    EXTENSION_MAP = {
-        "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".heic"],
-        "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a"],
-        "Videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
-        "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".csv"],
-        "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
-        "Executables": [".exe", ".msi", ".bat", ".cmd", ".ps1"],
-        "Shortcuts": [".lnk", ".url"],
-        "Scripts": [".py", ".js", ".html", ".css", ".json", ".xml", ".sh", ".ts", ".php"],
-        "Fonts": [".ttf", ".otf", ".woff", ".woff2"],
-        "Logs": [".log"],
-        "Other": []
-    }
-
-# Optional per-extension custom destination mapping: {"ext": "C:/Target/Folder"}
-CUSTOM_ROUTES = {}
-try:
-    for ext, target in (CONFIG.get("custom_routes") or {}).items():
-        if isinstance(ext, str) and isinstance(target, str) and target.strip():
-            CUSTOM_ROUTES["." + ext.lower().lstrip('.')] = target.strip()
-except Exception:
-    CUSTOM_ROUTES = {}
-
-# Optional filename tag-based routing: {"tag": "C:/Target/Folder"}
-# Files containing the tag anywhere in the filename will be routed to the specified folder
-TAG_ROUTES = {}
-try:
-    for tag, target in (CONFIG.get("tag_routes") or {}).items():
-        if isinstance(tag, str) and isinstance(target, str) and tag.strip() and target.strip():
-            TAG_ROUTES[tag.lower()] = target.strip()
-except Exception:
-    TAG_ROUTES = {}
-
-IGNORE_FILES = {"dashboard_config.json", ORGANIZER_LOG}
-IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp"}
+# Ignore list
+IGNORE_FILES = {
+    "dashboard_config.json",
+    "organizer_config.json",
+    Path(ORGANIZER_LOG).name if ORGANIZER_LOG else ""
+}
+IGNORE_EXTENSIONS = {".crdownload", ".part", ".tmp", ".downloading", ".incomplete"}
 
 
-# -----------------------------
-# Logging
-# -----------------------------
-log_path = DOWNLOADS_PATH / ORGANIZER_LOG
+# ============================================================================
+# LOGGING SETUP
+# ============================================================================
+
+log_path = LOGS_DIR / "organizer.log"
 log_path.parent.mkdir(parents=True, exist_ok=True)
-logger = logging.getLogger("Organizer")
+
+logger = logging.getLogger("SortNStore")
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", "%Y-%m-%d %H:%M:%S")
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
+
 file_handler = logging.FileHandler(log_path, encoding="utf-8")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-# -----------------------------
-# Core functions
-# -----------------------------
-def get_unique_path(dest_dir: Path, filename: str) -> str:
-    """Return a unique filepath in ``dest_dir`` for ``filename`` by appending
-    a numbered suffix when collisions occur.
-    """
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+def get_unique_path(dest_dir: Path, filename: str) -> Path:
+    """Return unique filepath by appending numbered suffix on collision."""
     base, ext = os.path.splitext(filename)
     candidate = dest_dir / filename
     counter = 1
     while candidate.exists():
         candidate = dest_dir / f"{base} ({counter}){ext}"
         counter += 1
-    return str(candidate)
+    return candidate
 
+
+def calculate_file_hash(file_path: Path, algorithm: str = "sha256") -> str:
+    """Calculate hash of file for duplicate detection."""
+    try:
+        hasher = hashlib.new(algorithm)
+        with open(file_path, "rb") as f:
+            while chunk := f.read(8192):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+    except Exception as e:
+        logger.warning(f"Failed to hash {file_path}: {e}")
+        return ""
+
+
+def is_duplicate(file_path: Path) -> bool:
+    """Check if file is a duplicate based on content hash."""
+    try:
+        file_hash = calculate_file_hash(file_path)
+        if not file_hash:
+            return False
+        
+        hashes = {}
+        if FILE_HASHES_JSON.exists():
+            with FILE_HASHES_JSON.open("r", encoding="utf-8") as f:
+                hashes = json.load(f)
+        
+        if file_hash in hashes.values():
+            logger.info(f"Duplicate detected: {file_path.name}")
+            return True
+        
+        return False
+    except Exception as e:
+        logger.warning(f"Duplicate check failed: {e}")
+        return False
+
+
+def is_network_path(path: Path) -> bool:
+    """Check if path is on network (UNC)."""
+    p = str(path)
+    return p.startswith('\\\\') or p.startswith('\\')
+
+
+def is_file_accessible(file_path: Path, timeout: float = 2.0) -> bool:
+    """Check if file is accessible and not locked."""
+    try:
+        with open(file_path, 'rb') as f:
+            f.read(1)
+        return True
+    except (PermissionError, OSError):
+        return False
+
+
+# ============================================================================
+# ADVANCED ROUTING ENGINE
+# ============================================================================
+
+class RoutingEngine:
+    """Determines destination folder for a file using multiple criteria."""
+    
+    def __init__(self, config: dict):
+        self.config = config
+        self.duplicate_action = config.get("duplicate_action", "skip")
+    
+    def route_file(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """
+        Route file and return (destination_path, routing_reason) or None.
+        
+        Routing priority:
+          1. Check duplicates (if enabled)
+          2. Custom per-extension routes
+          3. Filename tag routes
+          4. Regex pattern routes
+          5. File size rules
+          6. Date range rules
+          7. Extension-based categorization
+        """
+        
+        # Skip certain files
+        if file_path.name in IGNORE_FILES or file_path.suffix in IGNORE_EXTENSIONS:
+            return None
+        
+        # Check for duplicates
+        if self.config.get("duplicate_detection", {}).get("enabled", False):
+            if is_duplicate(file_path):
+                if self.duplicate_action == "skip":
+                    return None
+        
+        # 1. Custom per-extension routes (highest priority)
+        result = self._check_custom_routes(file_path)
+        if result:
+            return result
+        
+        # 2. Filename tag routes
+        result = self._check_tag_routes(file_path)
+        if result:
+            return result
+        
+        # 3. Regex pattern routes
+        result = self._check_pattern_routes(file_path)
+        if result:
+            return result
+        
+        # 4. File size rules
+        result = self._check_size_rules(file_path)
+        if result:
+            return result
+        
+        # 5. Date range rules
+        result = self._check_date_rules(file_path)
+        if result:
+            return result
+        
+        # 6. Extension-based categorization (default)
+        return self._check_extension_routes(file_path)
+    
+    def _check_custom_routes(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Check custom per-extension routes."""
+        ext = file_path.suffix.lower()
+        if ext in CUSTOM_ROUTES:
+            target = Path(CUSTOM_ROUTES[ext])
+            return target, f"custom_route:{ext}"
+        return None
+    
+    def _check_tag_routes(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Check filename contains tag."""
+        filename_lower = file_path.stem.lower()
+        for tag, target in TAG_ROUTES.items():
+            if tag in filename_lower:
+                return Path(target), f"tag_route:{tag}"
+        return None
+    
+    def _check_pattern_routes(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Check regex patterns against filename."""
+        filename = file_path.name
+        for pattern, target in PATTERN_ROUTES.items():
+            try:
+                if re.search(pattern, filename, re.IGNORECASE):
+                    return Path(target), f"pattern_route:{pattern}"
+            except re.error:
+                pass
+        return None
+    
+    def _check_size_rules(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Check file size rules."""
+        try:
+            file_size = file_path.stat().st_size / (1024 * 1024)
+            for rule in SIZE_RULES:
+                min_mb = rule.get("min_mb", 0)
+                max_mb = rule.get("max_mb", float('inf'))
+                if min_mb <= file_size <= max_mb:
+                    target = rule.get("destination")
+                    if target:
+                        return Path(target), f"size_rule:{min_mb}-{max_mb}MB"
+        except Exception as e:
+            logger.warning(f"Size rule check failed for {file_path}: {e}")
+        return None
+    
+    def _check_date_rules(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Check file creation/modification date rules."""
+        try:
+            mod_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+            for rule in DATE_RULES:
+                days_old = rule.get("days_older_than")
+                newer_than = rule.get("days_newer_than")
+                
+                age = (datetime.now() - mod_time).days
+                
+                if days_old and age >= days_old:
+                    target = rule.get("destination")
+                    if target:
+                        return Path(target), f"date_rule:older_{days_old}d"
+                
+                if newer_than and age <= newer_than:
+                    target = rule.get("destination")
+                    if target:
+                        return Path(target), f"date_rule:newer_{newer_than}d"
+        except Exception as e:
+            logger.warning(f"Date rule check failed for {file_path}: {e}")
+        return None
+    
+    def _check_extension_routes(self, file_path: Path) -> Optional[Tuple[Path, str]]:
+        """Default extension-based categorization."""
+        ext = file_path.suffix.lower()
+        
+        for category, extensions in EXTENSION_MAP.items():
+            if ext in extensions:
+                target = Path.home() / "Downloads" / category
+                return target, f"extension:{category}"
+        
+        target = Path.home() / "Downloads" / "Other"
+        return target, "extension:Other"
+
+
+# ============================================================================
+# RETRY QUEUE FOR NETWORK PATHS
+# ============================================================================
 
 class RetryQueue:
-    """Simple in-memory retry queue for failed moves to inaccessible destinations.
-
-    Periodically attempts to move queued files. Intended primarily for network
-    destinations (e.g., NAS/SMB paths) that may be temporarily unavailable.
-    """
-    def __init__(self, cfg: dict):
-        rq = cfg.get("retry_queue", {})
+    """Retry queue for failed moves (especially network destinations)."""
+    
+    def __init__(self, config: dict):
+        rq = config.get("retry_queue", {})
         self.enabled = bool(rq.get("enabled", True))
         self.interval = int(rq.get("interval_seconds", 600))
         self.max_retries = int(rq.get("max_retries", 10))
         self.queue = []
         self.lock = threading.Lock()
         self.thread = None
-
+    
     def start(self):
+        """Start retry worker thread."""
         if not self.enabled:
             return
         if self.thread and self.thread.is_alive():
             return
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
-
-    def add(self, src: str, dest: str):
+        logger.info("RetryQueue started")
+    
+    def add(self, src: str, dest: str, reason: str = ""):
+        """Add file move to retry queue."""
         with self.lock:
-            logger.info(f"Queuing move for retry: {src} -> {dest}")
-            self.queue.append({"src": src, "dest": dest, "retries": 0})
-
+            logger.info(f"Queuing for retry: {src} -> {dest} ({reason})")
+            self.queue.append({
+                "src": src,
+                "dest": dest,
+                "reason": reason,
+                "retries": 0,
+                "added_at": datetime.now().isoformat()
+            })
+    
     def _run(self):
+        """Worker thread main loop."""
         while True:
             time.sleep(self.interval)
             with self.lock:
@@ -195,27 +445,25 @@ class RetryQueue:
                     try:
                         Path(d).parent.mkdir(parents=True, exist_ok=True)
                         shutil.move(s, d)
-                        logger.info(f"Retry successful: {s} -> {d}")
+                        logger.info(f"Retry succeeded: {s} -> {d}")
                     except Exception as e:
                         r += 1
                         item["retries"] = r
                         if r < self.max_retries:
-                            logger.warning(f"Retry {r} failed for {s} -> {d}: {e}")
+                            logger.warning(f"Retry {r}/{self.max_retries} failed: {e}")
                             remaining.append(item)
                         else:
-                            logger.error(f"Max retries reached for {s} -> {d}: {e}")
+                            logger.error(f"Max retries exhausted: {s} -> {d}")
                 self.queue = remaining
 
 
-def log_file_move(original_path: str, destination_path: str, category: str) -> None:
-    """Log a file move to the file moves JSON for dashboard reference.
-    
-    Maintains a list of recent file moves with metadata including timestamp,
-    original path, destination path, category, and filename. Limits to most
-    recent 100 entries to prevent unbounded growth.
-    """
+# ============================================================================
+# FILE MOVE LOGGING
+# ============================================================================
+
+def log_file_move(original_path: str, destination_path: str, category: str, reason: str = "") -> None:
+    """Log file move to JSON for dashboard."""
     try:
-        # Load existing moves
         moves = []
         if FILE_MOVES_JSON.exists():
             try:
@@ -224,20 +472,17 @@ def log_file_move(original_path: str, destination_path: str, category: str) -> N
             except Exception:
                 moves = []
         
-        # Add new move entry
         move_entry = {
             "timestamp": datetime.now().isoformat(),
             "original_path": original_path,
             "destination_path": destination_path,
             "category": category,
+            "reason": reason,
             "filename": Path(destination_path).name
         }
-        moves.insert(0, move_entry)  # Add to beginning (most recent first)
+        moves.insert(0, move_entry)
+        moves = moves[:1000]
         
-        # Keep only the 100 most recent moves
-        moves = moves[:100]
-        
-        # Save back to file
         FILE_MOVES_JSON.parent.mkdir(parents=True, exist_ok=True)
         with FILE_MOVES_JSON.open("w", encoding="utf-8") as f:
             json.dump(moves, f, indent=2, ensure_ascii=False)
@@ -245,321 +490,146 @@ def log_file_move(original_path: str, destination_path: str, category: str) -> N
         logger.error(f"Failed to log file move: {e}")
 
 
-def is_network_path(path: Path) -> bool:
-    p = str(path)
-    return p.startswith('\\\\') or p.startswith('\\')
-
-
-def calculate_file_hash(file_path: str) -> str:
-    """Calculate SHA256 hash of a file.
-    
-    Args:
-        file_path: Path to the file to hash
+def update_file_hash(file_path: Path, hash_value: str) -> None:
+    """Update file hash for duplicate detection."""
+    try:
+        hashes = {}
+        if FILE_HASHES_JSON.exists():
+            with FILE_HASHES_JSON.open("r", encoding="utf-8") as f:
+                hashes = json.load(f)
         
-    Returns:
-        Hex string of the file's SHA256 hash
-    """
-    sha256_hash = hashlib.sha256()
-    try:
-        with open(file_path, "rb") as f:
-            # Read file in chunks to handle large files efficiently
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-        return sha256_hash.hexdigest()
-    except Exception as e:
-        logger.error(f"Failed to calculate hash for {file_path}: {e}")
-        return ""
-
-
-def load_file_hashes() -> Dict[str, List[str]]:
-    """Load the file hashes database from JSON.
-    
-    Returns:
-        Dictionary mapping SHA256 hashes to lists of file paths
-    """
-    if not FILE_HASHES_JSON.exists():
-        return {}
-    try:
-        with FILE_HASHES_JSON.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load file hashes: {e}")
-        return {}
-
-
-def save_file_hashes(hashes: Dict[str, List[str]]) -> None:
-    """Save the file hashes database to JSON.
-    
-    Args:
-        hashes: Dictionary mapping SHA256 hashes to lists of file paths
-    """
-    try:
+        hashes[hash_value] = str(file_path)
+        
         FILE_HASHES_JSON.parent.mkdir(parents=True, exist_ok=True)
         with FILE_HASHES_JSON.open("w", encoding="utf-8") as f:
             json.dump(hashes, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logger.error(f"Failed to save file hashes: {e}")
+        logger.error(f"Failed to update file hash: {e}")
 
 
-def check_duplicate(file_path: str, file_hash: str) -> Optional[List[str]]:
-    """Check if a file is a duplicate based on its hash.
+# ============================================================================
+# FILE SYSTEM EVENT HANDLER
+# ============================================================================
+
+class SortNStoreHandler(FileSystemEventHandler):
+    """Handles file system events (creation, modification)."""
     
-    Args:
-        file_path: Path to the file being checked
-        file_hash: SHA256 hash of the file
-        
-    Returns:
-        List of existing file paths with the same hash, or None if no duplicates
-    """
-    hashes = load_file_hashes()
-    existing_files = hashes.get(file_hash, [])
+    def __init__(self, watch_folder: Path, routing_engine: RoutingEngine, retry_queue: RetryQueue):
+        super().__init__()
+        self.watch_folder = watch_folder
+        self.routing_engine = routing_engine
+        self.retry_queue = retry_queue
+        self.processing = set()
+        self.lock = threading.Lock()
     
-    # Filter out the current file path and non-existent files
-    duplicates = [f for f in existing_files if f != file_path and Path(f).exists()]
-    
-    return duplicates if duplicates else None
-
-
-def register_file_hash(file_path: str, file_hash: str) -> None:
-    """Register a file's hash in the database.
-    
-    Args:
-        file_path: Path to the file
-        file_hash: SHA256 hash of the file
-    """
-    if not file_hash:
-        return
-        
-    hashes = load_file_hashes()
-    
-    if file_hash not in hashes:
-        hashes[file_hash] = []
-    
-    # Add file path if not already present
-    if file_path not in hashes[file_hash]:
-        hashes[file_hash].append(file_path)
-    
-    save_file_hashes(hashes)
-
-
-def send_notification(message: str, notification_type: str = "info") -> None:
-    """Send a notification to the dashboard notification center.
-    
-    Args:
-        message: Notification message text
-        notification_type: Type of notification (info, success, warning, error)
-    """
-    try:
-        # Load existing notifications
-        notifications = []
-        if NOTIFICATION_HISTORY_JSON.exists():
-            with NOTIFICATION_HISTORY_JSON.open("r", encoding="utf-8") as f:
-                notifications = json.load(f)
-        
-        # Create new notification
-        notification = {
-            "id": f"notif_{int(datetime.now().timestamp() * 1000)}",
-            "message": message,
-            "type": notification_type,
-            "timestamp": datetime.now().isoformat(),
-            "read": False
-        }
-        
-        # Add to beginning (most recent first)
-        notifications.insert(0, notification)
-        
-        # Keep only 100 most recent
-        notifications = notifications[:100]
-        
-        # Save back to file
-        NOTIFICATION_HISTORY_JSON.parent.mkdir(parents=True, exist_ok=True)
-        with NOTIFICATION_HISTORY_JSON.open("w", encoding="utf-8") as f:
-            json.dump(notifications, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        logger.error(f"Failed to send notification: {e}")
-
-
-def format_file_size(size_bytes: float) -> str:
-    """Format file size in human-readable format.
-    
-    Args:
-        size_bytes: File size in bytes
-        
-    Returns:
-        Formatted string (e.g., "1.5 MB")
-    """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.1f} PB"
-
-
-def organize_file(file_path: str, base_path: Path = DOWNLOADS_PATH) -> tuple:
-    """Move a single file into the matching category folder under Downloads.
-
-    Priority order:
-    1. Tag-based routes (filename contains tag)
-    2. Extension-based custom routes
-    3. Category-based routes (by extension)
-    
-    The function is careful to skip incomplete downloads and explicitly
-    ignored files. Also calculates file hash and detects duplicates.
-    
-    Returns:
-        Tuple of (destination_path, category) on success, (None, None) if skipped/failed
-    """
-    p = Path(file_path)
-    if not p.is_file():
-        return (None, None)
-    filename = p.name
-    filename_lower = filename.lower()
-    ext = p.suffix.lower()
-
-    if filename in IGNORE_FILES or ext in IGNORE_EXTENSIONS:
-        return (None, None)
-
-    # Calculate file hash before organizing
-    file_hash = calculate_file_hash(file_path)
-    if file_hash:
-        # Check for duplicates
-        duplicates = check_duplicate(file_path, file_hash)
-        if duplicates:
-            logger.warning(f"Duplicate file detected: {filename}")
-            logger.warning(f"  New file: {file_path}")
-            logger.warning(f"  Existing: {', '.join(duplicates)}")
-            
-            # Send notification about duplicate
-            file_size = Path(file_path).stat().st_size if Path(file_path).exists() else 0
-            size_human = format_file_size(file_size)
-            send_notification(
-                f"Duplicate file detected: {filename} ({size_human}) - {len(duplicates)} existing copy/copies found",
-                "warning"
-            )
-
-    # Priority 1: Check for tag-based routes (highest priority)
-    tag_matched = False
-    for tag, target_path in TAG_ROUTES.items():
-        if tag in filename_lower:
-            dest_dir = Path(target_path)
-            category_label = f"Tag:{tag}"
-            tag_matched = True
-            break
-    
-    # Priority 2: Check for extension-based custom routes
-    if not tag_matched:
-        custom_target_path = CUSTOM_ROUTES.get(ext)
-        if custom_target_path:
-            dest_dir = Path(custom_target_path)
-            category_label = "Custom"
-        else:
-            # Priority 3: Fallback to category-based routing inside Downloads
-            target_dir = "Other"
-            for category, extensions in EXTENSION_MAP.items():
-                if ext in extensions:
-                    target_dir = category
-                    break
-            dest_dir = base_path / target_dir
-            category_label = target_dir
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest_path = get_unique_path(dest_dir, filename)
-    try:
-        shutil.move(str(p), dest_path)
-        logger.info(f"Moved {file_path} → {dest_path}")
-        log_file_move(file_path, dest_path, category_label)
-        
-        # Register file hash after successful move
-        if file_hash:
-            register_file_hash(dest_path, file_hash)
-        return (str(dest_path), category_label)
-    except Exception as e:
-        logger.warning(f"Move failed: {file_path} -> {dest_path}: {e}")
-        # If destination is network or currently inaccessible, queue for retry
-        if RETRY_QUEUE and (is_network_path(dest_dir)):
-            RETRY_QUEUE.add(str(p), dest_path)
-        else:
-            logger.error(f"Error moving {file_path}: {e}")
-        return (None, None)
-
-
-def update_dashboard_json(downloads_path: Path) -> None:
-    """Write a small summary JSON used by the dashboard (if configured)."""
-    summary = {"last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    for entry in downloads_path.iterdir():
-        if entry.is_dir():
-            summary[entry.name] = str(len([f for f in entry.iterdir() if f.is_file()]))
-    try:
-        DOWNLOADS_JSON.parent.mkdir(parents=True, exist_ok=True)
-        with DOWNLOADS_JSON.open("w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
-    except Exception as e:
-        logger.error(f"Failed to update dashboard JSON: {e}")
-
-
-def initial_scan(downloads_path: Path) -> None:
-    """Process existing files in Downloads once at startup."""
-    for entry in downloads_path.iterdir():
-        if entry.is_file():
-            organize_file(str(entry))
-    update_dashboard_json(downloads_path)
-    logger.info("Initial scan complete")
-
-
-class DownloadsHandler(FileSystemEventHandler):
-    """Watchdog event handler for the Downloads folder."""
-
-    def __init__(self, downloads_path: Path):
-        self.downloads_path = downloads_path
-
     def on_created(self, event):
-        if not event.is_directory:
-            organize_file(str(event.src_path), self.downloads_path)
-            update_dashboard_json(self.downloads_path)
-    def on_moved(self, event):
-        if not event.is_directory:
-            organize_file(str(event.dest_path), self.downloads_path)
-            update_dashboard_json(self.downloads_path)
-    def on_modified(self, event):
-        if not event.is_directory:
-            organize_file(str(event.src_path), self.downloads_path)
-            update_dashboard_json(self.downloads_path)
-
-
-# -----------------------------
-# Main entrypoint
-# -----------------------------
-if __name__ == "__main__":
-    # Check if any watch folders are configured
-    if not WATCH_FOLDERS:
-        logger.error("No watch folders configured in organizer_config.json. Please configure watch_folders or watch_folder.")
-        print("ERROR: No watch folders configured. Please update your organizer_config.json with watch_folder or watch_folders.")
-        exit(1)
+        """Handle file creation."""
+        if event.is_dir:
+            return
+        self._process_file(Path(event.src_path))
     
-    # Ensure all watch folders exist
+    def on_modified(self, event):
+        """Handle file modification."""
+        if event.is_dir:
+            return
+        self._process_file(Path(event.src_path))
+    
+    def on_moved(self, event):
+        """Handle file moved into watch folder."""
+        if event.is_dir:
+            return
+        self._process_file(Path(event.dest_path))
+    
+    def _process_file(self, file_path: Path):
+        """Process a file for organization."""
+        with self.lock:
+            if file_path in self.processing:
+                return
+            self.processing.add(file_path)
+        
+        try:
+            for attempt in range(10):
+                if is_file_accessible(file_path):
+                    break
+                time.sleep(0.5)
+            else:
+                logger.warning(f"File not accessible after 5s: {file_path}")
+                return
+            
+            result = self.routing_engine.route_file(file_path)
+            if not result:
+                logger.debug(f"File skipped (ignored): {file_path.name}")
+                return
+            
+            dest_dir, reason = result
+            
+            try:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"Failed to create destination {dest_dir}: {e}")
+                return
+            
+            unique_dest = get_unique_path(dest_dir, file_path.name)
+            
+            try:
+                shutil.move(str(file_path), str(unique_dest))
+                logger.info(f"Organized: {file_path.name} -> {unique_dest} ({reason})")
+                log_file_move(str(file_path), str(unique_dest), reason.split(':')[0], reason)
+                
+                if CONFIG.get("duplicate_detection", {}).get("enabled"):
+                    file_hash = calculate_file_hash(Path(unique_dest))
+                    if file_hash:
+                        update_file_hash(Path(unique_dest), file_hash)
+            
+            except Exception as e:
+                logger.error(f"Failed to move {file_path}: {e}")
+                if is_network_path(dest_dir):
+                    self.retry_queue.add(str(file_path), str(unique_dest), reason)
+        
+        finally:
+            with self.lock:
+                self.processing.discard(file_path)
+
+
+# ============================================================================
+# MAIN ORGANIZER
+# ============================================================================
+
+def main():
+    """Main entry point for organizer service."""
+    logger.info("=" * 70)
+    logger.info("SortNStore File Organizer Starting")
+    logger.info("=" * 70)
+    logger.info(f"Watch folders: {[str(f) for f in WATCH_FOLDERS]}")
+    
+    routing_engine = RoutingEngine(CONFIG)
+    retry_queue = RetryQueue(CONFIG)
+    retry_queue.start()
+    
+    observer = Observer()
+    
     for folder in WATCH_FOLDERS:
-        folder.mkdir(parents=True, exist_ok=True)
-    # Initialize retry queue
-    RETRY_QUEUE = RetryQueue(CONFIG)
-    RETRY_QUEUE.start()
-    # Initial scan for each folder
-    for folder in WATCH_FOLDERS:
-        initial_scan(folder)
-    # Create observers per folder
-    observers = []
-    for folder in WATCH_FOLDERS:
-        event_handler = DownloadsHandler(folder)
-        observer = Observer()
-        observer.schedule(event_handler, str(folder), recursive=False)
-        observer.start()
-        observers.append(observer)
-        logger.info(f"Monitoring {folder} started")
-    print(f"Monitoring {len(WATCH_FOLDERS)} folder(s)... Press Ctrl+C to stop.")
+        if not folder.exists():
+            logger.warning(f"Watch folder doesn't exist: {folder}")
+            continue
+        
+        handler = SortNStoreHandler(folder, routing_engine, retry_queue)
+        observer.schedule(handler, str(folder), recursive=False)
+        logger.info(f"Watching: {folder}")
+    
+    observer.start()
+    logger.info("Organizer started successfully. Press Ctrl+C to stop.")
+    
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        for obs in observers:
-            obs.stop()
-        for obs in observers:
-            obs.join()
-    logger.info("Monitoring stopped")
+        logger.info("Stopping organizer...")
+        observer.stop()
+    
+    observer.join()
+    logger.info("Organizer stopped.")
+
+
+if __name__ == "__main__":
+    main()
