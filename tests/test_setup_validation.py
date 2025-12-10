@@ -15,7 +15,7 @@ def make_auth_header(user, password):
 
 @pytest.fixture()
 def app_client(tmp_path, monkeypatch):
-    # Use app factory from OrganizerDashboard, override config paths before create_app()
+    # Use app factory from SortNStoreDashboard, override config paths before create_app()
     cwd = os.path.dirname(os.path.dirname(__file__))
     org_config_src = os.path.join(cwd, 'organizer_config.json')
     dash_config_src = os.path.join(cwd, 'dashboard_config.json')
@@ -39,18 +39,18 @@ def app_client(tmp_path, monkeypatch):
     with open(dash_config_tmp, 'w', encoding='utf-8') as f:
         json.dump(dash_cfg, f, indent=4)
 
-    module_path = os.path.join(cwd, 'OrganizerDashboard.py')
-    spec = util.spec_from_file_location('OrganizerDashboard', module_path)
-    OD = util.module_from_spec(spec)
+    module_path = os.path.join(cwd, 'SortNStoreDashboard.py')
+    spec = util.spec_from_file_location('SortNStoreDashboard', module_path)
+    SD = util.module_from_spec(spec)
     loader = spec.loader
     assert loader is not None
     # Set paths prior to execution so module reads our temp files
-    OD.CONFIG_FILE = str(org_config_tmp)
-    OD.DASHBOARD_CONFIG_FILE = str(dash_config_tmp)
-    loader.exec_module(OD)
+    SD.CONFIG_FILE = str(org_config_tmp)
+    SD.DASHBOARD_CONFIG_FILE = str(dash_config_tmp)
+    loader.exec_module(SD)
 
     # Build app via factory
-    app = OD.create_app()
+    app = SD.create_app()
     client = app.test_client()
     # Ensure runtime dashboard setup flag is false
     from SortNStoreDashboard.config_runtime import get_dashboard_config, save_dashboard_config
@@ -69,7 +69,7 @@ def app_client(tmp_path, monkeypatch):
     save_config()
     from SortNStoreDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
-    return OD, client
+    return SD, client
 
 
 def test_initialize_missing_fields(app_client):

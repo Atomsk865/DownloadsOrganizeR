@@ -43,11 +43,11 @@ print("Checking project structure...")
 print("=" * 60)
 
 required_files = [
-    'OrganizerDashboard.py',
+    'SortNStoreDashboard.py',
     'Organizer.py',
     'organizer_config.json',
     'requirements.txt',
-    'OrganizerDashboard/routes/api_recent_files.py'
+    'SortNStoreDashboard/routes/api_recent_files.py'
 ]
 
 for file in required_files:
@@ -81,7 +81,7 @@ if missing_packages:
 else:
     print("\n✓ All required packages are installed")
 
-print("\nIf all checks pass, restart OrganizerDashboard.py and check for:")
+print("\nIf all checks pass, restart SortNStoreDashboard.py and check for:")
 print("  1. '✓ api_recent_files imported successfully' in console")
 print("  2. '✓ routes_api_recent_files registered' in console")
 print("  3. '/api/recent_files/virustotal' in registered routes list")

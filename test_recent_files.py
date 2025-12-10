@@ -61,7 +61,7 @@ def test_api_endpoints():
     print("Testing API Endpoints")
     print("="*60)
     print("\n1. Start the dashboard:")
-    print("   python OrganizerDashboard.py")
+    print("   python SortNStoreDashboard.py")
     print("\n2. Open browser to http://localhost:5000")
     print("\n3. Login with credentials (default: admin / <blank password>)")
     print("\n4. Look for 'Recent File Movements' card")

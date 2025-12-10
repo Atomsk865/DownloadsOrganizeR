@@ -194,7 +194,7 @@ class InstallerGUI:
             # Start dashboard if requested
             if self.start_dashboard.get():
                 self.update_progress('Starting dashboard...')
-                subprocess.Popen([venv_python, str(Path(target) / 'OrganizerDashboard.py')],
+                subprocess.Popen([venv_python, str(Path(target) / 'SortNStoreDashboard.py')],
                                cwd=target, creationflags=subprocess.CREATE_NEW_CONSOLE)
             
             self.update_progress('Installation complete!')

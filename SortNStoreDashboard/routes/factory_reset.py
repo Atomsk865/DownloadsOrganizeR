@@ -44,7 +44,7 @@ def factory_reset():
             setattr(main, 'dashboard_config', reset_dashboard_config.copy())
             
             # Update package module reference
-            pkg_module = sys.modules.get('OrganizerDashboard')
+            pkg_module = sys.modules.get('SortNStoreDashboard')
             if pkg_module:
                 try:
                     setattr(pkg_module, 'config', getattr(main, 'config'))
