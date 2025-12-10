@@ -832,7 +832,7 @@ function initDragAndDrop() {
     
     const gridContainer = document.getElementById('dashboard-grid');
     if (!gridContainer) {
-        console.warn('Dashboard grid container not found');
+        // Silently skip if not on dashboard page
         return;
     }
     
@@ -2575,9 +2575,9 @@ function showNotification(message, type) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ message, type })
-            }).then(() => {
-                // Refresh notification badge/count
-                if (typeof loadNotificationCenter === 'function') {
+            }).then(r => {
+                // Only refresh if successful
+                if (r.ok && typeof loadNotificationCenter === 'function') {
                     loadNotificationCenter();
                 }
             }).catch(() => {});
@@ -2779,7 +2779,9 @@ async function updateSidebarMetrics() {
         const response = await fetch('/metrics', {
             credentials: 'include',
             headers: getAuthHeaders()
-        });
+        }).catch(() => null);
+        
+        if (!response) return;
         
         if (response.ok) {
             const data = await response.json();
@@ -2915,7 +2917,7 @@ let duplicatesModuleLoaded = false;
 function initLazyLoadDuplicates() {
     const duplicatesCard = document.getElementById('card-duplicates');
     if (!duplicatesCard) {
-        console.warn('Duplicates card not found, skipping lazy load');
+        // Silently skip if not on dashboard page with duplicates module
         return;
     }
     
@@ -5059,8 +5061,9 @@ async function updateResourceSummary() {
     try {
         const response = await fetch('/metrics', {
             headers: getAuthHeaders ? getAuthHeaders() : {}
-        });
-        if (response.ok) {
+        }).catch(() => null);
+        
+        if (response && response.ok) {
             const data = await response.json();
             
             // Update memory display - API returns total_memory_mb and total_memory_gb
