@@ -106,13 +106,15 @@
     }
     
     .cidr-example {
-        background: var(--bg-tertiary, #f8f9fa);
-        border-left: 3px solid var(--info-color, #0dcaf0);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--info-color, #0dcaf0);
         padding: 0.75rem;
         margin-top: 0.5rem;
-        border-radius: 0.25rem;
+        border-radius: 0.5rem;
         font-family: 'Courier New', monospace;
         font-size: 0.85rem;
+        color: var(--text-primary);
     }
     
     /* Badge styling for enabled/disabled */
@@ -243,15 +245,116 @@
             <div class="config-grid">
                 <div class="config-item">
                     <label>Dashboard Title</label>
-                    <input type="text" class="form-control" id="cfg-brand-title" placeholder="SortNStore Dashboard">
+                    <input type="text" class="form-control" id="brand-title" placeholder="DownloadsOrganizeR" value="DownloadsOrganizeR">
+                    <small class="text-muted">Displayed in header and browser title.</small>
                 </div>
                 <div class="config-item">
-                    <label>Favicon URL</label>
-                    <input type="text" class="form-control" id="cfg-brand-favicon" placeholder="/static/img/favicon.ico">
+                    <label>Logo URL</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="brand-logo" placeholder="https://example.com/logo.png">
+                        <button class="btn btn-outline-secondary" type="button" data-theme-action="extract-logo">
+                            <i class="bi bi-eyedropper"></i> Extract Colors
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2 mt-2 align-items-center">
+                        <input type="file" class="form-control" id="brand-logo-file" accept="image/*" style="max-width: 280px;">
+                        <small class="text-muted">Upload to set URL and extract colors.</small>
+                    </div>
                 </div>
             </div>
+
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Primary</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-primary" data-color-id="primary" value="#0d6efd">
+                </div>
+                <div class="config-item">
+                    <label>Secondary</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-secondary" data-color-id="secondary" value="#6c757d">
+                </div>
+                <div class="config-item">
+                    <label>Success</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-success" data-color-id="success" value="#198754">
+                </div>
+                <div class="config-item">
+                    <label>Danger</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-danger" data-color-id="danger" value="#dc3545">
+                </div>
+                <div class="config-item">
+                    <label>Warning</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-warning" data-color-id="warning" value="#ffc107">
+                </div>
+                <div class="config-item">
+                    <label>Info</label>
+                    <input type="color" class="form-control form-control-color" id="brand-color-info" data-color-id="info" value="#0dcaf0">
+                </div>
+            </div>
+
+            <div class="config-grid mt-2">
+                <div class="config-item">
+                    <label>Border Radius</label>
+                    <select class="form-select" id="brand-border-radius">
+                        <option value="4px">4px</option>
+                        <option value="6px" selected>6px</option>
+                        <option value="8px">8px</option>
+                        <option value="12px">12px</option>
+                        <option value="16px">16px</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Font Size</label>
+                    <select class="form-select" id="brand-font-size">
+                        <option value="95%">95%</option>
+                        <option value="100%" selected>100%</option>
+                        <option value="105%">105%</option>
+                        <option value="110%">110%</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Shadow</label>
+                    <select class="form-select" id="brand-shadow">
+                        <option value="none">None</option>
+                        <option value="light">Light</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="strong">Strong</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="config-grid mt-2">
+                <div class="config-item">
+                    <label>Theme Name</label>
+                    <input type="text" class="form-control" id="brand-theme-name" placeholder="Custom Theme">
+                </div>
+                <div class="config-item">
+                    <label>Custom CSS (optional)</label>
+                    <textarea class="form-control" id="brand-css" rows="3" placeholder="Add CSS overrides (e.g., .card{backdrop-filter: blur(6px);})"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-2">
+                <select class="form-select w-auto preset-theme-select" style="min-width: 220px;">
+                    <option value="" selected>Apply preset theme...</option>
+                    <option value="default">Default Blue</option>
+                    <option value="forest">Forest Green</option>
+                    <option value="ocean">Ocean Blue</option>
+                    <option value="mint">Mint Fresh</option>
+                    <option value="high-contrast-carbon">High Contrast - Carbon</option>
+                    <option value="high-contrast-royal">High Contrast - Royal</option>
+                    <option value="halloween">Halloween Night</option>
+                    <option value="christmas">Christmas Cozy</option>
+                    <option value="easter">Easter Pastels</option>
+                    <option value="independence">Independence Day</option>
+                    <option value="soft-sand">Soft Sand</option>
+                    <option value="soft-sky">Soft Sky</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="button" data-theme-action="preview"><i class="bi bi-eye"></i> Preview</button>
+                <button class="btn btn-outline-info" type="button" data-theme-action="export"><i class="bi bi-download"></i> Export</button>
+                <button class="btn btn-outline-warning" type="button" data-theme-action="reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+            </div>
+
             <div class="config-actions">
-                <button class="btn btn-primary" onclick="saveBrandingConfig()">
+                <button class="btn btn-primary" id="save-branding-btn" data-theme-action="save">
                     <i class="bi bi-save"></i> Save Branding
                 </button>
             </div>
@@ -933,36 +1036,223 @@ async function saveFeaturesConfig() {
     }
 }
 
-// Stub functions for other tabs (implement as needed)
-function loadUsers() { /* Implement user loading */ }
-function loadRoleRights() { /* Implement role rights loading */ }
-function addUser() { /* Implement add user */ }
-function saveRoleRights() { /* Implement save role rights */ }
-function filterUsers() { /* Implement user filtering */ }
-function saveBrandingConfig() { /* Implement branding save */ }
-function saveApiSettings() { /* Implement API settings save */ }
-function loadServiceLogs() { /* Implement log loading */ }
-function clearServiceLogs() { /* Implement log clearing */ }
-function exportConfig() { /* Implement config export */ }
-function handleImportFile(event) { /* Implement config import */ }
-function factoryReset() { /* Implement factory reset */ }
-function resetSetup() { /* Implement setup reset */ }
-function repairAuth() { /* Implement auth repair */ }
-
-// Helper function for auth headers
-function getAuthHeaders() {
-    return {
-        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
-    };
+// Load shared config actions (users, features, network, etc.)
+</script>
+<script src="{{ url_for('static', filename='js/modules/config-actions.js') }}"></script>
+<script>
+// Map tab actions to real implementations (fallback to notices when unavailable)
+function loadUsers() {
+    if (typeof fetchConfig === 'function') return fetchConfig();
+    showNotification('Unable to load users: config actions not initialized.', 'warning');
 }
 
-// Notification helper
-function showNotification(message, type) {
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
-    } else {
-        alert(message);
+function loadRoleRights() {
+    if (typeof fetchConfig === 'function') return fetchConfig();
+    showNotification('Role rights loading is not available in this view yet.', 'info');
+}
+
+function addUser() {
+    if (typeof saveUser === 'function') return saveUser();
+    showNotification('Add user is unavailable: missing handler.', 'warning');
+}
+
+function saveRoleRights() {
+    showNotification('Role permissions editing is not implemented in this view yet.', 'info');
+}
+
+function saveBrandingConfig() {
+    if (window.ThemeBuilder?.saveBranding) return window.ThemeBuilder.saveBranding();
+    showNotification('Branding save is not available (ThemeBuilder missing).', 'warning');
+}
+
+function saveApiSettings() {
+    showNotification('API settings save is not implemented in this view yet.', 'info');
+}
+
+function loadServiceLogs() {
+    showNotification('Service logs are not available in this view yet.', 'info');
+}
+
+function clearServiceLogs() {
+    showNotification('Service log clearing is not available in this view yet.', 'info');
+}
+
+async function exportConfig() {
+    try {
+        const response = await fetch('/api/config/export', {
+            method: 'GET',
+            headers: typeof getAuthHeaders === 'function' ? getAuthHeaders() : {}
+        });
+
+        if (!response.ok) throw new Error(`Export failed: ${response.statusText}`);
+
+        const disposition = response.headers.get('Content-Disposition');
+        let filename = 'organizer_backup.json';
+        if (disposition && disposition.includes('filename=')) {
+            const matches = /filename[^;=\n]*=((["']).*?\2|[^;\n]*)/.exec(disposition);
+            if (matches && matches[1]) filename = matches[1].replace(/['"]/g, '');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showNotification('Configuration exported successfully!', 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        showNotification(`Export failed: ${error.message}`, 'danger');
     }
 }
+
+async function handleImportFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const csrfToken = window.__csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const baseHeaders = { ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {}), 'X-CSRFToken': csrfToken };
+
+    const validateForm = new FormData();
+    validateForm.append('file', file);
+
+    try {
+        const validateResponse = await fetch('/api/config/validate', {
+            method: 'POST',
+            headers: baseHeaders,
+            body: validateForm
+        });
+
+        const validation = await validateResponse.json();
+        if (!validation.valid) {
+            let errorMsg = 'Invalid configuration file';
+            if (validation.errors?.length) errorMsg += ':\n- ' + validation.errors.join('\n- ');
+            showNotification(errorMsg, 'danger');
+            event.target.value = '';
+            return;
+        }
+
+        if (validation.warnings?.length) {
+            console.warn('Config import warnings:', validation.warnings);
+        }
+
+        const confirmMsg = `Import configuration backup?\n\nExported: ${validation.export_timestamp || 'unknown'}\nVersion: ${validation.export_version || 'unknown'}\n\nThis will replace current settings. Continue?`;
+        if (!confirm(confirmMsg)) {
+            event.target.value = '';
+            return;
+        }
+
+        const importForm = new FormData();
+        importForm.append('file', file);
+        importForm.append('import_organizer', 'true');
+        importForm.append('import_dashboard', 'true');
+
+        const importResponse = await fetch('/api/config/import', {
+            method: 'POST',
+            headers: baseHeaders,
+            body: importForm
+        });
+
+        const result = await importResponse.json();
+        if (result.success) {
+            showNotification('Configuration imported successfully! Reloading...', 'success');
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            throw new Error(result.error || 'Import failed');
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        showNotification(`Import failed: ${error.message}`, 'danger');
+    } finally {
+        event.target.value = '';
+    }
+}
+
+function factoryReset() {
+    if (!confirm('⚠️ WARNING: Reset ALL configurations to defaults?\n\nIncludes:\n- File organization rules\n- User accounts (except admin)\n- Dashboard layout\n- All settings\n\nCannot be undone!')) return;
+    if (!confirm('Are you absolutely sure? This will erase all custom configurations!')) return;
+    showNotification('Performing factory reset...', 'info');
+    fetch('/api/factory-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {}) }
+    })
+    .then(r => r.json().then(j => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+        if (ok && j.success) {
+            showNotification('Factory reset complete! Redirecting...', 'success');
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+        } else {
+            showNotification(j.error || 'Factory reset failed', 'danger');
+        }
+    })
+    .catch(err => showNotification('Factory reset error: ' + err.message, 'danger'));
+}
+
+function resetSetup() {
+    if (!confirm('Re-run setup wizard? Users will be redirected to setup page and must complete it again to access dashboard.')) return;
+    fetch('/api/setup/reset', { method: 'POST', headers: (typeof getAuthHeaders === 'function' ? getAuthHeaders() : {}) })
+        .then(r => r.json().then(j => ({ ok: r.ok, j })))
+        .then(({ ok, j }) => {
+            if (ok && j.success) {
+                showNotification('Setup reset. Redirecting to wizard...', 'success');
+                setTimeout(() => { window.location.href = '/setup'; }, 1500);
+            } else {
+                showNotification(j.error || 'Reset failed', 'danger');
+            }
+        });
+}
+
+async function repairAuth() {
+    const username = (document.getElementById('new-username')?.value || '').trim();
+    const password = (document.getElementById('user-new-password')?.value || '').trim();
+    const body = { username: username || undefined, password: password || undefined, force_basic: true };
+    showNotification('Repairing auth...', 'info');
+    try {
+        const resp = await fetch('/api/admin/repair_auth', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(typeof getAuthHeaders === 'function' ? getAuthHeaders() : {}) },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            showNotification('Auth repaired for ' + data.username, 'success');
+            if (typeof fetchConfig === 'function') fetchConfig();
+        } else {
+            showNotification(data.error || 'Auth repair failed', 'danger');
+        }
+    } catch (e) {
+        showNotification('Auth repair error: ' + e.message, 'danger');
+    }
+}
+</script>
+<!-- Theme Builder (customizer with logo color extraction) -->
+<script type="module">
+    const themeModule = await import('{{ url_for("static", filename="js/modules/theme-builder.js") }}');
+    const ThemeBuilder = themeModule.ThemeBuilder || themeModule.default;
+    if (ThemeBuilder?.init) {
+        ThemeBuilder.init();
+        window.ThemeBuilder = ThemeBuilder;
+    }
+</script>
+<script>
+// Logo file to data URL + optional auto extraction
+document.addEventListener('change', (e) => {
+    if (e.target.id !== 'brand-logo-file') return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        const url = reader.result;
+        const input = document.getElementById('brand-logo');
+        if (input) input.value = url;
+        if (typeof extractColorsFromLogo === 'function') extractColorsFromLogo();
+    };
+    reader.readAsDataURL(file);
+});
 </script>
 {% endblock %}

@@ -235,6 +235,75 @@
                 padding: 0.85rem;
             }
         }
+
+        /* Module cards (align dashboard modules with config sections) */
+        .dashboard-module,
+        .card.module-card {
+            margin-bottom: 1rem;
+        }
+        .dashboard-module .card,
+        .card.module-card {
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--bg-secondary);
+            transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+        .dashboard-module .card:hover,
+        .card.module-card:hover {
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transform: translateY(-1px);
+        }
+        .dashboard-module .card-header,
+        .card.module-card .card-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            padding: 0.9rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dashboard-module .card-header b,
+        .card.module-card .card-header b {
+            font-weight: 600;
+        }
+        .dashboard-module .card-body,
+        .card.module-card .card-body {
+            padding: 1rem !important;
+            background: var(--bg-secondary);
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+        .dashboard-module .card-body.tight,
+        .card.module-card .card-body.tight {
+            padding: 0.75rem !important;
+        }
+        .dashboard-module .toggle-icon,
+        .card.module-card .toggle-icon {
+            color: var(--text-secondary);
+        }
+        .dashboard-module .hide-toggle,
+        .card.module-card .hide-toggle {
+            color: var(--text-secondary);
+        }
+        .dashboard-module .hide-toggle:hover,
+        .card.module-card .hide-toggle:hover {
+            color: #dc3545;
+        }
+        .dashboard-module .drag-handle,
+        .card.module-card .drag-handle {
+            color: var(--text-secondary);
+        }
+        .dashboard-module .drag-handle:hover,
+        .card.module-card .drag-handle:hover {
+            color: #0d6efd;
+        }
+        .dashboard-module .badge,
+        .card.module-card .badge {
+            border-radius: 0.4rem;
+        }
         
         /* Badges contrast in dark mode */
         [data-theme="dark"] .badge.bg-secondary {
