@@ -560,6 +560,73 @@
     </div>
   </div>
 
+  <!-- Organizer Status & Settings -->
+  <div class="config-module" data-module="organizer-status" draggable="true">
+    <div class="card" data-right="manage_service">
+      <div class="card-header d-flex align-items-center">
+        <b>Organizer Service Control</b>
+        <span class="drag-handle ms-auto" style="cursor: move; padding: 4px 10px; font-size: 1.1rem; color: #6c757d;"><i class="bi bi-grip-vertical"></i></span>
+      </div>
+      <div class="card-body p-2">
+        <!-- Status Display -->
+        <div class="alert alert-info mb-3" id="organizer-status-alert">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Status:</strong>
+            <span class="badge ms-2" id="organizer-enabled-badge">Loading...</span>
+          </div>
+          <div id="organizer-status-details" class="small"></div>
+        </div>
+
+        <!-- Configuration Display -->
+        <div class="mb-3">
+          <label class="form-label mb-1"><small><b>Destination Mode</b></small></label>
+          <select class="form-select form-select-sm" id="organizer-dest-mode">
+            <option value="subfolder">Subfolder (organize within watch folder)</option>
+            <option value="custom">Custom Base Destination</option>
+          </select>
+          <small class="text-muted">Subfolder: Create category folders in each watch folder. Custom: Send all files to one base location.</small>
+        </div>
+
+        <div class="mb-3" id="organizer-base-dest-group" style="display:none;">
+          <label class="form-label mb-1"><small><b>Custom Base Destination</b></small></label>
+          <input type="text" class="form-control form-control-sm" id="organizer-base-dest" placeholder="e.g., D:/Organized or \\server\share\organized">
+          <small class="text-muted">All categories will be created under this path. Supports local, UNC, and cloud storage paths.</small>
+        </div>
+
+        <!-- Watch Folders Summary -->
+        <div class="mb-3">
+          <label class="form-label mb-1"><small><b>Monitored Folders</b></small></label>
+          <div id="organizer-watch-folders-summary" class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto;">
+            <div class="text-muted small">Loading...</div>
+          </div>
+          <small class="text-muted">Configure watch folders in the "Watched Folders" section above.</small>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="d-flex gap-2">
+          <button class="btn btn-success btn-sm" onclick="enableOrganizer()" id="btn-enable-organizer">
+            <i class="bi bi-play-circle"></i> Enable Organizer
+          </button>
+          <button class="btn btn-warning btn-sm" onclick="disableOrganizer()" id="btn-disable-organizer" style="display:none;">
+            <i class="bi bi-pause-circle"></i> Disable Organizer
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="updateOrganizerConfig()">
+            <i class="bi bi-save"></i> Save Configuration
+          </button>
+          <button class="btn btn-info btn-sm" onclick="refreshOrganizerStatus()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+
+        <div class="alert alert-warning mt-3 mb-0">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <small><strong>Important:</strong> After enabling/disabling or changing configuration, restart the service for changes to take effect.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Config Actions Modal -->
   <div class="modal fade" id="configActionsModal" tabindex="-1" aria-labelledby="configActionsLabel" aria-hidden="true" role="dialog">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1826,6 +1893,180 @@ function filterUsers() {
       }
     });
   }
+
+  // ============================================
+  // ORGANIZER STATUS & CONTROL FUNCTIONS
+  // ============================================
+  
+  async function refreshOrganizerStatus() {
+    try {
+      const res = await fetch('/api/organizer/status', {
+        credentials: 'include',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Update status badge
+        const badge = document.getElementById('organizer-enabled-badge');
+        const statusAlert = document.getElementById('organizer-status-alert');
+        const detailsDiv = document.getElementById('organizer-status-details');
+        
+        if (data.organizer_enabled) {
+          badge.textContent = 'ENABLED';
+          badge.className = 'badge bg-success ms-2';
+          statusAlert.className = 'alert alert-success mb-3';
+          detailsDiv.innerHTML = '<i class="bi bi-check-circle me-1"></i>The organizer is actively monitoring and organizing files.';
+          document.getElementById('btn-enable-organizer').style.display = 'none';
+          document.getElementById('btn-disable-organizer').style.display = 'inline-block';
+        } else {
+          badge.textContent = 'DISABLED';
+          badge.className = 'badge bg-warning ms-2';
+          statusAlert.className = 'alert alert-warning mb-3';
+          detailsDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>The organizer is disabled. Files will not be organized until you enable it.';
+          document.getElementById('btn-enable-organizer').style.display = 'inline-block';
+          document.getElementById('btn-disable-organizer').style.display = 'none';
+        }
+        
+        // Update destination mode
+        const destMode = document.getElementById('organizer-dest-mode');
+        destMode.value = data.destination_mode || 'subfolder';
+        
+        // Update base destination
+        const baseDest = document.getElementById('organizer-base-dest');
+        baseDest.value = data.base_destination || '';
+        
+        // Show/hide custom destination input
+        const baseDestGroup = document.getElementById('organizer-base-dest-group');
+        baseDestGroup.style.display = (data.destination_mode === 'custom') ? 'block' : 'none';
+        
+        // Update watch folders summary
+        const watchFoldersSummary = document.getElementById('organizer-watch-folders-summary');
+        if (data.watch_folders && data.watch_folders.length > 0) {
+          watchFoldersSummary.innerHTML = data.watch_folders.map(f => 
+            `<div class="mb-1"><i class="bi bi-folder me-2"></i><code class="small">${f}</code></div>`
+          ).join('');
+        } else {
+          watchFoldersSummary.innerHTML = '<div class="text-warning small"><i class="bi bi-exclamation-triangle me-2"></i>No watch folders configured!</div>';
+        }
+      } else {
+        showNotification('Failed to load organizer status: ' + (data.error || 'Unknown error'), 'danger');
+      }
+    } catch (e) {
+      showNotification('Error refreshing organizer status: ' + e.message, 'danger');
+    }
+  }
+  
+  async function enableOrganizer() {
+    if (!confirm('Enable the organizer service?\n\nThe service will begin monitoring and organizing files immediately after restart.')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/organizer/enable', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ enabled: true })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        showNotification(data.message || 'Organizer enabled successfully', 'success');
+        await refreshOrganizerStatus();
+      } else {
+        showNotification('Failed to enable organizer: ' + (data.error || 'Unknown error'), 'danger');
+      }
+    } catch (e) {
+      showNotification('Error enabling organizer: ' + e.message, 'danger');
+    }
+  }
+  
+  async function disableOrganizer() {
+    if (!confirm('Disable the organizer service?\n\nThe service will stop monitoring and organizing files after restart.')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/organizer/enable', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ enabled: false })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        showNotification(data.message || 'Organizer disabled successfully', 'success');
+        await refreshOrganizerStatus();
+      } else {
+        showNotification('Failed to disable organizer: ' + (data.error || 'Unknown error'), 'danger');
+      }
+    } catch (e) {
+      showNotification('Error disabling organizer: ' + e.message, 'danger');
+    }
+  }
+  
+  async function updateOrganizerConfig() {
+    try {
+      const destMode = document.getElementById('organizer-dest-mode').value;
+      const baseDest = document.getElementById('organizer-base-dest').value.trim();
+      
+      // Validate
+      if (destMode === 'custom' && !baseDest) {
+        showNotification('Please specify a base destination path for custom mode', 'warning');
+        return;
+      }
+      
+      const payload = {
+        destination_mode: destMode
+      };
+      
+      if (destMode === 'custom') {
+        payload.base_destination = baseDest;
+      }
+      
+      const res = await fetch('/api/organizer/config', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        showNotification(data.message || 'Configuration saved successfully', 'success');
+        await refreshOrganizerStatus();
+      } else {
+        showNotification('Failed to save configuration: ' + (data.error || 'Unknown error'), 'danger');
+      }
+    } catch (e) {
+      showNotification('Error saving configuration: ' + e.message, 'danger');
+    }
+  }
+  
+  // Event listener for destination mode changes
+  document.addEventListener('DOMContentLoaded', function() {
+    const destModeSelect = document.getElementById('organizer-dest-mode');
+    if (destModeSelect) {
+      destModeSelect.addEventListener('change', function() {
+        const baseDestGroup = document.getElementById('organizer-base-dest-group');
+        baseDestGroup.style.display = (this.value === 'custom') ? 'block' : 'none';
+      });
+    }
+    
+    // Load initial organizer status
+    refreshOrganizerStatus();
+  });
 
   function isValidPath(p) {
     if (!p || typeof p !== 'string') return false;

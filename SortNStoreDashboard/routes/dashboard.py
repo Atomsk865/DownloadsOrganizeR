@@ -154,6 +154,11 @@ def get_organizer_config():
         # Legacy single watch folder and new list for multi-folder support
         "watch_folder": config.get("watch_folder", ""),
         "watch_folders": config.get("watch_folders", []),
+        # Organizer control settings
+        "organizer_enabled": config.get("organizer_enabled", False),
+        "destination_mode": config.get("destination_mode", "subfolder"),
+        "base_destination": config.get("base_destination", ""),
+        "category_destinations": config.get("category_destinations", {}),
         # Feature flags and VirusTotal API key for UI gating
         "features": config.get("features", {}),
         "vt_api_key": config.get("vt_api_key") or config.get("virustotal_api_key") or ""
