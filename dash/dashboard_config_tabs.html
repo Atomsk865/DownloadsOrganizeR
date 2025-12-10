@@ -480,7 +480,7 @@
                     <input type="text" class="form-control" id="new-username" placeholder="Username">
                 </div>
                 <div class="col-md-4">
-                    <input type="password" class="form-control" id="new-password" placeholder="Password">
+                    <input type="password" class="form-control" id="user-new-password" placeholder="Password">
                 </div>
                 <div class="col-md-2">
                     <select class="form-select" id="new-role">
@@ -658,6 +658,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Security Configuration Functions
 async function loadSecurityConfig() {
+    if (!__authHeader) {
+        showNotification('Please login to view security settings.', 'warning');
+        return;
+    }
     try {
         const response = await fetch('/api/security/config', {
             credentials: 'include',
@@ -693,6 +697,10 @@ async function loadSecurityConfig() {
 }
 
 async function saveSecurityConfig(section) {
+    if (!__authHeader) {
+        showNotification('Please login before saving security settings.', 'warning');
+        return;
+    }
     const config = {};
     
     if (section === 'rate_lockout' || section === 'all') {

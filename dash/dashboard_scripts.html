@@ -3068,10 +3068,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(data => {
                 __rights = data.rights || {};
                 __configVersion = data.config_version || 0;
-                document.getElementById('login-btn').classList.add('d-none');
-                document.getElementById('logout-btn').classList.remove('d-none');
-                if (__rights.manage_config || __rights.modify_layout) {
-                    document.getElementById('config-link').classList.remove('d-none');
+                const loginBtn = document.getElementById('login-btn');
+                if (loginBtn) loginBtn.classList.add('d-none');
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) logoutBtn.classList.remove('d-none');
+                const configLink = document.getElementById('config-link');
+                if (configLink && (__rights.manage_config || __rights.modify_layout)) {
+                    configLink.classList.remove('d-none');
                 }
                 applyRights();
                 if (__rights.view_recent_files) refreshRecentFiles();
@@ -3797,6 +3800,7 @@ let notificationCenterOpen = false;
 let notificationPollingInterval = null;
 
 async function loadNotificationCenter() {
+    if (!__authHeader) return; // Skip when not authenticated to avoid pointless fetches
     try {
         const response = await fetch('/api/notifications', {
             credentials: 'include',

@@ -563,19 +563,28 @@
                 </div>
                 </div>
     </div>
-    <div class="dashboard-container">
-            <!-- Removed draggable resizer for new sidebar layout -->
+    <div class="page-shell">
+        <div class="page-header">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h5 class="mb-0">Organizer Dashboard</h5>
+                <span id="service-badge" class="badge bg-{{ 'success' if service_status == 'Running' else 'danger' }}" style="font-size: 0.85rem;">{{ service_status }}</span>
+            </div>
+            <div class="page-actions">
+                <button id="login-btn" class="btn btn-primary btn-sm" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
+                <button id="logout-btn" class="btn btn-secondary btn-sm d-none" onclick="if(typeof logout==='function')logout()">Logout</button>
+                <a id="config-link" href="/config" class="btn btn-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
+                <button id="reset-layout-btn" class="btn btn-warning btn-sm d-none" title="Reset to default layout" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
+                <button id="show-hidden-btn" class="btn btn-info btn-sm d-none" title="Show hidden modules" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
+                <button id="btn-add-widget-main" class="btn btn-primary btn-sm" onclick="if(typeof addCustomWidget==='function')addCustomWidget()"><i class="bi bi-plus-circle"></i> Add Widget</button>
+                <button id="dev-reset-btn" class="btn btn-danger btn-sm dev-only-element" title="DEV: Delete all config and force setup wizard" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
+                <button id="service-name-btn" class="btn btn-info btn-sm" style="display:none;" title="Click to copy service name" onclick="if(typeof copyServiceName==='function')copyServiceName()">Service: <span id="service-name">...</span></button>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
             <!-- Main Content Grid -->
             <div id="dashboard-grid">
-                    <button id="login-btn" class="btn btn-primary btn-sm" onclick="if(typeof promptLogin==='function')promptLogin()">Login</button>
-                    <button id="logout-btn" class="btn btn-secondary btn-sm d-none" onclick="if(typeof logout==='function')logout()">Logout</button>
-                    <a id="config-link" href="/config" class="btn btn-success btn-sm d-none" title="Dashboard Configuration"><i class="bi bi-gear-fill"></i> Config</a>
-                    <button id="reset-layout-btn" class="btn btn-warning btn-sm d-none" title="Reset to default layout" onclick="if(typeof resetDashboardLayout==='function')resetDashboardLayout()"><i class="bi bi-arrow-clockwise"></i> Reset Layout</button>
-                    <button id="show-hidden-btn" class="btn btn-info btn-sm d-none" title="Show hidden modules" onclick="if(typeof showHiddenModules==='function')showHiddenModules()"><i class="bi bi-eye"></i> Show Hidden</button>
-                    <button id="dev-reset-btn" class="btn btn-danger btn-sm dev-only-element" title="DEV: Delete all config and force setup wizard" onclick="if(typeof devResetToSetup==='function')devResetToSetup()"><i class="bi bi-exclamation-triangle"></i> DEV Reset</button>
-                    <a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank" class="btn btn-dark btn-sm">GitHub</a>
-                    <button id="service-name-btn" class="btn btn-info btn-sm" style="display:none;" title="Click to copy service name" onclick="if(typeof copyServiceName==='function')copyServiceName()">Service: <span id="service-name">...</span></button>
-                </div>
+            </div>
             <!-- System Info Card (Top, non-draggable) -->
             {% include "modules/system_info.html" %}
             
@@ -607,7 +616,7 @@
             <div id="custom-widgets-container">
                 <!-- Widgets inserted here by JS -->
             </div>
-            
+        </div>
     </div>
         <!-- VirusTotal Modal -->
         <div class="modal fade" id="vtModal" tabindex="-1" aria-labelledby="vtModalLabel" aria-hidden="true" role="dialog">
