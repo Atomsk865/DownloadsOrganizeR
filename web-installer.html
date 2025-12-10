@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortNStore - Web Installer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .install-method {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .install-method h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .install-method h3 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .code-block code {
+            display: block;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+        
+        .copy-btn.copied {
+            background: #28a745;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #5568d3;
+        }
+        
+        .download-btn i {
+            margin-right: 8px;
+        }
+        
+        .requirements {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .requirements h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .requirements ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+        
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+        }
+        
+        .steps li {
+            counter-increment: step-counter;
+            margin-bottom: 20px;
+            padding-left: 50px;
+            position: relative;
+        }
+        
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .alert {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .alert strong {
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 SortNStore</h1>
+            <p>Automated File Organization Made Simple</p>
+        </div>
+        
+        <div class="content">
+            <div class="requirements">
+                <h4>⚙️ System Requirements</h4>
+                <ul>
+                    <li>Windows 10/11 or Windows Server 2016+</li>
+                    <li>Administrator privileges</li>
+                    <li>Internet connection</li>
+                    <li>Python 3.8+ (installer will help if not installed)</li>
+                </ul>
+            </div>
+            
+            <div class="install-method">
+                <h2>🚀 Quick Install (Recommended)</h2>
+                
+                <h3>Method 1: One-Command Install</h3>
+                <ol class="steps">
+                    <li>Right-click <strong>PowerShell</strong> and select <strong>"Run as Administrator"</strong></li>
+                    <li>Copy and paste this command:
+                        <div class="code-block">
+                            <button class="copy-btn" onclick="copyCode(this, 'cmd1')">Copy</button>
+                            <code id="cmd1">Set-ExecutionPolicy Bypass -Scope Process -Force; `
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/Install-DownloadsOrganizeR.ps1" -OutFile "$env:TEMP\Install-DownloadsOrganizeR.ps1"; `
+& "$env:TEMP\Install-DownloadsOrganizeR.ps1"</code>
+                        </div>
+                    </li>
+                    <li>Press <strong>Enter</strong> and follow the installation wizard</li>
+                </ol>
+                
+                <h3>Method 2: Download and Run</h3>
+                <p>Download the installer and run it:</p>
+                <a href="https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/Install-DownloadsOrganizeR.ps1" 
+                   download="Install-DownloadsOrganizeR.ps1" 
+                   class="download-btn">
+                    📥 Download PowerShell Installer
+                </a>
+                <a href="https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/Install.bat" 
+                   download="Install.bat" 
+                   class="download-btn">
+                    📥 Download Batch Installer
+                </a>
+                
+                <p style="margin-top: 15px;">
+                    After downloading, right-click the file and select <strong>"Run as Administrator"</strong>
+                </p>
+            </div>
+            
+            <div class="install-method">
+                <h2>📦 What Gets Installed</h2>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>✅ Python 3.8+ (if not already installed)</li>
+                    <li>✅ Latest version from GitHub</li>
+                    <li>✅ All required dependencies</li>
+                    <li>✅ Windows service (auto-starts on boot)</li>
+                    <li>✅ Health monitoring (checks every 5 minutes)</li>
+                    <li>✅ Desktop shortcut for dashboard</li>
+                </ul>
+            </div>
+            
+            <div class="install-method">
+                <h2>🎯 After Installation</h2>
+                <ol class="steps">
+                    <li>Click the <strong>"DownloadsOrganizeR Dashboard"</strong> desktop shortcut</li>
+                    <li>Dashboard opens in your browser at <code>http://localhost:5000</code></li>
+                    <li>Login with default credentials:
+                        <div class="code-block">
+                            <code>Username: admin
+Password: change_this_password</code>
+                        </div>
+                    </li>
+                    <li>Change your password in Settings</li>
+                    <li>Configure watch folders and file categories</li>
+                </ol>
+            </div>
+            
+            <div class="alert">
+                <strong>💡 Tip:</strong> The organizer service runs automatically in the background. 
+                Files in your Downloads folder will be automatically organized into categories like 
+                Images, Documents, Videos, etc.
+            </div>
+            
+            <div class="install-method">
+                <h2>📚 Additional Resources</h2>
+                <ul>
+                    <li><a href="https://github.com/Atomsk865/DownloadsOrganizeR" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://github.com/Atomsk865/DownloadsOrganizeR/blob/main/INSTALL.md" target="_blank">Detailed Installation Guide</a></li>
+                    <li><a href="https://github.com/Atomsk865/DownloadsOrganizeR/blob/main/QUICKSTART.md" target="_blank">Quick Reference</a></li>
+                    <li><a href="https://github.com/Atomsk865/DownloadsOrganizeR/issues" target="_blank">Report Issues</a></li>
+                </ul>
+            </div>
+            
+            <div class="install-method">
+                <h2>❓ Troubleshooting</h2>
+                
+                <h3>Python Not Found</h3>
+                <p>Download Python from <a href="https://www.python.org/downloads/" target="_blank">python.org</a> 
+                and make sure to check "Add Python to PATH" during installation.</p>
+                
+                <h3>Permission Denied</h3>
+                <p>Make sure you're running PowerShell or the installer <strong>as Administrator</strong>. 
+                Right-click and select "Run as Administrator".</p>
+                
+                <h3>Service Won't Start</h3>
+                <p>Check logs at <code>C:\DownloadsOrganizeR\service-logs\</code> for error details.</p>
+                
+                <h3>Need More Help?</h3>
+                <p>Visit our <a href="https://github.com/Atomsk865/DownloadsOrganizeR/issues" target="_blank">GitHub Issues</a> 
+                page or consult the <a href="https://github.com/Atomsk865/DownloadsOrganizeR/blob/main/INSTALL.md" target="_blank">installation guide</a>.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function copyCode(button, elementId) {
+            const code = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy. Please copy manually.');
+            });
+        }
+    </script>
+</body>
+</html>

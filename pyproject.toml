@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "downloads-organizer"
+name = "sortnstore"
 version = "1.0.0"
 description = "Windows file organization service with web dashboard"
 

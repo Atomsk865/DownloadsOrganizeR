@@ -1,7 +1,7 @@
 """
-DownloadsOrganizeR System Tray Application
+SortNStore System Tray Application
 
-A lightweight system tray application for managing the DownloadsOrganizeR service and dashboard.
+A lightweight system tray application for managing the SortNStore service and dashboard.
 Provides quick access to start/stop service, launch dashboard, and update from GitHub.
 """
 

@@ -1,4 +1,4 @@
-# DownloadsOrganizeR
+# SortNStore
 
 **Intelligent file organization service for Windows that automatically categorizes downloaded files into organized folders.**
 
