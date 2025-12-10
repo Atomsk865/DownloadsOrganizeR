@@ -170,7 +170,26 @@ DASHBOARD_CONFIG_DEFAULT = {
             "Logs (real-time)"
         ],
         "hidden_sections": []
-    }
+    },
+    # Security configuration settings
+    "security_config": {
+        # Rate limiting (login attempts per IP)
+        "rate_limit": 10,              # requests per window
+        "rate_window": 60,              # seconds
+        # Failed login lockout
+        "lockout_attempts": 5,          # failed attempts before lockout
+        "lockout_duration": 5,          # minutes
+        # Session timeout
+        "session_lifetime": 60,         # minutes (absolute max)
+        "idle_timeout": 30,             # minutes (inactivity timeout)
+        "idle_warning": 25,             # minutes (show warning)
+        # Audit log settings
+        "audit_retention_days": 90,     # days to keep audit entries
+        "audit_max_entries": 10000      # max audit log size
+    },
+    # IP Allowlist (CIDR-based access control)
+    # Empty array = all IPs allowed, non-empty = restrict to listed ranges
+    "ip_allowlist": []
 }
 
 from SortNStoreDashboard.config_runtime import save_dashboard_config
