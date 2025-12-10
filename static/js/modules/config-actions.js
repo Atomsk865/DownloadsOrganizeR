@@ -4,10 +4,14 @@
 // Utilities and state (scoped to avoid clashes with dashboard globals)
 let dashboardConfig = {};
 let __configAuthHeader = window.__configAuthHeader || null;
-let __rights = window.__rights || {};
+const __configRights = window.__rights || (window.__rights = {});
 let originalStdoutContent = '';
 let originalStderrContent = '';
 const __configBaseNotifier = typeof window.showNotification === 'function' ? window.showNotification : null;
+
+if (typeof window.__authHeader === 'undefined') {
+  window.__authHeader = null;
+}
 
 function ensureAuthHeader() {
   if (__configAuthHeader) return __configAuthHeader;
@@ -18,6 +22,11 @@ function ensureAuthHeader() {
     console.warn('Auth cookie missing or unreadable');
   }
   window.__configAuthHeader = __configAuthHeader;
+  if (typeof window.__authHeader === 'undefined') {
+    window.__authHeader = __configAuthHeader;
+  } else if (__configAuthHeader) {
+    window.__authHeader = __configAuthHeader;
+  }
   return __configAuthHeader;
 }
 
@@ -115,7 +124,7 @@ function renderRolesFromSources(cfg) {
   let roleNames = [];
   try {
     if (cfg && cfg.roles) roleNames = Object.keys(cfg.roles || {});
-    if (!roleNames.length && __rights && __rights.available_roles) roleNames = __rights.available_roles;
+    if (!roleNames.length && __configRights && __configRights.available_roles) roleNames = __configRights.available_roles;
   } catch (e) { /* ignore */ }
   if (!roleNames || !roleNames.length) roleNames = ['admin', 'user', 'viewer'];
   sel.innerHTML = roleNames.map((r) => `<option value='${r}'>${r}</option>`).join('');
