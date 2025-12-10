@@ -944,7 +944,7 @@ function repairAuth() { /* Implement auth repair */ }
 // Helper function for auth headers
 function getAuthHeaders() {
     return {
-        'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || ''),
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
     };
 }
 
