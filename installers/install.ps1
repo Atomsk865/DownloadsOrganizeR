@@ -269,10 +269,12 @@ function Install-FileStructure {
     
     # Core application files
     $coreFiles = @(
-        'Organizer.py',
+        'SortNStoreService.py',
+        'Organizer.py',             # legacy shim
         'SortNStoreDashboard.py',
         'requirements.txt',
-        'organizer_config.json',
+        'sortnstore_config.json',
+        'organizer_config.json',    # legacy config name
         'dashboard_config.json',
         'LICENSE',
         'README.md'

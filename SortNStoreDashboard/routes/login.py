@@ -2,6 +2,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import login_user, logout_user, current_user, UserMixin, login_required
 import bcrypt
 from SortNStoreDashboard.auth.auth import check_auth
+from SortNStoreDashboard.auth.security import (
+    check_rate_limit, is_ip_locked, is_user_locked,
+    record_failed_login, record_successful_login, _get_client_ip
+)
 
 routes_login = Blueprint('routes_login', __name__)
 
@@ -37,9 +41,37 @@ def login_post():
     # Accept form or JSON
     username = request.form.get('username') or (request.json.get('username') if request.is_json else None)
     password = request.form.get('password') or (request.json.get('password') if request.is_json else None)
+    
     if not username or not password:
         return render_template('login.html', error='Missing username or password'), 400
+    
+    client_ip = _get_client_ip()
+    
+    # Check rate limiting
+    rate_ok, rate_msg = check_rate_limit(client_ip)
+    if not rate_ok:
+        record_failed_login(username, client_ip, "rate_limited")
+        return render_template('login.html', error='Too many requests. Please try again later.'), 429
+    
+    # Check IP lockout
+    ip_locked, ip_remaining = is_ip_locked(client_ip)
+    if ip_locked:
+        minutes = ip_remaining // 60
+        seconds = ip_remaining % 60
+        error_msg = f'Too many failed attempts from your IP. Locked for {minutes}m {seconds}s.'
+        return render_template('login.html', error=error_msg), 403
+    
+    # Check username lockout
+    user_locked, user_remaining = is_user_locked(username)
+    if user_locked:
+        minutes = user_remaining // 60
+        seconds = user_remaining % 60
+        error_msg = f'Account temporarily locked due to failed login attempts. Try again in {minutes}m {seconds}s.'
+        return render_template('login.html', error=error_msg), 403
+    
+    # Attempt authentication
     if check_auth(username, password):
+        record_successful_login(username, client_ip)
         role = _resolve_role(username)
         user = User(username, role)
         # Remember login with persistent cookie
@@ -58,6 +90,9 @@ def login_post():
         except Exception:
             pass
         return redirect(url_for('routes_dashboard.dashboard'))
+    
+    # Authentication failed - record and provide feedback
+    record_failed_login(username, client_ip, "invalid_credentials")
     return render_template('login.html', error='Invalid credentials'), 401
 
 @routes_login.route('/logout', methods=['GET'])

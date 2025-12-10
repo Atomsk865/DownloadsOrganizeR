@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 """
-Backward compatibility wrapper for Organizer.py
-
-This script maintains compatibility with existing installation scripts
-that reference Organizer.py from the root directory.
+Compatibility shim: wrapper renamed to SortNStoreService_wrapper.py.
 """
 import sys
 from pathlib import Path
 
-# Add src to path to allow imports
 project_root = Path(__file__).parent
-src_path = project_root / "src"
-if src_path not in sys.path:
-    sys.path.insert(0, str(src_path))
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-from sortnstore.organizer import main
+from SortNStoreService_wrapper import main
 
 if __name__ == "__main__":
     main()

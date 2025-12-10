@@ -330,6 +330,7 @@ def create_app():
     from SortNStoreDashboard.routes.login import routes_login
     from SortNStoreDashboard.routes.csrf_token import routes_csrf
     from SortNStoreDashboard.routes.user_links import routes_user_links
+    from SortNStoreDashboard.routes.security import routes_security
     from SortNStoreDashboard.routes.reports import reports_bp
     from SortNStoreDashboard.routes.branding import routes_branding
     from SortNStoreDashboard.routes.statistics import routes_statistics
@@ -371,6 +372,7 @@ def create_app():
     app.register_blueprint(routes_auth_settings)
     app.register_blueprint(routes_dashboard_config)
     app.register_blueprint(routes_auth_session)
+    app.register_blueprint(routes_security)
     app.register_blueprint(routes_api_users)
     app.register_blueprint(routes_api_network_targets)
     app.register_blueprint(routes_api_smtp)
@@ -425,9 +427,47 @@ def create_app():
     if routes_api_recent_files:
         csrf.exempt(routes_api_recent_files)
 
+    # Add security headers
+    @app.after_request
+    def add_security_headers(response):
+        """Apply security headers to all responses."""
+        # Content Security Policy - restrict resource loading
+        # Allow self, inline scripts/styles (needed for dashboard), and CDNs for Bootstrap/etc
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'"
+        )
+        
+        # Prevent clickjacking
+        response.headers['X-Frame-Options'] = 'DENY'
+        
+        # Prevent MIME type sniffing
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        
+        # Referrer policy - only send origin on cross-origin requests
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        
+        # XSS protection (legacy, but still useful for older browsers)
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        
+        # Enable HSTS if running in production with HTTPS
+        if os.environ.get('FLASK_ENV') == 'production' or request.is_secure:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+        return response
+
     # Initialize authentication manager after all globals are set
     from SortNStoreDashboard.auth.auth import initialize_auth_manager
     initialize_auth_manager()
+    
+    # Initialize session timeout enforcement
+    from SortNStoreDashboard.auth.session_timeout import init_session_timeout
+    init_session_timeout(app)
 
     # Debug: List all registered routes
     print("\n=== Registered Routes ===")

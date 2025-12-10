@@ -56,6 +56,8 @@
 
 ## Quick Start
 
+> **Naming update:** The core service script is now `SortNStoreService.py`. `Organizer.py` remains as a compatibility shim for legacy tooling.
+
 ### One-Liner Installation (Recommended)
 
 Download and install the latest version in one command (run in PowerShell as Administrator):
