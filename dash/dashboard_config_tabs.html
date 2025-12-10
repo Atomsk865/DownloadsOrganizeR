@@ -761,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Security Configuration Functions
 async function loadSecurityConfig() {
-    if (!__authHeader) {
+    if (!ensureAuthHeader()) {
         showNotification('Please login to view security settings.', 'warning');
         return;
     }
@@ -800,7 +800,7 @@ async function loadSecurityConfig() {
 }
 
 async function saveSecurityConfig(section) {
-    if (!__authHeader) {
+    if (!ensureAuthHeader()) {
         showNotification('Please login before saving security settings.', 'warning');
         return;
     }

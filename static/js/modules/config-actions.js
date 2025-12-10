@@ -1,22 +1,24 @@
 // Config Page Actions - extracted from dashboard_config.html for standalone config_page
 // Provides button handlers and data loading so inline onclick handlers work.
 
-// Utilities and state
+// Utilities and state (scoped to avoid clashes with dashboard globals)
 let dashboardConfig = {};
-let __authHeader = null;
+let __configAuthHeader = window.__configAuthHeader || null;
 let __rights = window.__rights || {};
 let originalStdoutContent = '';
 let originalStderrContent = '';
+const __configBaseNotifier = typeof window.showNotification === 'function' ? window.showNotification : null;
 
 function ensureAuthHeader() {
-  if (__authHeader) return __authHeader;
+  if (__configAuthHeader) return __configAuthHeader;
   try {
     const match = document.cookie.match(/(?:^|; )authHeader=([^;]+)/);
-    if (match) __authHeader = decodeURIComponent(match[1]);
+    if (match) __configAuthHeader = decodeURIComponent(match[1]);
   } catch (e) {
     console.warn('Auth cookie missing or unreadable');
   }
-  return __authHeader;
+  window.__configAuthHeader = __configAuthHeader;
+  return __configAuthHeader;
 }
 
 function getAuthHeaders() {
@@ -25,9 +27,9 @@ function getAuthHeaders() {
 }
 
 function showNotification(message, type = 'info') {
-  // Reuse existing global if available
-  if (typeof window.showNotification === 'function') {
-    return window.showNotification(message, type);
+  // Reuse existing global if available (and avoid recursion)
+  if (__configBaseNotifier && __configBaseNotifier !== showNotification) {
+    return __configBaseNotifier(message, type);
   }
   let container = document.getElementById('notification-container');
   if (!container) {
@@ -380,6 +382,7 @@ function isValidPath(p) {
 
 function renderWatchFoldersList() {
   const ul = document.getElementById('watch-folders-config-list');
+  if (!ul) return; // Page may not include watch folder list
   const folders = Array.isArray(window.__watchFolders) ? window.__watchFolders : [];
   ul.innerHTML = folders
     .map((f, idx) => {
