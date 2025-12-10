@@ -18,14 +18,14 @@
 
 ### Check Service Status
 ```powershell
-Get-Service DownloadsOrganizer
+Get-Service SortNStore
 ```
 
 ### Start/Stop Service
 ```powershell
-Start-Service DownloadsOrganizer
-Stop-Service DownloadsOrganizer
-Restart-Service DownloadsOrganizer
+Start-Service SortNStore
+Stop-Service SortNStore
+Restart-Service SortNStore
 ```
 
 ### View Service Logs
@@ -121,7 +121,7 @@ Custom colors and themes
 ### Service Not Running
 **Check status:**
 ```powershell
-Get-Service DownloadsOrganizer | Select-Object Status, StartType
+Get-Service SortNStore | Select-Object Status, StartType
 ```
 
 **Check logs:**
@@ -174,7 +174,7 @@ Test-NetConnection -ComputerName localhost -Port 5000
 ### Manual Health Check
 ```powershell
 # Check scheduled task
-Get-ScheduledTask -TaskName "DownloadsOrganizer-HealthMonitor"
+Get-ScheduledTask -TaskName "SortNStore-HealthMonitor"
 
 # Run health check manually
 <INSTALL_DIR>\Monitor-OrganizerService.ps1
@@ -194,9 +194,9 @@ Get-Content <INSTALL_DIR>\service-logs\health-monitor.log -Tail 20
 ```
 
 ### Manual Uninstall Steps
-1. Stop service: `Stop-Service DownloadsOrganizer`
-2. Remove service: `<INSTALL_DIR>\nssm.exe remove DownloadsOrganizer confirm`
-3. Remove task: `Unregister-ScheduledTask -TaskName "DownloadsOrganizer-HealthMonitor"`
+1. Stop service: `Stop-Service SortNStore`
+2. Remove service: `<INSTALL_DIR>\nssm.exe remove SortNStore confirm`
+3. Remove task: `Unregister-ScheduledTask -TaskName "SortNStore-HealthMonitor"`
 4. Delete shortcut: `Remove-Item "$([Environment]::GetFolderPath('Desktop'))\DownloadsOrganizeR Dashboard.lnk"`
 5. Delete folder: `Remove-Item <INSTALL_DIR> -Recurse -Force`
 

@@ -39,7 +39,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Atomsk865/DownloadsOrg
 
 5. **Creates Windows Service**
    - Installs NSSM (service manager)
-   - Creates and starts "DownloadsOrganizer" service
+   - Creates and starts "SortNStore" service
    - Configures automatic startup
 
 6. **Sets Up Health Monitor**
@@ -112,12 +112,12 @@ If you prefer manual installation:
 
 ### Verify Service Status
 ```powershell
-Get-Service DownloadsOrganizer
+Get-Service SortNStore
 ```
 
 ### Check Health Monitor
 ```powershell
-Get-ScheduledTask -TaskName "DownloadsOrganizer-HealthMonitor"
+Get-ScheduledTask -TaskName "SortNStore-HealthMonitor"
 ```
 
 ### View Logs
@@ -144,11 +144,11 @@ Service logs location:
 ### Manual Uninstall
 ```powershell
 # Stop and remove service
-nssm stop DownloadsOrganizer
-nssm remove DownloadsOrganizer confirm
+nssm stop SortNStore
+nssm remove SortNStore confirm
 
 # Remove scheduled task
-Unregister-ScheduledTask -TaskName "DownloadsOrganizer-HealthMonitor" -Confirm:$false
+Unregister-ScheduledTask -TaskName "SortNStore-HealthMonitor" -Confirm:$false
 
 # Remove desktop shortcut
 Remove-Item "$([Environment]::GetFolderPath('Desktop'))\DownloadsOrganizeR Dashboard.lnk"

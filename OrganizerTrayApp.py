@@ -49,7 +49,7 @@ except ImportError:
 class OrganizerTrayApp:
     def __init__(self, app):
         self.app = app
-        self.service_name = "DownloadsOrganizer"
+        self.service_name = "SortNStore"
         self.dashboard_process = None
         self.dashboard_port = 5000
         
@@ -251,7 +251,7 @@ class OrganizerTrayApp:
             
             if result.returncode == 0:
                 self.show_notification("Service Started", 
-                                      "DownloadsOrganizer service started successfully")
+                                      "SortNStore service started successfully")
                 self.update_service_status()
             else:
                 self.show_error("Failed to start service", result.stderr)
@@ -272,7 +272,7 @@ class OrganizerTrayApp:
             
             if result.returncode == 0:
                 self.show_notification("Service Stopped", 
-                                      "DownloadsOrganizer service stopped successfully")
+                                      "SortNStore service stopped successfully")
                 self.update_service_status()
             else:
                 self.show_error("Failed to stop service", result.stderr)
@@ -293,7 +293,7 @@ class OrganizerTrayApp:
             
             if result.returncode == 0:
                 self.show_notification("Service Restarted", 
-                                      "DownloadsOrganizer service restarted successfully")
+                                      "SortNStore service restarted successfully")
                 self.update_service_status()
             else:
                 self.show_error("Failed to restart service", result.stderr)
@@ -497,7 +497,7 @@ def main():
         app.setQuitOnLastWindowClosed(False)  # Keep running when windows close
         
         # Check if already running (simple check)
-        app.setApplicationName("DownloadsOrganizerTray")
+        app.setApplicationName("SortNStoreTray")
         
         tray_app = OrganizerTrayApp(app)
         
