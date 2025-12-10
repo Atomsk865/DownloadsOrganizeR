@@ -2,6 +2,18 @@
 
 **Quick setup and installation guides for DownloadsOrganizeR**
 
+## One-Liner Installation (Fastest)
+
+Copy and paste this into PowerShell (run as Administrator):
+
+```powershell
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex
+```
+
+Done! 🎉 Your service is installed.
+
+---
+
 ## Choose Your Path
 
 ### 🚀 Quick Start (10 minutes)

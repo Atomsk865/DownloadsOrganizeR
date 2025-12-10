@@ -6,51 +6,45 @@
 - Windows 10/11 or Windows Server 2016+
 - Administrator privileges
 - Internet connection
+- PowerShell 5.1+
 
-### One-Command Install
+### One-Command Install (Recommended)
 
 Open PowerShell **as Administrator** and run:
 
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; `
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/Install-DownloadsOrganizeR.ps1" -OutFile "$env:TEMP\Install-DownloadsOrganizeR.ps1"; `
-& "$env:TEMP\Install-DownloadsOrganizeR.ps1"
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex
 ```
+
+This will:
+- Download latest release from GitHub
+- Extract files to `C:\DownloadsOrganizeR`
+- Install Python dependencies
+- Set up configuration directories
+- Optionally install as Windows service
 
 ### What the Installer Does
 
-1. **Checks System Requirements**
-   - Verifies Python 3.8+ is installed
-   - Prompts to install Python if missing
+1. **Downloads Latest Release**
+   - Fetches latest version from GitHub releases
+   - Falls back to main branch if no release available
 
-2. **Chooses Installation Location**
-   - Default: `C:\Program Files\DownloadsOrganizeR` (recommended - industry standard)
-   - Alternative: `C:\DownloadsOrganizeR` (legacy/simple mode)
-   - Custom path option available during installation
-   - Program Files installations automatically use `C:\ProgramData\DownloadsOrganizeR` for config/logs
+2. **Installs to Target Directory**
+   - Default: `C:\DownloadsOrganizeR`
+   - Creates subdirectories for logs and config
 
-3. **Downloads Latest Version**
-   - Clones from GitHub (if Git available)
-   - Downloads ZIP as fallback
+3. **Installs Dependencies**
+   - Installs Python packages from requirements.txt
+   - Validates installation
 
-4. **Installs Dependencies**
-   - Upgrades pip
-   - Installs all requirements from requirements.txt
+4. **Sets Up Directories**
+   - Creates logs directory for service logs
+   - Creates config directory for settings
 
-5. **Creates Windows Service**
-   - Installs NSSM (service manager)
-   - Creates and starts "SortNStore" service
+5. **Optional Service Installation**
+   - Offers to install as Windows service
    - Configures automatic startup
-
-6. **Sets Up Health Monitor**
-   - Creates scheduled task
-   - Checks service every 5 minutes
-   - Auto-restarts if service stops
-
-7. **Creates Desktop Shortcut**
-   - "DownloadsOrganizeR Dashboard" shortcut
-   - Automatically starts dashboard if not running
-   - Opens browser to http://localhost:5000
+   - Sets up health monitoring
 
 ## Installation Options
 

@@ -56,14 +56,32 @@
 
 ## Quick Start
 
-### Installation
+### One-Liner Installation (Recommended)
 
-1. **Download the installer**
-   - See [Installation Guide](docs/INSTALLATION.md) for detailed instructions
+Download and install the latest version in one command (run in PowerShell as Administrator):
 
-2. **Run the PowerShell installer** (as Administrator)
+```powershell
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex
+```
+
+This will:
+- ✅ Download latest release from GitHub
+- ✅ Extract files to `C:\DownloadsOrganizeR`
+- ✅ Install Python dependencies
+- ✅ Set up configuration directories
+- ✅ Optionally install as Windows service
+
+### Manual Installation
+
+1. **Clone or download the repository**
    ```powershell
-   .\installers\Setup-Installer.ps1
+   git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
+   cd DownloadsOrganizeR
+   ```
+
+2. **Run the installer** (as Administrator)
+   ```powershell
+   .\installers\install.ps1
    ```
 
 3. **Configure settings**
@@ -115,9 +133,10 @@ DownloadsOrganizeR/
 │   └── ...
 │
 ├── installers/                        ← Installation & build scripts
-│   ├── Setup-Installer.ps1            ← Main installation script
-│   ├── Setup-Installer.bat            ← Windows batch installer
-│   ├── build.py                       ← Build script
+│   ├── install.ps1                     ← One-liner installer (GitHub releases)
+│   ├── Setup-Installer.ps1             ← Manual local installation
+│   ├── Install-And-Monitor-OrganizerService.ps1 ← Service setup
+│   ├── build.py                        ← Build script
 │   └── ...
 │
 ├── scripts/                           ← Utility & development scripts
