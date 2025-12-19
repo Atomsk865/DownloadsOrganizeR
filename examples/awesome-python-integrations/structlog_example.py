@@ -173,7 +173,7 @@ def demonstrate_file_operations_logging():
     
     for file_info in files:
         log.info("file_detected",
-            event="new_file",
+            file_event="new_file",
             filename=file_info["name"],
             size_bytes=file_info["size"],
             category=file_info["category"],
@@ -186,8 +186,7 @@ def demonstrate_file_operations_logging():
             category_match=file_info["category"]
         )
         
-        log.info("file_moved",
-            event="file_organized",
+        log.info("file_organized",
             filename=file_info["name"],
             category=file_info["category"],
             status="success"
@@ -272,7 +271,7 @@ def demonstrate_authentication_logging():
     
     # Successful login
     log.info("login_success",
-        event="authentication",
+        auth_event="authentication",
         user="admin",
         auth_method="basic",
         ip_address="192.168.1.100",
@@ -281,7 +280,7 @@ def demonstrate_authentication_logging():
     
     # Failed login
     log.warning("login_failed",
-        event="authentication",
+        auth_event="authentication",
         user="unknown_user",
         auth_method="basic",
         ip_address="192.168.1.105",
@@ -291,7 +290,7 @@ def demonstrate_authentication_logging():
     
     # Session activity
     log.debug("session_activity",
-        event="api_call",
+        api_event="api_call",
         user="admin",
         session_id="abc123",
         endpoint="/api/config",

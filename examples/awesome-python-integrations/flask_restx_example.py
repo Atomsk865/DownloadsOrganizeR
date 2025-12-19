@@ -41,7 +41,7 @@ api = Api(
     version='2.0',
     title='SortNStore API',
     description='File organization service REST API with automatic documentation',
-    doc='/api/docs',  # Swagger UI location
+    doc='/docs',  # Swagger UI location (relative to prefix)
     prefix='/api'
 )
 
@@ -372,8 +372,9 @@ if __name__ == '__main__':
     print("\n" + "="*70)
     print("Flask-RESTX Example Running")
     print("="*70)
-    print("\n📚 Swagger UI: http://localhost:5001/api/docs")
+    print("\n📚 Swagger UI: http://localhost:5001/docs")
     print("🔌 API Base: http://localhost:5001/api/")
+    print("📄 API Spec: http://localhost:5001/api/swagger.json")
     print("\nEndpoints:")
     print("  - GET  /api/service/status")
     print("  - POST /api/service/control")
@@ -383,6 +384,7 @@ if __name__ == '__main__':
     print("  - GET  /api/files/stats")
     print("  - GET  /api/metrics/system")
     print("  - GET  /api/metrics/health")
+    print("\n💡 Open http://localhost:5001/docs for interactive API documentation!")
     print("\n" + "="*70 + "\n")
     
     app.run(debug=True, port=5001)
