@@ -32,3 +32,7 @@ flask-admin>=1.6.0,<2.0.0
 celery>=5.3.0,<6.0.0
 # @redis: Result backend and message broker for Celery
 redis>=5.0.0,<6.0.0
+# @flask-socketio: WebSocket support for real-time updates
+python-socketio>=5.9.0,<6.0.0
+# @websocket: WebSocket client/server communications
+python-engineio>=4.7.0,<5.0.0

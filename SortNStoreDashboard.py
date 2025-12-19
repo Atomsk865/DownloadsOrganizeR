@@ -591,6 +591,28 @@ def create_app():
         log.debug("celery_import_failed", reason="Install via: pip install celery redis")
     except Exception as e:
         log.warning("celery_initialization_failed", error=str(e), exc_info=True)
+    
+    # @flask-socketio: Register WebSocket and real-time dashboard
+    try:
+        from SortNStoreDashboard.websocket import init_socketio, set_socketio, register_socketio_events
+        from SortNStoreDashboard.dashboard_api import register_dashboard_blueprint
+        from SortNStoreDashboard.dashboard_routes import register_dashboard_routes
+        
+        socketio = init_socketio(app)
+        if socketio:
+            set_socketio(socketio)
+            register_socketio_events(socketio)
+            register_dashboard_blueprint(app)
+            register_dashboard_routes(app)
+            log.info("websocket_dashboard_initialized",
+                    status="enabled",
+                    features=["real_time_updates", "live_monitoring", "task_dashboard"])
+        else:
+            log.debug("websocket_not_initialized", reason="flask-socketio not installed")
+    except ImportError:
+        log.debug("websocket_import_failed", reason="Install via: pip install flask-socketio")
+    except Exception as e:
+        log.warning("websocket_initialization_failed", error=str(e), exc_info=True)
 
     # Debug: List all registered routes
     # @structlog: Log registered routes for debugging

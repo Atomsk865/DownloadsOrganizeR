@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortNStore - Task Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--light);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card {
+            background: white;
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .task-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .progress-bar-animated {
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+        
+        .worker-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-speedometer2"></i> SortNStore Dashboard
+            </span>
+            <span class="navbar-text">
+                <span class="live-indicator"></span>
+                <span id="connection-status">Connecting...</span>
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Active Tasks</div>
+                    <div class="stat-value" id="stat-active-tasks">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color: var(--success);">
+                    <div class="stat-label">Completed Today</div>
+                    <div class="stat-value" id="stat-completed">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color: var(--danger);">
+                    <div class="stat-label">Failed Tasks</div>
+                    <div class="stat-value" id="stat-failed">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color: var(--info);">
+                    <div class="stat-label">Workers Online</div>
+                    <div class="stat-value" id="stat-workers">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row">
+            <!-- Tasks Panel -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task"></i> Recent Tasks
+                        </h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <div id="tasks-list">
+                            <p class="text-muted text-center py-4">No tasks yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workers Panel -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cpu"></i> Workers
+                        </h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <div id="workers-list">
+                            <p class="text-muted text-center py-4">No workers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Metrics Row -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up"></i> System Metrics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>CPU Usage</h6>
+                                    <div style="font-size: 1.5rem; font-weight: 600;" id="metric-cpu">--%</div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div id="metric-cpu-bar" class="progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>Memory Usage</h6>
+                                    <div style="font-size: 1.5rem; font-weight: 600;" id="metric-memory">--MB</div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div id="metric-memory-bar" class="progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>Disk Usage</h6>
+                                    <div style="font-size: 1.5rem; font-weight: 600;" id="metric-disk">--%</div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div id="metric-disk-bar" class="progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>Uptime</h6>
+                                    <div style="font-size: 1.5rem; font-weight: 600;" id="metric-uptime">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // @websocket: WebSocket connection
+        const socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
+
+        // Connection handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').style.color = '#28a745';
+            
+            // Subscribe to events
+            socket.emit('subscribe_tasks');
+            socket.emit('subscribe_workers');
+            socket.emit('subscribe_metrics');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+            document.getElementById('connection-status').textContent = 'Disconnected';
+            document.getElementById('connection-status').style.color = '#dc3545';
+        });
+
+        // @websocket: Task event handlers
+        socket.on('task_started', function(data) {
+            console.log('Task started:', data);
+            updateTasksList();
+        });
+
+        socket.on('task_progress', function(data) {
+            console.log('Task progress:', data);
+            updateTaskProgress(data.task_id, data.current, data.total);
+        });
+
+        socket.on('task_completed', function(data) {
+            console.log('Task completed:', data);
+            updateTasksList();
+        });
+
+        socket.on('task_failed', function(data) {
+            console.log('Task failed:', data);
+            updateTasksList();
+        });
+
+        // @websocket: Worker event handlers
+        socket.on('worker_status', function(data) {
+            console.log('Worker status:', data);
+            updateWorkersList(data.workers);
+        });
+
+        // @websocket: Metrics event handlers
+        socket.on('system_metrics', function(data) {
+            console.log('System metrics:', data);
+            updateMetrics(data.metrics);
+        });
+
+        // API call helpers
+        async function updateTasksList() {
+            try {
+                const response = await fetch('/api/dashboard/tasks?limit=10');
+                const data = await response.json();
+                
+                const tasksList = document.getElementById('tasks-list');
+                if (data.tasks && data.tasks.length > 0) {
+                    tasksList.innerHTML = data.tasks.map(task => `
+                        <div class="task-item">
+                            <div>
+                                <strong>${task.id}</strong>
+                                <br>
+                                <small class="text-muted">${task.status}</small>
+                            </div>
+                            <span class="badge bg-primary">${task.progress || '0%'}</span>
+                        </div>
+                    `).join('');
+                }
+                
+                // Update stats
+                if (data.stats) {
+                    document.getElementById('stat-active-tasks').textContent = data.stats.pending || 0;
+                    document.getElementById('stat-completed').textContent = data.stats.completed || 0;
+                    document.getElementById('stat-failed').textContent = data.stats.failed || 0;
+                }
+            } catch (error) {
+                console.error('Error updating tasks:', error);
+            }
+        }
+
+        function updateTaskProgress(taskId, current, total) {
+            // Update specific task progress
+            const percentage = Math.round((current / total) * 100);
+            console.log(`Task ${taskId}: ${percentage}%`);
+        }
+
+        async function updateWorkersList(workers) {
+            const workersList = document.getElementById('workers-list');
+            if (workers && workers.length > 0) {
+                workersList.innerHTML = workers.map(worker => `
+                    <div class="worker-item">
+                        <div>
+                            <strong>${worker.name}</strong>
+                            <br>
+                            <small class="text-muted">Active: ${worker.active_tasks || 0}</small>
+                        </div>
+                        <span class="status-badge ${worker.status === 'online' ? 'status-online' : 'status-offline'}">
+                            ${worker.status}
+                        </span>
+                    </div>
+                `).join('');
+                
+                document.getElementById('stat-workers').textContent = workers.length;
+            }
+        }
+
+        async function updateMetrics(metrics) {
+            if (!metrics) return;
+            
+            // CPU
+            document.getElementById('metric-cpu').textContent = metrics.cpu_percent?.toFixed(1) + '%';
+            document.getElementById('metric-cpu-bar').style.width = (metrics.cpu_percent || 0) + '%';
+            
+            // Memory
+            document.getElementById('metric-memory').textContent = metrics.memory_mb?.toFixed(0) + 'MB';
+            document.getElementById('metric-memory-bar').style.width = (metrics.memory_percent || 0) + '%';
+            
+            // Disk
+            document.getElementById('metric-disk').textContent = metrics.disk_percent?.toFixed(1) + '%';
+            document.getElementById('metric-disk-bar').style.width = (metrics.disk_percent || 0) + '%';
+            
+            // Uptime
+            const uptime = Math.floor(metrics.uptime_seconds || 0);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            document.getElementById('metric-uptime').textContent = `${hours}h ${minutes}m`;
+        }
+
+        // Refresh data periodically
+        setInterval(updateTasksList, 5000);
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/dashboard/metrics');
+                const data = await response.json();
+                if (data.metrics) updateMetrics(data.metrics);
+            } catch (error) {
+                console.error('Error updating metrics:', error);
+            }
+        }, 3000);
+        
+        // Initial load
+        updateTasksList();
+    </script>
+</body>
+</html>
