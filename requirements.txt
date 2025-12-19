@@ -1,3 +1,4 @@
+# Core Dependencies
 Flask>=3.0,<4
 flask-wtf==1.2.1,<2
 Flask-Caching>=2.3,<3
@@ -12,3 +13,12 @@ pywin32>=306; sys_platform == 'win32'
 flask-login>=0.6,<0.7
 pyinstaller>=6.10,<7
 requests>=2.31,<3
+
+# Optional awesome-python enhancements (see docs/AWESOME_PYTHON_ENHANCEMENTS.md)
+# Install with: pip install -r requirements.txt flask-restx flask-security-too flask-admin structlog
+# Or use the examples: pip install -r examples/awesome-python-integrations/requirements.txt
+#
+# flask-restx>=1.0.0,<2.0.0         # API documentation with Swagger UI
+# flask-security-too>=5.0.0,<6.0.0  # Enhanced authentication & authorization
+# flask-admin>=1.6.0,<2.0.0         # Auto-generated admin interface
+# structlog>=23.0.0,<25.0.0         # Structured JSON logging
