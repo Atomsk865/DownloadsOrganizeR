@@ -264,6 +264,30 @@ def create_app():
     app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress > 500 bytes
     Compress(app)
     
+    # @flask-caching: Phase 7A - Initialize Redis-backed caching
+    try:
+        from SortNStoreDashboard.caching_config import init_cache as init_cache_config
+        cache_instance = init_cache_config(app)
+        log.info("phase7a_cache_initialized", status="enabled")
+    except ImportError:
+        log.warning("phase7a_cache_import_failed", message="Flask-Caching not available")
+        cache_instance = None
+    except Exception as e:
+        log.error("phase7a_cache_initialization_failed", error=str(e))
+        cache_instance = None
+    
+    # @flask-limiter: Phase 7A - Initialize rate limiting with Redis
+    try:
+        from SortNStoreDashboard.rate_limiter_config import init_limiter, get_limiter
+        limiter_instance = init_limiter(app)
+        log.info("phase7a_limiter_initialized", status="enabled")
+    except ImportError:
+        log.warning("phase7a_limiter_import_failed", message="Flask-Limiter not available")
+        limiter_instance = None
+    except Exception as e:
+        log.error("phase7a_limiter_initialization_failed", error=str(e))
+        limiter_instance = None
+    
     # CSRF Protection
     csrf = CSRFProtect()
     csrf.init_app(app)

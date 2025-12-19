@@ -2,6 +2,7 @@
 Flask>=3.0,<4
 flask-wtf==1.2.1,<2
 Flask-Caching>=2.3,<3
+Flask-Limiter>=3.5.0,<4.0.0
 flask-compress>=1.23,<2
 gputil>=1.4,<2
 psutil>=5.9,<6.1

@@ -1,148 +1,365 @@
-# DownloadsOrganizeR - AI Coding Agent Instructions
+# SortNStore (formerly DownloadsOrganizeR) - AI Coding Agent Instructions
 
 ## Project Overview
 
-**DownloadsOrganizeR** is a Windows-based file organization service that automatically categorizes downloaded files into folders by type (Images, Videos, Documents, etc.) using real-time file system monitoring. It comprises three main components:
+**SortNStore** is a production-ready Windows file organization service with advanced multi-folder watching, flexible routing rules, and enterprise-grade web dashboard. The project underwent significant architecture evolution (6 phases) integrating battle-tested awesome-python libraries.
 
-1. **Organizer.py** - Core service that watches the Downloads folder and organizes files
-2. **OrganizerDashboard.py** - Flask web UI for monitoring, configuration, and service control
-3. **Install-And-Monitor-OrganizerService.ps1** - Windows service installer using NSSM
+### Core Components
+
+1. **SortNStoreService.py** (main service, 713 lines) - Multi-folder file watcher with advanced routing
+   - Wrapper shim: `Organizer.py` (legacy compatibility)
+2. **SortNStoreDashboard.py** (main app, 885 lines) - Flask web dashboard with real-time monitoring
+   - Package directory: `SortNStoreDashboard/` (modular architecture)
+3. **SortNStoreTrayApp.py** - Windows system tray GUI
+4. **Installers** - PowerShell-based installation (`installers/install.ps1`, 525+ lines)
+
+### Project Status
+- **6 phases complete** (structured logging, API docs, auth, admin, async tasks, WebSocket)
+- **40/40 tests passing** (100%)
+- **9,430+ lines total** (5,340 implementation + 1,690 tests + 2,400 docs)
 
 ## Architecture & Data Flow
 
-### Component Interaction
+### Multi-Folder File Organization (SortNStoreService.py)
+
 ```
-User Downloads → [Watchdog Observer] → Organizer.py → Categorizes Files
-                                              ↓
-                                    organizer_config.json (rules)
-                                              ↓
-                                    OrganizerDashboard.py
-                                    (reads logs & config)
+Watch Folders (multiple) → [Watchdog Observer] → SortNStoreHandler
+                                ↓
+                    Configuration-Driven Routing:
+                    1. Pattern Routes (regex)
+                    2. Tag Routes (filename tags)
+                    3. Custom Routes (extension → absolute path)
+                    4. Size Rules (file size ranges)
+                    5. Standard Extension Map (fallback)
+                                ↓
+                    Destination: subfolder OR absolute custom path
+                                ↓
+                    Duplicate Handling (hash-based)
 ```
 
-### Key Configuration File: `organizer_config.json`
-- **routes**: Maps folder names to file extensions (e.g., "Images": ["jpg", "png", ...])
-- **memory_threshold_mb**: Health monitor memory limit (default: 200MB)
-- **cpu_threshold_percent**: Health monitor CPU limit (default: 60%)
-- **logs_dir**: Service log directory (default: `C:\Scripts\service-logs`)
+**Advanced Routing Priority** (in order):
+1. **Pattern Routes** - Regex-based filename matching → custom destination
+2. **Tag Routes** - Tag in filename (e.g., `[work]`) → custom destination  
+3. **Custom Routes** - Extension override → absolute path (e.g., `.pdf` → `D:\Documents\PDFs\`)
+4. **Size Rules** - File size ranges → category override (e.g., files >100MB → `Large Files`)
+5. **Standard Extension Map** - Default category by extension (9+ categories)
 
-Dashboard reads this file to display routes and thresholds; changes via the web UI update both the config and the running service configuration.
+**Destination Modes:**
+- `subfolder`: Files go to `{watch_folder}/{Category}/` (relative)
+- `custom`: Files go to `{base_destination}/{Category}/` (absolute paths, supports network/cloud)
 
-### File Organization Logic (Organizer.py)
+### Dashboard Architecture (Flask + Modular Package)
 
-**Extension-to-Category Mapping:**
-- Organizer.py has hardcoded `EXTENSION_MAP` (currently uses 9 categories + "Other" fallback)
-- `organizer_config.json` is the source of truth for dynamic category configuration (used by Dashboard)
-- On file arrival: extension matched → target category → `C:\Users\{username}\Downloads\{Category}\` folder
+```
+SortNStoreDashboard.py (entry point)
+├─ Imports → SortNStoreDashboard/ package
+│  ├─ __init__.py (package initialization)
+│  ├─ config_runtime.py (decoupled config accessor)
+│  ├─ structured_logging.py (@structlog integration)
+│  ├─ restx_api.py (@flask-restx Swagger/OpenAPI docs at /api/docs)
+│  ├─ tasks.py (@celery async task queue)
+│  ├─ websocket.py (@flask-socketio real-time updates)
+│  ├─ admin_panel.py (@flask-admin auto-generated admin UI at /admin)
+│  ├─ auth/ (authentication: basic, LDAP, Windows Auth)
+│  ├─ routes/ (API endpoints & views)
+│  └─ helpers/ (utility functions)
+├─ Templates → dash/ (HTML templates, Bootstrap 5)
+└─ Static Assets → static/ (CSS, JS, images)
+```
 
-**Unique Path Handling:**
-- If file exists in destination, append `({counter})` to filename (e.g., `image (1).jpg`)
-- Uses `get_unique_path()` function
+**Package Name Collision Shim** (lines 1-23 of SortNStoreDashboard.py):
+- When running script directly, Python prefers file over package directory
+- Shim forces package resolution by manually setting up `sys.modules[_pkg_name]`
+- Critical pattern for maintaining modular architecture while keeping top-level script runnable
 
-**Watch Events:** 
-Monitors three events via `DownloadsHandler`:
-- `on_created` - New file detected
-- `on_moved` - File moved into Downloads
-- `on_modified` - File modification (queues re-organization)
+### Configuration System
+
+**Two Config Files:**
+1. **sortnstore_config.json** (service config) - File routing, thresholds, auth settings
+2. **dashboard_config.json** (dashboard config) - Users, roles, layout, setup state
+
+**Config Paths Priority** (SortNStoreService.py lines 38-46):
+```python
+CONFIG_PATHS = [
+    SCRIPT_DIR / "organizer_config.json",  # Local (dev)
+    Path("C:/Scripts/organizer_config.json"),  # Legacy service install
+    Path("C:/ProgramData/SortNStore/organizer_config.json")  # Enterprise install
+]
+```
+
+**Writable Path Fallback** (config_runtime.py `_ensure_writable_path`):
+- Tries original path first
+- Falls back to `%LOCALAPPDATA%\DownloadsOrganizeR`
+- Last resort: temp directory
+- Ensures configs work in permission-restricted environments
 
 ## Critical Developer Workflows
 
-### Running Organizer Service Locally (Development)
-```powershell
-cd C:\Scripts
-python Organizer.py
-# Prompts for Windows username, then monitors Downloads folder
-# Press Ctrl+C to stop
-```
-
-### Running Dashboard Locally
+### Development (Cross-Platform via Dev Container)
 ```bash
+# Running in dev container (Ubuntu 24.04 LTS)
+cd /workspaces/DownloadsOrganizeR
+
+# Install dependencies
 pip install -r requirements.txt
-python OrganizerDashboard.py
-# Access at http://localhost:5000
-# Default credentials: admin / change_this_password (env vars: DASHBOARD_USER, DASHBOARD_PASS)
+
+# Run service (development mode)
+python SortNStoreService.py
+
+# Run dashboard (in another terminal)
+python SortNStoreDashboard.py
+# Access: http://localhost:5000
+# Defaults: admin / (check env: DASHBOARD_USER, DASHBOARD_PASS)
+
+# Run tests
+pytest tests/ -v
 ```
 
-### Service Installation (Windows Admin)
+### Production Deployment (Windows)
+
+**One-Liner Installation** (PowerShell as Administrator):
 ```powershell
-# Run as Administrator
-.\Install-And-Monitor-OrganizerService.ps1
-# Auto-elevates if not run as Admin
-# Copies Organizer.py to C:\Scripts
-# Installs NSSM and creates Windows service "DownloadsOrganizer"
+irm https://raw.githubusercontent.com/Atomsk865/DownloadsOrganizeR/main/installers/install.ps1 | iex
 ```
 
-### Removing Service
+**Manual Installation:**
 ```powershell
-nssm remove DownloadsOrganizer confirm
+# Clone/download repository
+git clone https://github.com/Atomsk865/DownloadsOrganizeR.git
+cd DownloadsOrganizeR
+
+# Run installer (auto-elevates)
+.\installers\install.ps1
 ```
+
+**Installer Features** (installers/install.ps1):
+- Role-based deployment (Personal vs Enterprise)
+- TLS 1.2+ enforcement
+- Security hardening & audit logging
+- Health checks & system validation
+- Automatic recovery & rollback
+- Silent & interactive modes
+
+### Testing & Validation
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Specific test suites
+pytest tests/test_phase2_api_integration.py  # API docs
+pytest tests/test_setup_validation.py  # Setup wizard
+pytest tests/test_routes_smoke.py  # Dashboard routes
+
+# Environment check
+python scripts/check_environment.py
+```
+
+### Accessing Production Features
+
+**Swagger API Documentation:**
+- URL: `http://localhost:5000/api/docs`
+- Auto-generated from flask-restx decorators
+- Interactive API testing interface
+
+**Admin Interface:**
+- URL: `http://localhost:5000/admin`
+- Auto-generated CRUD for users/roles/config
+- Role-based access control
+
+**Real-Time Dashboard:**
+- WebSocket updates at `/` (main dashboard)
+- Live task monitoring, worker status, system metrics
 
 ## Project-Specific Patterns
 
-### Configuration Sync Pattern
-- **Challenge:** Organizer.py has hardcoded `EXTENSION_MAP`; Dashboard reads from `organizer_config.json`
-- **Current Design:** Dashboard is the config source for web users; Organizer.py needs updates to read config at startup
-- **When Modifying Rules:** Update `organizer_config.json` routes section; if adding new categories, also update `EXTENSION_MAP` in Organizer.py and Dashboard's `DEFAULT_CONFIG`
+### Naming Convention Evolution
+- **Current:** `SortNStoreService.py`, `SortNStoreDashboard.py`, `SortNStoreTrayApp.py`
+- **Legacy (still works):** `Organizer.py`, `OrganizerDashboard.py`, `OrganizerTrayApp.py`
+- **Wrapper pattern:** `*_wrapper.py` files ensure backward compatibility
+- **When referencing:** Use "SortNStore" for new code; legacy names work via shims
 
-### Logging Pattern
-- **Organizer.py:** Logs to `C:\Users\{username}\Downloads\organizer.log` (INFO + console output)
-- **Service:** Logs to `C:\Scripts\service-logs\organizer_stdout.log` and `organizer_stderr.log` (configured in NSSM)
-- **Dashboard:** Streams and manages logs via web UI with file truncation
+### Configuration-Driven Everything
+**Service behavior entirely driven by config:**
+- Watch folders (multiple)
+- Routing rules (patterns, tags, custom, size)
+- Destination mode (subfolder vs custom)
+- Authentication method (basic, LDAP, Windows)
+- Thresholds (memory, CPU)
 
-### Ignored Files
-Organizer.py skips:
-- Files in `IGNORE_FILES` set: `{"dashboard_config.json", "organizer.log"}`
-- Files with extensions in `IGNORE_EXTENSIONS`: `{".crdownload", ".part", ".tmp"}` (incomplete downloads)
+**No hardcoded defaults in service** - all rules come from config or fallback map.
 
-### Dashboard State Management
-- Uses basic HTTP Basic Auth (env vars: `DASHBOARD_USER`, `DASHBOARD_PASS`)
-- Service status queried via platform-specific commands (psutil)
-- Config changes persisted to `organizer_config.json`
-- Bootstrap 5 for UI (no client-side state management)
+### Awesome-Python Integration Pattern
+**Optional, Non-Breaking Enhancements** (see AWESOME_PYTHON_SUMMARY.md):
+- All libraries have graceful fallback if not installed
+- Check pattern: `try: import X; AVAILABLE=True except: AVAILABLE=False`
+- Example: `restx_api.py` lines 27-31, `tasks.py` lines 34-40
+- Enables progressive adoption without breaking existing deployments
+
+### Structured Logging (@structlog)
+```python
+from SortNStoreDashboard.structured_logging import get_logger
+log = get_logger(__name__)
+
+# JSON logging with context
+log.info("file_organized", 
+         file=filename, 
+         category=category, 
+         destination=dest_path)
+```
+
+**Key Benefits:**
+- Machine-parseable JSON logs
+- Context binding (request IDs, user, etc.)
+- Colored console output for humans
+- Used throughout dashboard & service
+
+### Async Task Pattern (@celery)
+```python
+from SortNStoreDashboard.tasks import organize_files_task
+
+# Queue async task
+task = organize_files_task.delay(path='/path/to/folder')
+
+# Check status
+status = task.status  # PENDING, STARTED, SUCCESS, FAILURE
+result = task.result
+```
+
+**Infrastructure:**
+- Broker: Redis (localhost:6379)
+- Workers: Separate process pool (`celery -A SortNStoreDashboard.tasks worker`)
+- Monitoring: Flower UI (optional)
+
+### Real-Time Updates (@flask-socketio)
+**Server-side event emission:**
+```python
+from SortNStoreDashboard.websocket import get_socketio
+socketio = get_socketio()
+
+socketio.emit('task_started', {'task_id': task_id})
+socketio.emit('system_metrics', {'cpu': cpu_pct, 'memory': mem_pct})
+```
+
+**Client-side (templates):**
+- Bootstrap 5 responsive UI
+- Socket.IO JavaScript client
+- Real-time dashboard updates without polling
 
 ## Integration Points & Dependencies
 
-### External Libraries
-- **watchdog 6.0.0** - File system event monitoring
-- **psutil 7.1.3** - Process/system metrics for Dashboard
-- **Flask 3.1.2** - Dashboard web framework
-- **gputil 1.4.0** - GPU info (optional, graceful degradation if missing)
+### Battle-Tested Libraries (awesome-python)
+- **@structlog 23.0+** - Structured JSON logging
+- **@flask-restx 1.0+** - API documentation (Swagger/OpenAPI)
+- **@flask-security-too 5.0+** - Enhanced auth (RBAC, password reset)
+- **@flask-admin 1.6+** - Auto-generated admin UI
+- **@celery 5.3+** - Distributed task queue
+- **@redis 5.0+** - Message broker & result backend
+- **@flask-socketio** - WebSocket real-time updates
 
-### Windows-Specific Integration
-- **NSSM (Non-Sucking Service Manager)** - Runs Organizer.py as Windows service
-- Service runs as `$env:USERDOMAIN\$env:USERNAME` (current user) by default
-- PowerShell 5.1+ required; scripts use `-ExecutionPolicy Bypass`
+### Core Dependencies
+- **Flask 3.0+** - Web framework
+- **watchdog 3.0+** - File system monitoring
+- **psutil 5.9+** - System metrics
+- **bcrypt 4.0+** - Password hashing
+- **ldap3 2.9+** - LDAP authentication
+- **pywin32 306+** - Windows integration (Windows only)
 
-### Expected File Paths
-- **Organizer.py** source: Same folder as installer script
-- **Deployment target:** `C:\Scripts\Organizer.py`
-- **Config:** `C:\Scripts\organizer_config.json` (or local if running standalone)
-- **Service logs:** `C:\Scripts\service-logs\`
-- **Downloads folder:** Auto-detected as `C:\Users\{username}\Downloads\`
+### Windows-Specific (Production)
+- **Service Manager:** NSSM or native Windows service (see installers)
+- **Auth Integration:** Windows Authentication, LDAP, Basic
+- **Paths:** `C:\Scripts\`, `C:\ProgramData\SortNStore\`, `%LOCALAPPDATA%\DownloadsOrganizeR\`
+
+### Development Environment
+- **Dev Container:** Ubuntu 24.04.3 LTS
+- **Package Manager:** pip
+- **Testing:** pytest
+- **Tools:** apt, docker, git, gh, kubectl, curl
 
 ## Common Modifications & Tips
 
-### Adding a New File Category
-1. Add to `EXTENSION_MAP` in **Organizer.py** and `DEFAULT_CONFIG` in **OrganizerDashboard.py**
-2. Update `organizer_config.json` routes section
-3. Restart service or Dashboard
+### Adding New File Category
+1. Update `DEFAULT_CONFIG["routes"]` in `SortNStoreDashboard.py` (line ~49)
+2. If using legacy `EXTENSION_MAP` in `SortNStoreService.py`, update `_default_extension_map()` (line ~71)
+3. Update `sortnstore_config.json` routes section
+4. Restart service
 
-### Debugging File Organization Issues
-- Check `C:\Users\{username}\Downloads\organizer.log` for specific file movements
-- Verify extension is in config (case-insensitive in code)
-- Confirm destination folder exists and is writable
+### Adding Advanced Routing Rule
+**Pattern Route** (regex-based):
+```json
+{
+  "pattern_routes": {
+    "^invoice_.*\\.pdf$": "D:\\Accounting\\Invoices",
+    "\\[urgent\\]": "D:\\Priority"
+  }
+}
+```
 
-### Environment Variable Configuration (Dashboard)
+**Tag Route** (filename tags):
+```json
+{
+  "tag_routes": {
+    "[work]": "D:\\Work",
+    "[personal]": "D:\\Personal"
+  }
+}
+```
+
+**Size Rule** (override category by size):
+```json
+{
+  "size_rules": [
+    {"min_mb": 100, "category": "Large Files"},
+    {"max_mb": 1, "category": "Small Files"}
+  ]
+}
+```
+
+### Debugging Tips
+
+**Service Issues:**
+- Check logs: `C:\Scripts\service-logs\organizer_stdout.log`
+- Verify watch folders exist and are readable
+- Confirm routing priority (pattern > tag > custom > size > extension)
+
+**Dashboard Issues:**
+- Check structured logs (JSON format) in console or file
+- Access `/api/docs` for API testing
+- Verify config paths via `config_runtime.py` fallback logic
+
+**Package Import Issues:**
+- Ensure `SortNStoreDashboard/` directory treated as package
+- Check shim at top of `SortNStoreDashboard.py` (lines 1-23)
+- Verify `sys.path` includes script directory
+
+### Environment Variables (Dashboard)
 - `DASHBOARD_USER` - Basic auth username (default: "admin")
-- `DASHBOARD_PASS` - Basic auth password (default: "change_this_password")
+- `DASHBOARD_PASS` - Basic auth password (default: from config file)
+- Also: config file takes precedence (`dashboard_user`, `dashboard_pass_hash`)
 
-## Files Reference
+## Documentation Structure
+
+### Essential Docs (see docs/INDEX.md)
+- **Getting Started:** `docs/getting-started/QUICKSTART.md`
+- **Architecture:** `docs/architecture/DASHBOARD_ORGANIZER_INTEGRATION.md`
+- **Deployment:** `docs/deployment/ENTERPRISE_SETUP.md`
+- **Awesome-Python Enhancements:** `AWESOME_PYTHON_SUMMARY.md`, `AWESOME_PYTHON_INTEGRATION_PLAN.md`
+
+### Key Reference Files
 
 | File | Purpose |
 |------|---------|
-| `Organizer.py` | Core file watcher & organizer service |
-| `OrganizerDashboard.py` | Flask web dashboard (~960 lines) |
-| `organizer_config.json` | Runtime configuration (routes, thresholds) |
-| `Install-And-Monitor-OrganizerService.ps1` | Windows service installer |
-| `Monitor-OrganizerService.ps1` | Health check script (auto-generated) |
-| `requirements.txt` | Python dependencies |
+| `SortNStoreService.py` | Core multi-folder file organization (713 lines) |
+| `SortNStoreDashboard.py` | Main Flask app entry point (885 lines) |
+| `SortNStoreDashboard/` | Modular dashboard package (restx, tasks, websocket, auth) |
+| `sortnstore_config.json` | Service configuration (routing, auth, thresholds) |
+| `dashboard_config.json` | Dashboard configuration (users, roles, layout) |
+| `requirements.txt` | Python dependencies (27 packages) |
+| `pyproject.toml` | Package metadata, linting config |
+| `PROJECT_STATUS_OVERVIEW.md` | Current project state & metrics |
+| `installers/install.ps1` | Enterprise-grade PowerShell installer |
+
+### Example Configurations
+- `config_examples/organizer_simple_local.json` - Basic local setup
+- `config_examples/organizer_network_nas_example.json` - NAS integration
+- `config_examples/organizer_onedrive_example.json` - Cloud storage
+- `config_examples/organizer_mixed_cloud_network.json` - Hybrid deployment
