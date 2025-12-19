@@ -238,6 +238,12 @@ def create_app():
     # Basic secret key for session cookies; can be overridden via env
     app.secret_key = os.environ.get('DASHBOARD_SECRET_KEY', 'downloads_organizer_secret')
     
+    # @flask-security-too: Configure database
+    # Use SQLite by default for local deployments
+    db_path = os.environ.get('DATABASE_URL', 'sqlite:///sortnstore_users.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_path
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
     # Flask-Caching setup (simple in-memory cache)
     app.config['CACHE_TYPE'] = 'SimpleCache'
     app.config['CACHE_DEFAULT_TIMEOUT'] = 5  # 5 seconds default
@@ -498,6 +504,37 @@ def create_app():
     # Initialize session timeout enforcement
     from SortNStoreDashboard.auth.session_timeout import init_session_timeout
     init_session_timeout(app)
+    
+    # @flask-security-too: Initialize Flask-Security-Too for enhanced authentication
+    # Provides password reset, email verification, user management
+    # Non-breaking: coexists with existing custom auth system
+    try:
+        from SortNStoreDashboard.security import (
+            init_flask_security,
+            FLASK_SECURITY_AVAILABLE
+        )
+        
+        if FLASK_SECURITY_AVAILABLE:
+            try:
+                security, datastore = init_flask_security(app, migrate=False)
+                # @flask-security-too: Register password reset routes
+                from SortNStoreDashboard.security.password_reset import get_password_reset_blueprint
+                blueprint = get_password_reset_blueprint()
+                if blueprint:
+                    app.register_blueprint(blueprint)
+                
+                log.info("flask_security_initialized", 
+                        status="success",
+                        features=["password_reset", "account_lockout"])
+            except Exception as e:
+                log.error("flask_security_initialization_failed", error=str(e), exc_info=True)
+        else:
+            log.debug("flask_security_unavailable", 
+                     reason="flask_security_too_not_installed")
+    except ImportError:
+        log.debug("flask_security_import_failed")
+    except Exception as e:
+        log.error("flask_security_setup_unexpected_error", error=str(e))
     
     # @flask-restx: Initialize API documentation with Swagger UI
     # Provides automatic OpenAPI documentation at /api/docs
