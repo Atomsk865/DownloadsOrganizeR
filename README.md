@@ -52,6 +52,11 @@
 - Auto-start on login
 - GitHub integration for updates
 
+⚡ **Battle-Tested Libraries** (awesome-python recommendations)
+- **@structlog**: Structured JSON logging for better observability
+- **@flask-restx**: Automatic API documentation with Swagger UI at `/api/docs`
+- Enhanced authentication & admin interface (coming soon)
+
 ---
 
 ## Quick Start

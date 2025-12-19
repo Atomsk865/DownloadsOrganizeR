@@ -28,6 +28,10 @@ from flask_login import LoginManager, UserMixin
 from flask_wtf.csrf import CSRFProtect
 import json
 
+# @structlog: Structured logging integration
+from SortNStoreDashboard.structured_logging import get_logger, configure_logging
+log = get_logger(__name__)
+
 """SortNStore Dashboard
 
 Flask-based dashboard to monitor and control the SortNStore service.
@@ -326,9 +330,11 @@ def create_app():
         import SortNStoreDashboard.routes.api_recent_files
         importlib.reload(SortNStoreDashboard.routes.api_recent_files)
         from SortNStoreDashboard.routes.api_recent_files import routes_api_recent_files
-        print("✓ api_recent_files imported successfully (reloaded)")
+        # @structlog: Replace print with structured logging
+        log.info("routes_loaded", module="api_recent_files", status="success")
     except Exception as e:
-        print(f"✗ Failed to import api_recent_files: {e}")
+        # @structlog: Log exception with context
+        log.error("routes_load_failed", module="api_recent_files", error=str(e), exc_info=True)
         import traceback
         traceback.print_exc()
         routes_api_recent_files = None
@@ -382,11 +388,13 @@ def create_app():
     app.register_blueprint(routes_tasks)
     app.register_blueprint(routes_hardware)
     if routes_api_recent_files:
-        print("Registering routes_api_recent_files blueprint...")
+        # @structlog: Log blueprint registration
+        log.info("blueprint_registering", blueprint="routes_api_recent_files")
         app.register_blueprint(routes_api_recent_files)
-        print("✓ routes_api_recent_files registered")
+        log.info("blueprint_registered", blueprint="routes_api_recent_files", status="success")
     else:
-        print("⚠ Skipping routes_api_recent_files (import failed)")
+        # @structlog: Log skipped blueprint
+        log.warning("blueprint_skipped", blueprint="routes_api_recent_files", reason="import_failed")
     app.register_blueprint(routes_api_open_file)
     app.register_blueprint(routes_auth_settings)
     app.register_blueprint(routes_dashboard_config)
@@ -490,14 +498,28 @@ def create_app():
     # Initialize session timeout enforcement
     from SortNStoreDashboard.auth.session_timeout import init_session_timeout
     init_session_timeout(app)
+    
+    # @flask-restx: Initialize API documentation with Swagger UI
+    # Provides automatic OpenAPI documentation at /api/docs
+    # Non-breaking integration that documents existing endpoints
+    try:
+        from SortNStoreDashboard.restx_api import init_restx_api
+        api = init_restx_api(app, prefix="/api", doc_url="/docs")
+        if api:
+            log.info("restx_initialized", status="success", docs_url="/api/docs")
+        else:
+            log.debug("restx_unavailable", reason="flask_restx_not_installed")
+    except Exception as e:
+        # @structlog: Log Flask-RESTX initialization failure
+        log.error("restx_initialization_failed", error=str(e), exc_info=True)
 
     # Debug: List all registered routes
-    print("\n=== Registered Routes ===")
+    # @structlog: Log registered routes for debugging
+    log.debug("routes_registered", count=len(list(app.url_map.iter_rules())))
     for rule in app.url_map.iter_rules():
         if 'recent_files' in rule.rule:
             methods = ', '.join(rule.methods) if rule.methods else 'GET'
-            print(f"  {rule.rule} -> {rule.endpoint} [{methods}]")
-    print("========================\n")
+            log.debug("route_recent_files", rule=rule.rule, endpoint=rule.endpoint, methods=methods)
 
     return app
 
@@ -732,6 +754,14 @@ def run_preflight_checks():
 if __name__ == "__main__":
     import argparse
     
+    # @structlog: Initialize logging before parsing arguments
+    # This ensures all startup messages are structured
+    configure_logging(
+        use_json=False,  # Use colored console for development
+        log_level=os.environ.get("LOG_LEVEL", "INFO")
+    )
+    log.info("dashboard_startup_begin", version="2.0.0")
+    
     parser = argparse.ArgumentParser(description='SortNStore Dashboard Server')
     parser.add_argument('--skip-preflight', action='store_true',
                         help='Skip preflight checks and start immediately')
@@ -746,7 +776,8 @@ if __name__ == "__main__":
         if not run_preflight_checks():
             sys.exit(1)
     else:
-        print("⚠️  Skipping preflight checks...\n")
+        log.warning("preflight_skipped")
     
-    print(f"✅ Dashboard running at http://localhost:{args.port}")
+    # @structlog: Log server startup
+    log.info("dashboard_starting", host=args.host, port=args.port)
     create_app().run(host=args.host, port=args.port)
