@@ -15,7 +15,12 @@ Dependencies:
 
 Usage:
   python flask_restx_example.py
-  Open http://localhost:5001 to see Swagger UI
+  Open http://localhost:5001/docs to see Swagger UI
+
+Security Notes:
+  ⚠️  This example runs Flask in debug mode for demonstration purposes.
+  ⚠️  NEVER use debug=True in production deployments.
+  ⚠️  Use a proper WSGI server (gunicorn, uwsgi) for production.
 
 Integration Notes:
   - Non-breaking: Wraps existing endpoints
@@ -390,6 +395,10 @@ if __name__ == '__main__':
     print("  - GET  /api/metrics/system")
     print("  - GET  /api/metrics/health")
     print("\n💡 Open http://localhost:5001/docs for interactive API documentation!")
+    print("\n⚠️  WARNING: Running in debug mode for example purposes only!")
+    print("    DO NOT use debug=True in production deployments.")
     print("\n" + "="*70 + "\n")
     
+    # Note: debug=True is used for example/development purposes only
+    # In production, use a proper WSGI server (gunicorn, uwsgi) without debug mode
     app.run(debug=True, port=5001)
