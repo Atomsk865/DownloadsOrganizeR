@@ -373,8 +373,19 @@ Built with:
 - [psutil](https://github.com/giampaolo/psutil) - System monitoring
 - [Bootstrap 5](https://getbootstrap.com/) - UI framework
 
+### Optional Enhancements
+
+SortNStore can be enhanced with battle-tested libraries from [awesome-python](https://github.com/vinta/awesome-python):
+
+- [Flask-RESTX](https://flask-restx.readthedocs.io/) - Automatic API documentation with Swagger UI
+- [Flask-Security-Too](https://flask-security-too.readthedocs.io/) - Enhanced authentication & authorization
+- [Flask-Admin](https://flask-admin.readthedocs.io/) - Auto-generated admin interface
+- [structlog](https://www.structlog.org/) - Structured JSON logging
+
+See [AWESOME_PYTHON_ENHANCEMENTS.md](docs/AWESOME_PYTHON_ENHANCEMENTS.md) for detailed integration guide and examples in `examples/awesome-python-integrations/`.
+
 ---
 
-**Last Updated**: December 10, 2025  
+**Last Updated**: December 19, 2025  
 **Version**: See [version.json](version.json)
 

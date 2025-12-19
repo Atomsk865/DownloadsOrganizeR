@@ -1,0 +1,30 @@
+# Awesome Python Integration Examples - Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Flask (already in main requirements)
+Flask>=3.0,<4
+
+# API Documentation
+flask-restx>=1.0.0,<2.0.0
+
+# Enhanced Authentication
+flask-security-too>=5.0.0,<6.0.0
+
+# Admin Interface
+flask-admin>=1.6.0,<2.0.0
+
+# Structured Logging
+structlog>=23.0.0,<25.0.0
+
+# Database ORM (optional, for Flask-Admin examples)
+flask-sqlalchemy>=3.0.0,<4.0.0
+alembic>=1.12.0,<2.0.0
+
+# Email support (for Flask-Security password reset)
+flask-mail>=0.9.1,<1.0.0
+
+# WTForms (for Flask-Admin forms)
+wtforms>=3.0.0,<4.0.0
+
+# Additional utilities
+python-dotenv>=1.0.0,<2.0.0  # Environment variable management
