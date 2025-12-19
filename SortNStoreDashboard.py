@@ -572,6 +572,25 @@ def create_app():
         log.debug("flask_admin_import_failed", reason=str(e))
     except Exception as e:
         log.error("flask_admin_initialization_failed", error=str(e), exc_info=True)
+    
+    # @celery: Register Celery task queue and monitoring API
+    try:
+        from SortNStoreDashboard.tasks import init_celery_with_app
+        from SortNStoreDashboard.tasks_api import register_tasks_blueprint
+        
+        celery = init_celery_with_app(app)
+        if celery:
+            register_tasks_blueprint(app)
+            log.info("celery_initialized",
+                    status="success",
+                    broker="redis://localhost:6379/0",
+                    features=["async_file_organization", "task_monitoring", "worker_management"])
+        else:
+            log.debug("celery_unavailable", reason="celery_not_installed")
+    except ImportError as e:
+        log.debug("celery_import_failed", reason="Install via: pip install celery redis")
+    except Exception as e:
+        log.warning("celery_initialization_failed", error=str(e), exc_info=True)
 
     # Debug: List all registered routes
     # @structlog: Log registered routes for debugging
