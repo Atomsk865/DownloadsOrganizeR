@@ -550,6 +550,29 @@ def create_app():
         # @structlog: Log Flask-RESTX initialization failure
         log.error("restx_initialization_failed", error=str(e), exc_info=True)
 
+    # @flask-admin: Initialize admin interface for user/role management
+    # Provides auto-generated admin UI at /admin
+    # Non-breaking: optional feature for managing system configuration
+    try:
+        from SortNStoreDashboard.admin_panel import init_flask_admin
+        from SortNStoreDashboard.security import db, FLASK_SECURITY_AVAILABLE
+        
+        if FLASK_SECURITY_AVAILABLE:
+            admin = init_flask_admin(app, db)
+            if admin:
+                log.info("flask_admin_initialized",
+                        status="success",
+                        admin_url="/admin",
+                        features=["user_management", "role_management"])
+            else:
+                log.debug("flask_admin_unavailable", reason="flask_admin_not_installed")
+        else:
+            log.debug("flask_admin_skipped", reason="flask_security_not_available")
+    except ImportError as e:
+        log.debug("flask_admin_import_failed", reason=str(e))
+    except Exception as e:
+        log.error("flask_admin_initialization_failed", error=str(e), exc_info=True)
+
     # Debug: List all registered routes
     # @structlog: Log registered routes for debugging
     log.debug("routes_registered", count=len(list(app.url_map.iter_rules())))
