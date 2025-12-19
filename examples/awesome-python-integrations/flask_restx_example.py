@@ -143,7 +143,12 @@ class ServiceControl(Resource):
     def post(self):
         """Start, stop, or restart the service"""
         # Mock implementation - replace with actual service control
+        if not api.payload:
+            api.abort(400, "Request payload is required")
+        
         action = api.payload.get('action')
+        if not action:
+            api.abort(400, "Action field is required")
         
         if action == 'start':
             # Start service logic
