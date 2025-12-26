@@ -38,15 +38,9 @@ dev = [
 ]
 
 [project.scripts]
-sortnstore-dashboard = "sortnstore.dashboard:main"
-sortnstore-organizer = "sortnstore.organizer:main"
-sortnstore-tray = "sortnstore.tray_app:main"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
+sortnstore-service = "SortNStoreService:main"
+sortnstore-dashboard = "SortNStoreDashboard:main"
+sortnstore-tray = "SortNStoreTrayApp:main"
 
 [tool.pylint.messages_control]
 disable = [

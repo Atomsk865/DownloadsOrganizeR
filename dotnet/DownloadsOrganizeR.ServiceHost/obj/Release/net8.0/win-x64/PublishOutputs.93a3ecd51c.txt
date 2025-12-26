@@ -1,3 +1,0 @@
-/workspaces/DownloadsOrganizeR/dotnet/DownloadsOrganizeR.ServiceHost/publish/appsettings.json
-/workspaces/DownloadsOrganizeR/dotnet/DownloadsOrganizeR.ServiceHost/publish/DownloadsOrganizeR.ServiceHost.pdb
-/workspaces/DownloadsOrganizeR/dotnet/DownloadsOrganizeR.ServiceHost/publish/DownloadsOrganizeR.ServiceHost.exe
