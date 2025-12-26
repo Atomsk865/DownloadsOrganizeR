@@ -2,14 +2,20 @@
 C:/Scripts/
 C:\Scripts\
 
-# Generated config files (created during setup wizard)
+# Generated config files (created during setup wizard or at runtime)
 organizer_config.json
 dashboard_config.json
+sortnstore_config.json
+dashboard_branding.json
 
-# TEMP: auto-generated recent-files artifacts (remove before pushing to main)
+# Runtime-generated JSON files
 file_moves.json
-config/json/file_moves.json
+config/json/
 test_destination.txt
+
+# Build artifacts
+dist/
+node_modules/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

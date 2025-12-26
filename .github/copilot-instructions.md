@@ -6,17 +6,18 @@
 
 ### Core Components
 
-1. **SortNStoreService.py** (main service, 713 lines) - Multi-folder file watcher with advanced routing
-   - Wrapper shim: `Organizer.py` (legacy compatibility)
-2. **SortNStoreDashboard.py** (main app, 885 lines) - Flask web dashboard with real-time monitoring
+1. **SortNStoreService.py** (main service, ~712 lines) - Multi-folder file watcher with advanced routing
+   - Legacy compatibility shim: `Organizer.py` (imports SortNStoreService)
+2. **SortNStoreDashboard.py** (main app, ~885 lines) - Flask web dashboard with real-time monitoring
    - Package directory: `SortNStoreDashboard/` (modular architecture)
-3. **SortNStoreTrayApp.py** - Windows system tray GUI
+3. **SortNStoreTrayApp.py** (~200 lines) - Windows system tray GUI
+   - Legacy compatibility shim: `OrganizerTrayApp.py` (imports SortNStoreTrayApp)
 4. **Installers** - PowerShell-based installation (`installers/install.ps1`, 525+ lines)
 
 ### Project Status
 - **6 phases complete** (structured logging, API docs, auth, admin, async tasks, WebSocket)
-- **40/40 tests passing** (100%)
-- **9,430+ lines total** (5,340 implementation + 1,690 tests + 2,400 docs)
+- **Test suite:** tests/ directory (4 test files using pytest)
+- **Clean architecture:** No duplicate packages, single source of truth
 
 ## Architecture & Data Flow
 
@@ -78,7 +79,7 @@ SortNStoreDashboard.py (entry point)
 1. **sortnstore_config.json** (service config) - File routing, thresholds, auth settings
 2. **dashboard_config.json** (dashboard config) - Users, roles, layout, setup state
 
-**Config Paths Priority** (SortNStoreService.py lines 38-46):
+**Config Paths Priority:**
 ```python
 CONFIG_PATHS = [
     SCRIPT_DIR / "organizer_config.json",  # Local (dev)
@@ -86,6 +87,8 @@ CONFIG_PATHS = [
     Path("C:/ProgramData/SortNStore/organizer_config.json")  # Enterprise install
 ]
 ```
+
+**Note:** Config files are generated during setup and should NOT be committed to git.
 
 **Writable Path Fallback** (config_runtime.py `_ensure_writable_path`):
 - Tries original path first
@@ -142,13 +145,14 @@ cd DownloadsOrganizeR
 
 ### Testing & Validation
 ```bash
-# Run all tests
+# Run all tests (requires pytest installed)
 pytest tests/ -v
 
-# Specific test suites
-pytest tests/test_phase2_api_integration.py  # API docs
-pytest tests/test_setup_validation.py  # Setup wizard
-pytest tests/test_routes_smoke.py  # Dashboard routes
+# Test files in tests/ directory:
+# - test_phase2_api_integration.py  (API docs & routes)
+# - test_phase2_dashboard_smoke.py  (Dashboard smoke tests)
+# - test_routes_smoke.py            (Route availability)
+# - test_setup_validation.py        (Setup wizard)
 
 # Environment check
 python scripts/check_environment.py
@@ -173,10 +177,9 @@ python scripts/check_environment.py
 ## Project-Specific Patterns
 
 ### Naming Convention Evolution
-- **Current:** `SortNStoreService.py`, `SortNStoreDashboard.py`, `SortNStoreTrayApp.py`
-- **Legacy (still works):** `Organizer.py`, `OrganizerDashboard.py`, `OrganizerTrayApp.py`
-- **Wrapper pattern:** `*_wrapper.py` files ensure backward compatibility
-- **When referencing:** Use "SortNStore" for new code; legacy names work via shims
+- **Primary scripts:** `SortNStoreService.py`, `SortNStoreDashboard.py`, `SortNStoreTrayApp.py`
+- **Legacy compatibility shims:** `Organizer.py`, `OrganizerTrayApp.py` (simple import wrappers)
+- **When referencing:** Always use "SortNStore" naming for new code and documentation
 
 ### Configuration-Driven Everything
 **Service behavior entirely driven by config:**
@@ -278,9 +281,9 @@ socketio.emit('system_metrics', {'cpu': cpu_pct, 'memory': mem_pct})
 ## Common Modifications & Tips
 
 ### Adding New File Category
-1. Update `DEFAULT_CONFIG["routes"]` in `SortNStoreDashboard.py` (line ~49)
-2. If using legacy `EXTENSION_MAP` in `SortNStoreService.py`, update `_default_extension_map()` (line ~71)
-3. Update `sortnstore_config.json` routes section
+1. Update `DEFAULT_CONFIG["routes"]` in `SortNStoreDashboard.py` (around line 48)
+2. Update `EXTENSION_MAP` in `SortNStoreService.py` (around line 86-103)
+3. Optionally update `sortnstore_config.json` routes section (if using custom config)
 4. Restart service
 
 ### Adding Advanced Routing Rule
@@ -363,3 +366,37 @@ socketio.emit('system_metrics', {'cpu': cpu_pct, 'memory': mem_pct})
 - `config_examples/organizer_network_nas_example.json` - NAS integration
 - `config_examples/organizer_onedrive_example.json` - Cloud storage
 - `config_examples/organizer_mixed_cloud_network.json` - Hybrid deployment
+
+## Important: File Management
+
+### Files That Should NOT Be Committed
+These files are generated at runtime or during setup and are properly ignored in .gitignore:
+- `organizer_config.json` / `sortnstore_config.json` (generated during setup)
+- `dashboard_config.json` (generated during setup)
+- `dashboard_branding.json` (generated during setup)
+- `config/json/*.json` (runtime-generated: file_moves.json, file_hashes.json, etc.)
+- `dist/` (build artifacts)
+- `node_modules/` (JavaScript dependencies, if added)
+- `*.log` files (service logs)
+
+### Project Structure (Clean)
+```
+DownloadsOrganizeR/
+├── SortNStoreService.py         # Main service (primary)
+├── Organizer.py                 # Legacy shim (imports SortNStoreService)
+├── SortNStoreDashboard.py       # Main dashboard (primary)
+├── SortNStoreTrayApp.py         # Tray app (primary)
+├── OrganizerTrayApp.py          # Legacy shim (imports SortNStoreTrayApp)
+├── SortNStoreDashboard/         # Dashboard package (modular architecture)
+├── tests/                       # Test suite (pytest-based)
+├── docs/                        # Documentation
+├── installers/                  # PowerShell installers
+├── scripts/                     # Utility scripts
+├── config_examples/             # Example configurations
+├── examples/                    # Code examples
+├── static/                      # Web assets (CSS, JS)
+├── dash/                        # HTML templates
+└── requirements.txt             # Python dependencies
+```
+
+**Note:** No src/ directory or *_wrapper.py files - they were removed as part of project cleanup.
